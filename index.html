@@ -8,12 +8,41 @@
     <script src="https://cdn.jsdelivr.net/npm/dexie@4.0.8/dist/dexie.min.js"></script>
     <style>
         :root {
-    --p: #2e7d32;
-    --card: #ffffff;
-    --bg: #f5f7f5;
-    --txt: #2c3e50;
-    --radius-soft: 16px;
-    --shadow-soft: 0 6px 15px rgba(0,0,0,0.05); /* Sombra suave */
+    --p: #2e7d32;         /* Verde principal */
+    --bg: #f5f7f5;        /* Fundo da app */
+    --card: #ffffff;      /* Fundo dos cards */
+    --txt: #2c3e50;       /* Cor do texto principal */
+    --txt-rev: #ffffff;   /* Texto sobre fundos escuros */
+    --btn-alt: #546e7a;   /* Cor dos botões secundários (Import/Alterar) */
+}
+
+/* --- TEMA ESCURO (Dark Mode) --- */
+body.dark {
+    --bg: #121212;
+    --card: #1e1e1e;
+    --txt: #eceff1;
+    --txt-rev: #ffffff;
+    --p: #81c784;         /* Um verde mais suave para não cansar os olhos */
+}
+
+/* --- APLICAÇÃO DAS CORES --- */
+body { background-color: var(--bg); color: var(--txt); transition: 0.3s; }
+
+.card, .modal-content { 
+    background-color: var(--card); 
+    color: var(--txt); 
+}
+
+/* Botão de Exportar (que estava invisível) */
+.btn-main { 
+    background-color: var(--p); 
+    color: var(--txt-rev) !important; /* Força o texto a ser branco/claro */
+}
+
+/* Botões Cinzentos (Importar/Alterar) */
+.btn-sec { 
+    background-color: var(--btn-alt); 
+    color: var(--txt-rev) !important;
 }
         
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
