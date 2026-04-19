@@ -17,6 +17,7 @@ const ui = {
     view: 'dash',
     expandedZones: new Set(),
     expandedBookCats: new Set(),
+    expandedWikiCats: new Set(),
     nav: function(v, btn) {
     this.view = v;
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -121,12 +122,44 @@ const ui = {
 },
 
     drawWiki: async function(s) {
-        const data = await db.wiki.filter(i => i.especie.toLowerCase().includes(s)).toArray();
-        document.getElementById('draw-wiki').innerHTML = data.map(i => `
-            <div class="card"><div style="display:flex;justify-content:space-between"><b>${i.especie}</b><button onclick="logic.del('wiki', ${i.id})" style="border:none;background:none;color:red">✕</button></div>
-            <p style="font-size:0.85rem;margin:8px 0;opacity:0.8">${i.info || 'Sem descrição'}</p>
-            <div style="display:flex;gap:15px"><small>⏱️ ${i.tempo} dias</small><small>🌡️ ${i.temp}</small></div></div>`).join('') || '<p style="text-align:center;padding:40px;opacity:0.5">Wiki vazia.</p>';
-    },
+    const data = await db.wiki.toArray();
+    const filtered = data.filter(i => i.especie.toLowerCase().includes(s));
+    
+    // Obter categorias únicas
+    const categorias = [...new Set(filtered.map(i => i.categoria || "Outros"))];
+    
+    let html = "";
+    categorias.forEach(cat => {
+        const plantasDaCat = filtered.filter(i => (i.categoria || "Outros") === cat);
+        const isOpen = ui.expandedWikiCats.has(cat);
+
+        html += `
+            <div onclick="logic.toggleWikiCat('${cat}')" style="display:flex; justify-content:space-between; align-items:center; margin:20px 5px 10px; cursor:pointer; border-bottom: 2px solid var(--p); padding-bottom: 5px;">
+                <h4 style="margin:0; color:var(--txt); font-size:1rem;">${cat} <small style="opacity:0.5">(${plantasDaCat.length})</small></h4>
+                <span style="transition:0.3s; transform: rotate(${isOpen ? '90deg' : '0deg'});">▶</span>
+            </div>
+        `;
+
+        if (isOpen) {
+            plantasDaCat.forEach(i => {
+                html += `
+                    <div class="card" style="animation: pageIn 0.2s ease-out;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <b>${i.especie}</b>
+                            <button onclick="event.stopPropagation(); logic.del('wiki', ${i.id})" style="border:none; background:none; color:red;">✕</button>
+                        </div>
+                        <div style="display:flex; gap:12px; margin-top:8px;">
+                            <small>⏱️ ${i.tempo} dias</small>
+                            <small>🌡️ ${i.temp}</small>
+                        </div>
+                        <p style="font-size:0.85rem; margin-top:8px; opacity:0.8; border-top: 1px solid rgba(0,0,0,0.05); padding-top:8px;">${i.info}</p>
+                    </div>`;
+            });
+        }
+    });
+
+    document.getElementById('draw-wiki').innerHTML = html || '<p style="text-align:center; padding:40px; opacity:0.5;">A tua Wiki está vazia.</p>';
+},
 
     drawBook: async function(s) {
     const data = await db.book.toArray();
@@ -190,9 +223,17 @@ const logic = {
         await db.plantas.add(p); ui.modal('modal-planta', false); ui.render();
     },
     saveWiki: async function() {
-        const w = { especie: document.getElementById('w-nome').value, tempo: parseInt(document.getElementById('w-dias').value), temp: document.getElementById('w-temp').value, info: document.getElementById('w-info').value };
-        if(!w.especie || !w.tempo) return alert("Preenche o nome e os dias!");
-        await db.wiki.add(w); ui.modal('modal-wiki', false); ui.render();
+        const w = { 
+            especie: document.getElementById('w-nome').value, 
+            categoria: document.getElementById('w-cat').value, // Novo campo
+            tempo: parseInt(document.getElementById('w-dias').value), 
+            temp: document.getElementById('w-temp').value, 
+            info: document.getElementById('w-info').value 
+        };
+        if(!w.especie || !w.tempo) return alert("Preenche os campos obrigatórios!");
+        await db.wiki.add(w); 
+        ui.modal('modal-wiki', false); 
+        ui.render();
     },
     saveBook: async function() {
         const b = { titulo: document.getElementById('b-tit').value, categoria: document.getElementById('b-cat').value, conteudo: document.getElementById('b-txt').value };
@@ -213,6 +254,10 @@ const logic = {
     },
     del: async function(t, id) {
         if(confirm("Apagar permanentemente?")) { await db[t].delete(id); ui.render(); }
+    },
+    toggleWikiCat: function(cat) {
+        ui.expandedWikiCats.has(cat) ? ui.expandedWikiCats.delete(cat) : ui.expandedWikiCats.add(cat);
+        ui.render();
     },
 
     toggleZone: function(id) {
