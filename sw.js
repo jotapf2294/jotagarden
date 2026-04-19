@@ -1,8 +1,7 @@
-const CACHE_NAME = 'jotagarden-v11';
+const CACHE_NAME = 'jotagarden-v12';
 const ASSETS = [
   './',
   './index.html',
-  './app.js',
   './db.js',
   './manifest.json'
 ];
