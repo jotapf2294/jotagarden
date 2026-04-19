@@ -50,47 +50,36 @@ body { background-color: var(--bg); color: var(--txt); transition: 0.3s; }
         
         header { background: var(--p); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; }
         .search-bar { background: var(--p); padding: 0 15px 10px 15px; }
-        #globalSearch { width: 100%; border: none; padding: 12px; border-radius: 10px; font-size: 16px; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        #globalSearch {
+    border-radius: 50px !important; /* Barra de pesquisa em formato pilula */
+    border: none;
+    padding: 12px 20px;}
 
         .main-content { flex: 1; overflow-y: auto; padding: 15px 15px 100px 15px; }
         .page { display: none; }
         .page.active { display: block; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .card-lunar {
-    background: linear-gradient(135deg, #233140, #000);
-    color: white;
-    padding: 14px 18px;
-    border-radius: var(--radius-soft);
-    margin-bottom: 14px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15); /* Sombra mais forte para a noite */
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    border: 1px solid rgba(255,255,255,0.05); /* Borda fina para definição */
+.card, 
+.card-lunar, 
+.card-sauda-mini, 
+.modal-content {
+    border-radius: 24px !important; /* Aumentei para ser bem visível */
+    overflow: hidden !important;   /* Corta as pontas quadradas do fundo */
+    margin-bottom: 16px;
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
 }
 
-.card-lunar span { font-size: 2.2rem; }
-.card-lunar h4 { margin: 0; color: #ffeb3b; font-size: 0.9rem; font-weight: 700; }
-.card-lunar p { margin: 2px 0 0 0; font-size: 0.8rem; opacity: 0.9; }
-
-/* Nova Saudação Mini Arredondada */
-.card-sauda-mini {
-    background: linear-gradient(135deg, #233140, #000);
-    color: white;
-    padding: 14px 18px;
-    border-radius: var(--radius-soft);
-    margin-bottom: 14px;
-    box-shadow: var(--shadow-soft);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+body.dark .card, 
+body.dark .card-lunar, 
+body.dark .card-sauda-mini {
+    border-radius: 24px !important;
 }
 
-.card-sauda-mini .info { flex: 1; }
-.card-sauda-mini h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
-.card-sauda-mini p { margin: 2px 0 0 0; font-size: 0.85rem; opacity: 0.9; }
-.card-sauda-mini .icon { font-size: 1.6rem; opacity: 0.3; }
+.card-lunar, .card-sauda-mini {
+    padding: 20px !important;
+}
         
         /* Modais Blindados */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
