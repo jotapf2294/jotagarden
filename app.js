@@ -191,6 +191,26 @@ const logic = {
     }
 };
 
+const lunar = {
+    // Calcula a fase da lua (0 a 29.5)
+    getPhase: function() {
+        const date = new Date();
+        const lp = 2551443; // Período lunar em segundos
+        const newMoon = new Date('1970-01-07T20:35:00Z'); // Uma lua nova de referência
+        const phase = ((date.getTime() - newMoon.getTime()) / 1000) % lp;
+        return Math.floor(phase / (24 * 3600)) + 1;
+    },
+
+    getDetails: function() {
+        const p = this.getPhase();
+        if (p < 2)   return { f: "Lua Nova", i: "🌑", d: "Repouso. Evitar semear." };
+        if (p < 8)   return { f: "Quarto Crescente", i: "🌒", d: "Ideal para Folhas e Frutos (Salsa, Tomate)." };
+        if (p < 15)  return { f: "Lua Cheia", i: "🌕", d: "Semear Flores e Frutos. Muita seiva!" };
+        if (p < 22)  return { f: "Quarto Minguante", i: "🌘", d: "Ideal para Raízes (Cenoura, Batata) e Podas." };
+        return { f: "Lua Nova", i: "🌑", d: "Fase de limpeza e planeamento." };
+    }
+};
+
 window.onload = async () => {
     const cfg = await db.config.get('theme');
     if(cfg?.val) document.body.classList.add('dark');
