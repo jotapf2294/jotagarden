@@ -36,8 +36,22 @@ const ui = {
         const ps = await db.plantas.toArray();
         const ws = await db.wiki.toArray();
         const bk = await db.book.toArray();
-        let html = `<div class="card" style="background:var(--p); color:white">
-            <h2>Olá, Jota👋</h2><p>Tens ${ps.length} plantas ativas e ${bk.length} notas no teu book.</p></div>`;
+        const lua = lunar.getDetails();
+        let html = `
+            <div class="card" style="background: linear-gradient(135deg, #2c3e50, #000); color: #fff; border:none;">
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <span style="font-size:2.5rem">${lua.i}</span>
+                    <div>
+                        <h4 style="margin:0; color:#ffeb3b;">${lua.f}</h4>
+                        <p style="margin:0; font-size:0.85rem; opacity:0.9;">${lua.d}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="background:var(--p); color:white">
+                <h2>Olá, Jota! 👋</h2>
+                <p>Tens ${ps.length} cultivos em curso.</p>
+            </div>`;
         
         // Alertas de Colheita
         const hoje = new Date();
