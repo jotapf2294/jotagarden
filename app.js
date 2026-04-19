@@ -106,12 +106,31 @@ const ui = {
 };
 
 const logic = {
-    savePlanta: async function() {
+        savePlanta: async function() {
         const v = document.getElementById('p-nome').value;
         const z = document.getElementById('p-zona').value;
-        if(!v || !z) return;
-        await db.plantas.add({ variedade: v, zonaId: parseInt(z), data: document.getElementById('p-data').value, nota: document.getElementById('p-nota').value });
-        ui.modal('modal-planta', false); ui.render();
+        const d = document.getElementById('p-data').value;
+        
+        if(!v) return alert("Escreve o nome da planta!");
+        if(!z) return alert("Cria primeiro uma Zona nas Definições!");
+
+        try {
+            await db.plantas.add({ 
+                variedade: v, 
+                zonaId: parseInt(z), 
+                data: d, 
+                nota: document.getElementById('p-nota').value 
+            });
+            
+            // Limpar campos
+            document.getElementById('p-nome').value = "";
+            document.getElementById('p-nota').value = "";
+            
+            ui.modal('modal-planta', false); 
+            ui.render();
+        } catch (err) {
+            console.error("Erro ao salvar:", err);
+        }
     },
     saveWiki: async function() {
         const e = document.getElementById('w-nome').value;
@@ -120,12 +139,27 @@ const logic = {
         await db.wiki.add({ especie: e, tempo: parseInt(t), temp: document.getElementById('w-temp').value, info: document.getElementById('w-info').value });
         ui.modal('modal-wiki', false); ui.render();
     },
-    saveBook: async function() {
+        saveBook: async function() {
         const t = document.getElementById('b-tit').value;
-        if(!t) return;
-        await db.book.add({ titulo: t, categoria: document.getElementById('b-cat').value, conteudo: document.getElementById('b-txt').value });
-        ui.modal('modal-book', false); ui.render();
+        const c = document.getElementById('b-cat').value;
+        const txt = document.getElementById('b-txt').value;
+
+        if(!t || !txt) return alert("Preenche o título e o conteúdo!");
+
+        await db.book.add({ 
+            titulo: t, 
+            categoria: c, 
+            conteudo: txt 
+        });
+
+        // Limpar
+        document.getElementById('b-tit').value = "";
+        document.getElementById('b-txt').value = "";
+
+        ui.modal('modal-book', false); 
+        ui.render();
     },
+
     addZona: async function() {
         const v = document.getElementById('z-input').value;
         if(v) await db.zonas.add({ nome: v });
