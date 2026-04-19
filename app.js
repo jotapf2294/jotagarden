@@ -144,10 +144,10 @@ const ui = {
             plantasDaCat.forEach(i => {
                 html += `
                     <div class="card" style="animation: pageIn 0.2s ease-out;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <b>${i.especie}</b>
-                            <button onclick="event.stopPropagation(); logic.del('wiki', ${i.id})" style="border:none; background:none; color:red;">✕</button>
-                        </div>
+                        <div style="display:flex; gap:10px;">
+    <button onclick="event.stopPropagation(); logic.editWiki(${i.id})" style="border:none; background:none; color:var(--p); font-size:1.1rem;">✏️</button>
+    <button onclick="event.stopPropagation(); logic.del('wiki', ${i.id})" style="border:none; background:none; color:red; font-size:1.1rem;">✕</button>
+</div>
                         <div style="display:flex; gap:12px; margin-top:8px;">
                             <small>⏱️ ${i.tempo} dias</small>
                             <small>🌡️ ${i.temp}</small>
@@ -195,12 +195,10 @@ const ui = {
             notasDaCat.forEach(i => {
                 html += `
                     <div class="card" style="animation: pageIn 0.2s ease-out; margin-bottom:10px; border-left: 4px solid var(--p);">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                            <b style="display:block; color:var(--txt);">${i.titulo}</b>
-                            <button onclick="event.stopPropagation(); logic.del('book', ${i.id})" style="border:none; background:none; color:#e74c3c; padding:0 5px; font-weight:bold;">✕</button>
-                        </div>
-                        <p style="font-size:0.9rem; margin:8px 0 0; opacity:0.8; line-height:1.4;">${i.conteudo}</p>
-                    </div>
+                        <div style="display:flex; gap:10px;">
+    <button onclick="event.stopPropagation(); logic.editBook(${i.id})" style="border:none; background:none; color:var(--p); font-size:1.1rem;">✏️</button>
+    <button onclick="event.stopPropagation(); logic.del('book', ${i.id})" style="border:none; background:none; color:#e74c3c; font-size:1.1rem;">✕</button>
+</div>
                 `;
             });
         }
