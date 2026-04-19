@@ -81,25 +81,25 @@ const ui = {
                 }
             });
 
-            if(alertasColheita.length > 0) {
-                html += `<div class="card" style="border-left: 5px solid var(--a); background: #fffde7;">
-                            <h4 style="margin:0; color:#f57c00;">🔔 Próximas Colheitas</h4>`;
-                alertasColheita.forEach(a => {
-                    html += `<p style="margin:5px 0; font-size:0.9rem;">O <b>${a.nome}</b> estará pronto em ${a.dias === 0 ? '<b>HOJE!</b>' : a.dias + ' dias'}.</p>`;
-                });
-                html += `</div>`;
+            if(diasParaColher <= 7 && diasParaColher >= 0) {
+    const cor = diasParaColher <= 2 ? '#e74c3c' : 'var(--a)';
+    html += `</div>`;
             }
 
             // 2. Dica Aleatória do teu Book
             if(notas.length > 0) {
                 const randomNota = notas[Math.floor(Math.random() * notas.length)];
                 html += `
-                    <div class="card" style="background: #e3f2fd; border-left: 5px solid #2196f3;">
-                        <small style="color:#1976d2; font-weight:bold;">💡 RELEMBRA O TEU BOOK</small>
-                        <h4 style="margin:5px 0;">${randomNota.titulo}</h4>
-                        <p style="font-size:0.85rem; margin:0;">${randomNota.conteudo.substring(0, 100)}...</p>
-                    </div>`;
-            }
+                    <div class="card" style="background: linear-gradient(to right, #fff, #fff9f0); border-left: 5px solid ${cor}">
+            <div style="display:flex; align-items:center; gap:10px">
+                <span style="font-size:1.5rem">🍎</span>
+                <div>
+                    <h4 style="margin:0; color:${cor}">Pronto a Colher</h4>
+                    <p style="margin:0; font-size:0.85rem"><b>${p.variedade}</b> em ${diasParaColher === 0 ? 'HOJE!' : diasParaColher + ' dias'}</p>
+                </div>
+            </div>
+        </div>`;
+}
 
             // 3. Resumo de Atividade (Últimos 3 dias)
             const recentes = plantas.filter(p => {
