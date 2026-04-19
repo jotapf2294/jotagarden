@@ -1,5 +1,5 @@
 const ui = {
-    view: 'dash',
+    view: 'inicio',
     
     nav: function(v, btn) {
         this.view = v;
@@ -25,7 +25,7 @@ const ui = {
     render: async function() {
         const search = document.getElementById('globalSearch').value.toLowerCase();
         
-        if(this.view === 'dash') this.drawDash();
+        if(this.view === 'inicio') this.drawDash();
         if(this.view === 'horta') this.drawHorta(search);
         if(this.view === 'wiki') this.drawWiki(search);
         if(this.view === 'book') this.drawBook(search);
