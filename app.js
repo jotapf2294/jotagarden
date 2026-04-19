@@ -124,8 +124,6 @@ const ui = {
     drawWiki: async function(s) {
     const data = await db.wiki.toArray();
     const filtered = data.filter(i => i.especie.toLowerCase().includes(s));
-    
-    // Obter categorias únicas
     const categorias = [...new Set(filtered.map(i => i.categoria || "Outros"))];
     
     let html = "";
@@ -133,6 +131,7 @@ const ui = {
         const plantasDaCat = filtered.filter(i => (i.categoria || "Outros") === cat);
         const isOpen = ui.expandedWikiCats.has(cat);
 
+        // Cabeçalho da categoria (mantém-se igual)
         html += `
             <div onclick="logic.toggleWikiCat('${cat}')" style="display:flex; justify-content:space-between; align-items:center; margin:20px 5px 10px; cursor:pointer; border-bottom: 2px solid var(--p); padding-bottom: 5px;">
                 <h4 style="margin:0; color:var(--txt); font-size:1rem;">${cat} <small style="opacity:0.5">(${plantasDaCat.length})</small></h4>
@@ -142,17 +141,22 @@ const ui = {
 
         if (isOpen) {
             plantasDaCat.forEach(i => {
+                // --- NOVA ESTRUTURA PROFISSIONAL ---
                 html += `
-                    <div class="card" style="animation: pageIn 0.2s ease-out;">
-                        <div style="display:flex; gap:10px;">
-    <button onclick="event.stopPropagation(); logic.editWiki(${i.id})" style="border:none; background:none; color:var(--p); font-size:1.1rem;">✏️</button>
-    <button onclick="event.stopPropagation(); logic.del('wiki', ${i.id})" style="border:none; background:none; color:red; font-size:1.1rem;">✕</button>
-</div>
-                        <div style="display:flex; gap:12px; margin-top:8px;">
-                            <small>⏱️ ${i.tempo} dias</small>
-                            <small>🌡️ ${i.temp}</small>
+                    <div class="card">
+                        <div class="card-info">
+                            <span class="card-title">${i.especie}</span>
+                            <div class="card-details">
+                                <span>⏱️ ${i.tempo} dias</span>
+                                <span>🌡️ ${i.temp}</span>
+                            </div>
+                            ${i.info ? `<p style="font-size:0.8rem; margin:10px 0 0; opacity:0.8; line-height:1.4;">${i.info}</p>` : ''}
                         </div>
-                        <p style="font-size:0.85rem; margin-top:8px; opacity:0.8; border-top: 1px solid rgba(0,0,0,0.05); padding-top:8px;">${i.info}</p>
+
+                        <div class="card-actions">
+                            <button onclick="event.stopPropagation(); logic.editWiki(${i.id})" class="btn-action edit" title="Editar">✏️</button>
+                            <button onclick="event.stopPropagation(); logic.del('wiki', ${i.id})" class="btn-action del" title="Apagar">✕</button>
+                        </div>
                     </div>`;
             });
         }
@@ -160,6 +164,7 @@ const ui = {
 
     document.getElementById('draw-wiki').innerHTML = html || '<p style="text-align:center; padding:40px; opacity:0.5;">A tua Wiki está vazia.</p>';
 },
+
 
     drawBook: async function(s) {
     const data = await db.book.toArray();
@@ -174,38 +179,38 @@ const ui = {
     const categorias = [...new Set(filtered.map(i => i.categoria))];
     
     let html = "";
-
     categorias.forEach(cat => {
         const notasDaCat = filtered.filter(i => i.categoria === cat);
         const isOpen = ui.expandedBookCats.has(cat);
 
-        // Cabeçalho da Categoria
+        // Cabeçalho da categoria (mantém-se)
         html += `
             <div onclick="logic.toggleBookCat('${cat}')" style="display:flex; justify-content:space-between; align-items:center; margin:20px 5px 10px; cursor:pointer; background:rgba(0,0,0,0.02); padding:10px; border-radius:12px;">
-                <h4 style="margin:0; color:var(--p); display:flex; align-items:center; gap:8px; font-size:1rem;">
-                    <span>📂</span> ${cat} 
-                    <small style="font-weight:normal; opacity:0.5; font-size:0.8rem;">(${notasDaCat.length})</small>
-                </h4>
+                <h4 style="margin:0; color:var(--p); display:flex; align-items:center; gap:8px; font-size:1rem;">📂 ${cat} <small style="font-weight:normal; opacity:0.5; font-size:0.8rem;">(${notasDaCat.length})</small></h4>
                 <span style="transition:0.3s; transform: rotate(${isOpen ? '90deg' : '0deg'}); opacity:0.5;">▶</span>
             </div>
         `;
 
-        // Notas da Categoria (Só aparecem se expandido)
         if (isOpen) {
             notasDaCat.forEach(i => {
+                // --- NOVA ESTRUTURA PROFISSIONAL ---
                 html += `
-                    <div class="card" style="animation: pageIn 0.2s ease-out; margin-bottom:10px; border-left: 4px solid var(--p);">
-                        <div style="display:flex; gap:10px;">
-    <button onclick="event.stopPropagation(); logic.editBook(${i.id})" style="border:none; background:none; color:var(--p); font-size:1.1rem;">✏️</button>
-    <button onclick="event.stopPropagation(); logic.del('book', ${i.id})" style="border:none; background:none; color:#e74c3c; font-size:1.1rem;">✕</button>
-</div>
-                `;
+                    <div class="card" style="border-left: 4px solid var(--p);">
+                        <div class="card-info">
+                            <span class="card-title">${i.titulo}</span>
+                            <p style="font-size:0.9rem; margin:0; opacity:0.8; line-height:1.4;">${i.conteudo}</p>
+                        </div>
+
+                        <div class="card-actions">
+                            <button onclick="event.stopPropagation(); logic.editBook(${i.id})" class="btn-action edit" title="Editar">✏️</button>
+                            <button onclick="event.stopPropagation(); logic.del('book', ${i.id})" class="btn-action del" title="Apagar">✕</button>
+                        </div>
+                    </div>`;
             });
         }
     });
 
-    document.getElementById('draw-book').innerHTML = html || 
-        '<p style="text-align:center; padding:40px; opacity:0.5;">Nenhuma nota encontrada.</p>';
+    document.getElementById('draw-book').innerHTML = html || '<p style="text-align:center; padding:40px; opacity:0.5;">Nenhuma nota encontrada.</p>';
 },
 
     drawConfig: async function() {
