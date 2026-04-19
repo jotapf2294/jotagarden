@@ -38,22 +38,20 @@ const ui = {
         const bk = await db.book.toArray();
         const lua = lunar.getDetails();
         let html = `
-            <div class="card" style="background: linear-gradient(135deg, #1a2a3a, #000); color: #fff; padding: 12px 15px; margin-bottom: 10px; border:none;">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <span style="font-size:2rem">${lua.i}</span>
-                    <div style="flex:1">
-                        <h4 style="margin:0; color:#ffeb3b; font-size:0.9rem;">${lua.f}</h4>
-                        <p style="margin:0; font-size:0.75rem; opacity:0.8;">${lua.d}</p>
-                    </div>
+            <div class="card-lunar">
+                <span>${lua.i}</span>
+                <div>
+                    <h4>${lua.f}</h4>
+                    <p>${lua.d}</p>
                 </div>
             </div>
 
-            <div class="card-mini">
-                <div>
+            <div class="card-sauda-mini">
+                <div class="info">
                     <h2>Olá, Jota! 👋</h2>
-                    <p>${ps.length} plantas ativas</p>
+                    <p>${ps.length} plantas cultivadas em curso.</p>
                 </div>
-                <div style="font-size: 1.5rem; opacity: 0.3;">🌿</div>
+                <div class="icon">🌿</div>
             </div>
         `;
         
