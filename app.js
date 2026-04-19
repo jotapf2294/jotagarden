@@ -16,12 +16,11 @@ const lunar = {
 const ui = {
     view: 'dash',
     nav: function(v, btn) {
-        this.view = v;
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(`page-${v}`).classList.add('active');
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('view-title').innerText = btn.innerText.replace(/[^\w\sà-ú]/gi, '').trim();
+    this.view = v;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(`page-${v}`).classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
         document.getElementById('search-box').style.display = (v === 'config') ? 'none' : 'block';
         document.getElementById('scroll-area').scrollTop = 0;
         this.render();
