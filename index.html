@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JotaGarden Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/dexie@4.0.8/dist/dexie.min.js"></script>
+    <style>
+        :root { --p: #2e7d32; --s: #f1f8e9; --a: #fb8c00; --bg: #f9f9f9; --txt: #333; --card: #ffffff; }
+        body.dark { --p: #4ade80; --s: #1a1a1a; --a: #ff9800; --bg: #121212; --txt: #f0f0f0; --card: #1e1e1e; }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; transition: background 0.2s; }
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: var(--bg); color: var(--txt); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        header { background: var(--p); color: white; padding: 15px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .search-container { padding: 10px 15px; background: var(--p); }
+        #globalSearch { width: 100%; padding: 10px; border-radius: 8px; border: none; font-size: 1rem; outline: none; }
+
+        .content { flex: 1; overflow-y: auto; padding: 15px 15px 100px 15px; }
+        .page { display: none; animation: fadeIn 0.3s; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; }
+        .zona-title { color: var(--p); font-size: 1.2rem; margin: 15px 0 10px 0; border-left: 4px solid var(--p); padding-left: 10px; }
+        
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; border-top: 1px solid rgba(0,0,0,0.1); padding-bottom: env(safe-area-inset-bottom); }
+        .nav-btn { flex: 1; padding: 12px 5px; border: none; background: none; color: #888; font-size: 0.7rem; cursor: pointer; }
+        .nav-btn.active { color: var(--p); font-weight: bold; }
+        .nav-btn i { display: block; font-size: 1.4rem; margin-bottom: 4px; }
+
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+        .modal-content { background: var(--card); padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; max-height: 80vh; overflow-y: auto; }
+        
+        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; background: var(--bg); color: var(--txt); font-size: 1rem; }
+        .btn-main { background: var(--p); color: white; border: none; padding: 14px; width: 100%; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 10px; }
+        .btn-sec { background: #777; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 5px; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <span id="main-header">JotaGarden</span>
+</header>
+
+<div class="search-container" id="search-box">
+    <input type="text" id="globalSearch" placeholder="Pesquisar..." oninput="ui.filtrar()">
+</div>
+
+<div class="content">
+    <div id="page-dash" class="page active">
+        <div class="card" style="background: var(--p); color: white;">
+            <h2>Olá, Jardineiro! 👋</h2>
+            <p>Bem-vindo à tua JotaGarden. Aqui está o resumo da tua horta hoje:</p>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <div style="flex:1"><b>Plantas:</b> <span id="st-p">0</span></div>
+                <div style="flex:1"><b>Dicas:</b> <span id="st-b">0</span></div>
+            </div>
+        </div>
+        <div id="dash-summary"></div>
+    </div>
+
+    <div id="page-horta" class="page">
+        <button class="btn-main" onclick="ui.abrirModal('modal-planta')">+ Nova Plantação</button>
+        <div id="grid-horta"></div>
+    </div>
+
+    <div id="page-wiki" class="page">
+        <button class="btn-main" onclick="ui.abrirModal('modal-wiki')">+ Adicionar à Wiki</button>
+        <div id="grid-wiki" style="margin-top:15px;"></div>
+    </div>
+
+    <div id="page-book" class="page">
+        <button class="btn-main" onclick="ui.abrirModal('modal-book')">+ Nova Dica/Nota</button>
+        <div id="grid-book" style="margin-top:15px;"></div>
+    </div>
+
+    <div id="page-config" class="page">
+        <div class="card">
+            <h3>⚙️ Definições</h3>
+            <button class="btn-main" style="background:#444" onclick="logic.toggleDarkMode()">Alternar Dark Mode</button>
+            <hr>
+            <h4>📍 Gerir Zonas</h4>
+            <input type="text" id="z-nome" placeholder="Nome da Zona">
+            <button class="btn-main" onclick="logic.addZona()">Adicionar Zona</button>
+            <div id="lista-zonas" style="margin-top:15px;"></div>
+            <hr>
+            <h4>💾 Dados e Backup</h4>
+            <button class="btn-main" style="background:var(--a)" onclick="logic.exportarDados()">Exportar Backup (JSON)</button>
+            <p style="font-size:0.8rem; margin-top:10px;">Importar Backup:</p>
+            <input type="file" id="importFile" onchange="logic.importarDados(event)">
+        </div>
+    </div>
+</div>
+
+<div id="modal-planta" class="modal">
+    <div class="modal-content">
+        <h3>🌱 Plantar</h3>
+        <input type="text" id="p-variedade" placeholder="O que vais plantar?">
+        <input type="date" id="p-data">
+        <select id="p-zona"></select>
+        <textarea id="p-notas" placeholder="Notas sobre esta planta..."></textarea>
+        <button class="btn-main" onclick="logic.salvarPlanta()">Confirmar</button>
+        <button class="btn-main btn-sec" onclick="ui.fecharModais()">Cancelar</button>
+    </div>
+</div>
+
+<div id="modal-wiki" class="modal">
+    <div class="modal-content">
+        <h3>📖 Wiki: Nova Espécie</h3>
+        <input type="text" id="w-especie" placeholder="Nome da planta">
+        <input type="number" id="w-tempo" placeholder="Dias até colher">
+        <input type="text" id="w-temp" placeholder="Temp. Ideal (ex: 20-25°C)">
+        <textarea id="w-info" placeholder="Info extra..."></textarea>
+        <button class="btn-main" onclick="logic.salvarWiki()">Guardar</button>
+        <button class="btn-main btn-sec" onclick="ui.fecharModais()">Cancelar</button>
+    </div>
+</div>
+
+<div id="modal-book" class="modal">
+    <div class="modal-content">
+        <h3>📒 Nova Nota/Dica</h3>
+        <input type="text" id="b-titulo" placeholder="Título">
+        <select id="b-cat">
+            <option value="Dicas">💡 Dicas</option>
+            <option value="Truques">🪄 Truques</option>
+            <option value="Solo">🟫 Solo/Adubo</option>
+            <option value="Pragas">🐛 Pragas</option>
+            <option value="Outros">📝 Outros</option>
+        </select>
+        <textarea id="b-conteudo" placeholder="Conteúdo..."></textarea>
+        <button class="btn-main" onclick="logic.salvarBook()">Guardar no Book</button>
+        <button class="btn-main btn-sec" onclick="ui.fecharModais()">Cancelar</button>
+    </div>
+</div>
+
+<nav class="nav-bar">
+    <button class="nav-btn active" onclick="ui.nav('dash', this)"><i>🏠</i>Início</button>
+    <button class="nav-btn" onclick="ui.nav('horta', this)"><i>🌱</i>Horta</button>
+    <button class="nav-btn" onclick="ui.nav('wiki', this)"><i>📖</i>Wiki</button>
+    <button class="nav-btn" onclick="ui.nav('book', this)"><i>📒</i>Book</button>
+    <button class="nav-btn" onclick="ui.nav('config', this)"><i>⚙️</i>Config</button>
+</nav>
+
+<script src="db.js"></script>
+<script src="app.js"></script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('🚀 Service Worker Ativo!', reg.scope))
+                .catch(err => console.error('❌ Erro no SW:', err));
+        });
+    }
+</script>
+</body>
+</html>

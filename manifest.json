@@ -1,0 +1,18 @@
+{
+  "name": "JotaGarden Pro",
+  "short_name": "JotaGarden",
+  "description": "Gestão de Horta Inteligente e Offline",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#2e7d32",
+  "theme_color": "#2e7d32",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1864/1864474.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
