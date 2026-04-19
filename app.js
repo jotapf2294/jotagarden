@@ -15,6 +15,7 @@ const lunar = {
 
 const ui = {
     view: 'dash',
+    expandedZones: new Set(),
     nav: function(v, btn) {
     this.view = v;
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -73,23 +74,50 @@ const ui = {
     },
 
     drawHorta: async function(s) {
-        const [ps, zs, ws] = await Promise.all([db.plantas.toArray(), db.zonas.toArray(), db.wiki.toArray()]);
-        let html = "";
-        zs.forEach(z => {
-            const fil = ps.filter(p => p.zonaId == z.id && p.variedade.toLowerCase().includes(s));
-            if(fil.length > 0) {
-                html += `<h4 style="margin:25px 5px 10px; color:var(--p)">📍 ${z.nome}</h4>`;
+    const [ps, zs, ws] = await Promise.all([db.plantas.toArray(), db.zonas.toArray(), db.wiki.toArray()]);
+    let html = "";
+    
+    zs.forEach(z => {
+        const fil = ps.filter(p => p.zonaId == z.id && p.variedade.toLowerCase().includes(s));
+        
+        if(fil.length > 0) {
+            const isOpen = ui.expandedZones.has(z.id);
+            
+            // Título da Zona Clicável
+            html += `
+                <div onclick="logic.toggleZone(${z.id})" style="display:flex; justify-content:space-between; align-items:center; margin:25px 5px 10px; cursor:pointer;">
+                    <h4 style="margin:0; color:var(--p); display:flex; align-items:center; gap:8px;">
+                        <span>📍</span> ${z.nome} 
+                        <small style="font-weight:normal; opacity:0.5; font-size:0.8rem;">(${fil.length})</small>
+                    </h4>
+                    <span style="transition:0.3s; transform: rotate(${isOpen ? '90deg' : '0deg'}); opacity:0.5;">▶</span>
+                </div>
+            `;
+            
+            // Conteúdo da Zona (Só renderiza se estiver aberto)
+            if (isOpen) {
                 fil.forEach(p => {
                     const w = ws.find(x => x.especie.toLowerCase() === p.variedade.toLowerCase());
                     const dias = Math.floor((new Date() - new Date(p.data)) / 86400000);
-                    html += `<div class="card"><div style="display:flex;justify-content:space-between"><b>${p.variedade}</b><button onclick="logic.del('plantas', ${p.id})" style="border:none;background:none;color:red;font-weight:bold">✕</button></div>
-                    <div style="display:flex; gap:15px; margin-top:5px;"><small>⏳ ${dias} dias</small><small style="color:var(--p)">🌡️ ${w?w.temp:'--'}</small></div>
-                    ${p.nota ? `<p style="margin:10px 0 0; font-size:0.85rem; padding:10px; background:rgba(0,0,0,0.03); border-radius:10px; font-style:italic">"${p.nota}"</p>` : ''}</div>`;
+                    html += `
+                        <div class="card" style="animation: fadeIn 0.2s ease-out;">
+                            <div style="display:flex;justify-content:space-between">
+                                <b>${p.variedade}</b>
+                                <button onclick="event.stopPropagation(); logic.del('plantas', ${p.id})" style="border:none;background:none;color:red;font-weight:bold;padding:5px">✕</button>
+                            </div>
+                            <div style="display:flex; gap:15px; margin-top:5px;">
+                                <small>⏳ ${dias} dias</small>
+                                <small style="color:var(--p)">🌡️ ${w ? w.temp : '--'}</small>
+                            </div>
+                            ${p.nota ? `<p style="margin:10px 0 0; font-size:0.85rem; padding:10px; background:rgba(0,0,0,0.03); border-radius:10px; font-style:italic">"${p.nota}"</p>` : ''}
+                        </div>`;
                 });
             }
-        });
-        document.getElementById('draw-horta').innerHTML = html || '<p style="text-align:center;padding:40px;opacity:0.5">Horta vazia ou sem resultados.</p>';
-    },
+        }
+    });
+    
+    document.getElementById('draw-horta').innerHTML = html || '<p style="text-align:center;padding:40px;opacity:0.5">Horta vazia ou sem resultados.</p>';
+},
 
     drawWiki: async function(s) {
         const data = await db.wiki.filter(i => i.especie.toLowerCase().includes(s)).toArray();
@@ -133,6 +161,16 @@ const logic = {
     del: async function(t, id) {
         if(confirm("Apagar permanentemente?")) { await db[t].delete(id); ui.render(); }
     },
+
+    toggleZone: function(id) {
+        if (ui.expandedZones.has(id)) {
+            ui.expandedZones.delete(id);
+        } else {
+            ui.expandedZones.add(id);
+        }
+        ui.render(); // Redesenha a aba Horta com a zona aberta/fechada
+    },
+
     toggleTheme: async function() {
         document.body.classList.toggle('dark');
         await db.config.put({ id: 'theme', val: document.body.classList.contains('dark') });
