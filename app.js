@@ -119,7 +119,6 @@ const ui = {
 
 
     drawHorta: async function(s) {
-    // Carregamos as plantas, as zonas e a wiki ao mesmo tempo para performance
     const [ps, zs, ws] = await Promise.all([
         db.plantas.toArray(), 
         db.zonas.toArray(), 
@@ -137,32 +136,39 @@ const ui = {
                      </h4>`;
             
             fil.forEach(p => {
-                const dias = Math.floor((new Date() - new Date(p.data)) / 86400000);
-                
-                // --- NOVA LÓGICA: Procurar dados na Wiki ---
                 const wikiInfo = ws.find(w => w.especie.trim().toLowerCase() === p.variedade.trim().toLowerCase());
-                
-                // Se encontrar na Wiki mostra a temp, senão mostra "N/A"
+                const dias = Math.floor((new Date() - new Date(p.data)) / 86400000);
                 const tempIdeal = wikiInfo ? wikiInfo.temp : "--";
-                const diasColheita = wikiInfo ? wikiInfo.tempo : null;
                 
                 html += `
-                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding: 18px;">
-                        <div>
-                            <b style="font-size:1.1rem; display:block; margin-bottom:4px;">${p.variedade}</b>
-                            <div style="display:flex; gap:12px; align-items:center;">
-                                <small style="opacity:0.8; display:flex; align-items:center; gap:4px;">
-                                    ⏳ ${dias} dias
-                                </small>
-                                <small style="color:var(--p); font-weight:600; display:flex; align-items:center; gap:4px;">
-                                    🌡️ ${tempIdeal}
-                                </small>
+                    <div class="card" style="padding: 18px; margin-bottom: 12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div style="flex:1;">
+                                <b style="font-size:1.1rem; display:block; margin-bottom:6px;">${p.variedade}</b>
+                                
+                                <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px;">
+                                    <small style="opacity:0.8; display:flex; align-items:center; gap:4px;">
+                                        ⏳ ${dias} dias
+                                    </small>
+                                    <small style="color:var(--p); font-weight:600; display:flex; align-items:center; gap:4px;">
+                                        🌡️ ${tempIdeal}
+                                    </small>
+                                </div>
+
+                                ${p.nota ? `
+                                    <div style="background: rgba(0,0,0,0.03); padding: 10px; border-radius: 12px; border-left: 3px solid var(--p);">
+                                        <p style="margin:0; font-size:0.85rem; font-style: italic; color: var(--txt); opacity: 0.8;">
+                                            " ${p.nota} "
+                                        </p>
+                                    </div>
+                                ` : ''}
                             </div>
+
+                            <button onclick="logic.del('plantas', ${p.id})" 
+                                    style="border:none; background:rgba(231, 76, 60, 0.1); color:#e74c3c; width:35px; height:35px; border-radius:10px; font-weight:bold; margin-left:10px;">
+                                ✕
+                            </button>
                         </div>
-                        <button onclick="logic.del('plantas', ${p.id})" 
-                                style="border:none; background:rgba(231, 76, 60, 0.1); color:#e74c3c; width:35px; height:35px; border-radius:10px; font-weight:bold;">
-                            ✕
-                        </button>
                     </div>`;
             });
         }
