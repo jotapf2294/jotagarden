@@ -145,15 +145,25 @@
 
 <script src="db.js"></script>
 <script src="app.js"></script>
-
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('🚀 Service Worker Ativo!', reg.scope))
-                .catch(err => console.error('❌ Erro no SW:', err));
+            navigator.serviceWorker.register('./sw.js', { scope: './' })
+                .then(reg => {
+                    console.log('🚀 SW Registado com sucesso!');
+                    // Força atualização se houver mudanças
+                    reg.update();
+                })
+                .catch(err => console.error('❌ Falha no SW:', err));
         });
     }
+
+    // Truque para o Chrome: Capturar o evento de instalação
+    window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('✅ App pronta para ser instalada!');
+        // Se quiseres podes guardar o evento num botão teu
+    });
 </script>
+
 </body>
 </html>
