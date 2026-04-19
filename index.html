@@ -7,8 +7,14 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/dexie@4.0.8/dist/dexie.min.js"></script>
     <style>
-        :root { --p: #2e7d32; --p-dark: #1b5e20; --a: #fb8c00; --bg: #f0f2f0; --card: #ffffff; --txt: #263238; }
-        body.dark { --bg: #121212; --card: #1e1e1e; --txt: #eceff1; }
+        :root {
+    --p: #2e7d32;
+    --card: #ffffff;
+    --bg: #f5f7f5;
+    --txt: #2c3e50;
+    --radius-soft: 16px;
+    --shadow-soft: 0 6px 15px rgba(0,0,0,0.05); /* Sombra suave */
+}
         
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: var(--bg); color: var(--txt); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
@@ -22,29 +28,40 @@
         .page.active { display: block; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .card-mini {
-    padding: 12px 18px;
+        .card-lunar {
+    background: linear-gradient(135deg, #233140, #000);
+    color: white;
+    padding: 14px 18px;
+    border-radius: var(--radius-soft);
+    margin-bottom: 14px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15); /* Sombra mais forte para a noite */
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid rgba(255,255,255,0.05); /* Borda fina para definição */
+}
+
+.card-lunar span { font-size: 2.2rem; }
+.card-lunar h4 { margin: 0; color: #ffeb3b; font-size: 0.9rem; font-weight: 700; }
+.card-lunar p { margin: 2px 0 0 0; font-size: 0.8rem; opacity: 0.9; }
+
+/* Nova Saudação Mini Arredondada */
+.card-sauda-mini {
+    background: var(--p);
+    color: white;
+    padding: 14px 18px;
+    border-radius: var(--radius-soft);
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-soft);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--p);
-    color: white;
-    border-radius: 12px;
-    margin-bottom: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-.card-mini h2 {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-
-.card-mini p {
-    margin: 0;
-    font-size: 0.85rem;
-    opacity: 0.9;
-}
+.card-sauda-mini .info { flex: 1; }
+.card-sauda-mini h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+.card-sauda-mini p { margin: 2px 0 0 0; font-size: 0.85rem; opacity: 0.9; }
+.card-sauda-mini .icon { font-size: 1.6rem; opacity: 0.3; }
         
         /* Modais Blindados */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
