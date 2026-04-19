@@ -166,16 +166,20 @@ const ui = {
     renderWiki: async function() {
         const term = document.getElementById('globalSearch').value.toLowerCase();
         const itens = await db.wiki.filter(i => i.especie.toLowerCase().includes(term)).toArray();
-        document.getElementById('grid-wiki').innerHTML = itens.map(i => `
-            <div class="card" style="border-left: 5px solid #8e44ad">
-                <div style="display:flex; justify-content:space-between">
-                    <strong style="color:#8e44ad">${i.especie}</strong>
-                    <button onclick="logic.apagar('wiki', ${i.id}, 'wiki')" style="border:none; background:none; color:red">✕</button>
-                </div>
-                <small>⏱️ ${i.tempo} dias | 🌡️ ${i.temp}</small>
-                <p style="font-size:0.85rem">${i.info}</p>
-            </div>
-        `).join('');
+        container.innerHTML = itens.map(i => `
+    <div class="card" style="border-top: 4px solid #8e44ad">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+            <span class="badge" style="background:#f3e5f5; color:#8e44ad">Wiki</span>
+            <button onclick="logic.apagar('wiki', ${i.id}, 'wiki')" style="border:none; background:none; color:#ccc">✕</button>
+        </div>
+        <h3 style="margin:10px 0 5px 0">${i.especie}</h3>
+        <div style="display:flex; gap:15px; font-size:0.85rem; color:#666;">
+            <span>⏱️ <b>${i.tempo} dias</b></span>
+            <span>🌡️ <b>${i.temp}</b></span>
+        </div>
+        <p style="font-size:0.9rem; margin-top:10px; border-top:1px dashed #eee; pt-10">${i.info}</p>
+    </div>
+`).join('');
     },
 
     renderBook: async function() {
