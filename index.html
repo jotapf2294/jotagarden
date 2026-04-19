@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JotaGarden Pro</title>
+    <title>JotaGarden</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/dexie@4.0.8/dist/dexie.min.js"></script>
     <style>
@@ -44,18 +44,18 @@
 <body>
 
 <header>
-    <span id="view-title">JotaGarden</span>
+    <span id="view-title">Inicio</span>
     <div id="header-icons">🌿</div>
 </header>
 
 <div class="search-bar" id="search-container">
-    <input type="text" id="globalSearch" placeholder="Procurar na horta..." oninput="ui.render()">
+    <input type="text" id="globalSearch" placeholder="🔍 Procurar..." oninput="ui.render()">
 </div>
 
 <main class="main-content">
     <section id="page-dash" class="page active"></section>
     <section id="page-horta" class="page">
-        <button class="btn-main" onclick="ui.modal('modal-planta', true)">+ Registar Plantação</button>
+        <button class="btn-main" onclick="ui.modal('modal-planta', true)">+ Registar Planta</button>
         <div id="draw-horta"></div>
     </section>
     <section id="page-wiki" class="page">
@@ -63,7 +63,7 @@
         <div id="draw-wiki"></div>
     </section>
     <section id="page-book" class="page">
-        <button class="btn-main" onclick="ui.modal('modal-book', true)">+ Nova Dica</button>
+        <button class="btn-main" onclick="ui.modal('modal-book', true)">+ Nova</button>
         <div id="draw-book"></div>
     </section>
     <section id="page-config" class="page">
@@ -99,7 +99,7 @@
 
 <div id="modal-wiki" class="modal">
     <div class="modal-content">
-        <h3>📖 Wiki: Nova Espécie</h3>
+        <h3>📖 Nova Espécie</h3>
         <input type="text" id="w-nome" placeholder="Nome da espécie">
         <input type="number" id="w-dias" placeholder="Dias até colher">
         <input type="text" id="w-temp" placeholder="Temp. ideal">
