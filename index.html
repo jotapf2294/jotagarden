@@ -151,10 +151,22 @@
 <div id="modal-wiki" class="modal">
     <div class="modal-content">
         <h3 style="margin-top:0">📖 Nova Espécie</h3>
-        <input type="text" id="w-nome" placeholder="Nome da espécie">
-        <input type="number" id="w-dias" placeholder="Dias para colheita (ex: 90)">
-        <input type="text" id="w-temp" placeholder="Temperatura ideal (ex: 15-25°C)">
-        <textarea id="w-info" placeholder="Instruções de rega e sol..."></textarea>
+        <input type="text" id="w-nome" placeholder="Nome (ex: Tomate Rosa)">
+        
+        <label><small>Grupo / Categoria</small></label>
+        <select id="w-cat">
+            <option>☀️ Hortícolas de Verão</option>
+            <option>🥕 Raízes e Bolbos</option>
+            <option>🥬 Couves e Folhas</option>
+            <option>🌿 Ervas Aromáticas</option>
+            <option>🍓 Frutos Vermelhos</option>
+            <option>🌸 Flores e Outros</option>
+        </select>
+
+        <input type="number" id="w-dias" placeholder="Dias para colheita">
+        <input type="text" id="w-temp" placeholder="Temp. Ideal (ex: 18-26°C)">
+        <textarea id="w-info" placeholder="Dicas de cultivo..."></textarea>
+        
         <button class="btn-main" onclick="logic.saveWiki()">Guardar na Wiki</button>
         <button class="btn-main btn-sec" onclick="ui.modal('modal-wiki', false)">Sair</button>
     </div>
