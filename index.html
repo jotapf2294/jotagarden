@@ -4,17 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>JotaGarden Pro</title>
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/dexie@4.0.8/dist/dexie.min.js"></script>
     <style>
         :root {
-            --p: #2e7d32; --bg: #f5f7f5; --card: #ffffff; --txt: #2c3e50;
+            --p: #2e7d32; --bg: #f0f2f0; --card: #ffffff; --txt: #2c3e50;
             --txt-rev: #ffffff; --btn-alt: #546e7a; --radius: 24px;
-            --shadow: 0 8px 24px rgba(0,0,0,0.06);
+            --shadow: 0 10px 25px rgba(0,0,0,0.05);
         }
         body.dark {
             --bg: #121212; --card: #1e1e1e; --txt: #eceff1; --p: #81c784;
         }
 
+        /* Base */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { 
             font-family: system-ui, -apple-system, sans-serif; margin: 0; 
@@ -22,93 +24,97 @@
             display: flex; flex-direction: column; overflow: hidden; transition: 0.3s;
         }
 
-        header { background: var(--p); color: var(--txt-rev); padding: 20px; z-index: 10; display: flex; justify-content: space-between; }
-        .search-bar { background: var(--p); padding: 0 15px 15px; border-radius: 0 0 20px 20px; }
+        /* Layout Fixo */
+        header { background: var(--p); color: var(--txt-rev); padding: 20px; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        .search-container { background: var(--p); padding: 0 15px 15px; border-radius: 0 0 24px 24px; z-index: 90; }
         #globalSearch { 
-            width: 100%; border: none; padding: 12px 20px; border-radius: 50px; 
-            background: var(--card); color: var(--txt); font-size: 16px;
+            width: 100%; border: none; padding: 14px 20px; border-radius: 50px; 
+            background: var(--card); color: var(--txt); font-size: 16px; box-shadow: var(--shadow);
         }
 
-        .main-content { flex: 1; overflow-y: auto; padding: 20px 15px 120px; }
+        .main-content { flex: 1; overflow-y: auto; padding: 20px 15px 120px; scroll-behavior: smooth; }
         .page { display: none; }
-        .page.active { display: block; animation: slideUp 0.3s ease; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .page.active { display: block; animation: pageIn 0.3s ease-out; }
+        @keyframes pageIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Componentes de Cards */
+        /* Cards Estilizados */
         .card, .card-lunar, .card-sauda, .modal-content {
             background: var(--card); color: var(--txt); border-radius: var(--radius) !important;
-            padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); border: none; position: relative;
+            padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow); border: none; overflow: hidden;
         }
-        .card-lunar { background: linear-gradient(135deg, #1a2a3a, #000) !important; color: white !important; }
-        .card-sauda { background: var(--p) !important; color: var(--txt-rev) !important; }
+        .card-lunar { background: linear-gradient(135deg, #1a2a3a, #000) !important; color: white !important; display: flex; align-items: center; gap: 15px; }
+        .card-sauda { background: var(--p) !important; color: var(--txt-rev) !important; display: flex; justify-content: space-between; align-items: center; }
 
-        /* Formulários */
+        /* Formulários e Botões */
         input, select, textarea { 
-            width: 100%; padding: 14px; margin: 8px 0; border-radius: 16px; 
-            border: 1px solid rgba(0,0,0,0.1); background: var(--card); color: var(--txt); font-size: 16px;
+            width: 100%; padding: 15px; margin: 10px 0; border-radius: 16px; 
+            border: 1px solid rgba(0,0,0,0.08); background: var(--bg); color: var(--txt); font-size: 16px;
         }
         .btn-main { 
-            background: var(--p); color: var(--txt-rev); border: none; padding: 16px; 
-            border-radius: 18px; width: 100%; font-weight: bold; cursor: pointer;
+            background: var(--p); color: var(--txt-rev); border: none; padding: 18px; 
+            border-radius: 20px; width: 100%; font-weight: bold; cursor: pointer; transition: 0.2s;
         }
+        .btn-main:active { transform: scale(0.97); opacity: 0.9; }
         .btn-sec { background: var(--btn-alt) !important; margin-top: 8px; }
 
-        /* Navbar */
+        /* Navbar Inferior */
         .nav-bar { 
             position: fixed; bottom: 0; width: 100%; background: var(--card); 
-            display: flex; padding: 10px 5px env(safe-area-inset-bottom); 
-            border-top: 1px solid rgba(0,0,0,0.05); z-index: 1000; 
+            display: flex; padding: 10px 5px calc(10px + env(safe-area-inset-bottom)); 
+            border-top: 1px solid rgba(0,0,0,0.05); z-index: 1000; box-shadow: 0 -5px 20px rgba(0,0,0,0.03);
         }
-        .nav-btn { flex: 1; border: none; background: none; color: #90a4ae; font-size: 0.7rem; cursor: pointer; }
-        .nav-btn.active { color: var(--p); font-weight: bold; }
-        .nav-btn i { display: block; font-size: 1.5rem; margin-bottom: 4px; }
+        .nav-btn { flex: 1; border: none; background: none; color: #90a4ae; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
+        .nav-btn.active { color: var(--p); font-weight: bold; transform: translateY(-3px); }
+        .nav-btn i { display: block; font-size: 1.6rem; margin-bottom: 5px; }
 
         /* Modais */
         .modal { 
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); 
-            z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(8px);
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); 
+            z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(8px); padding: 20px;
         }
+        .modal-content { width: 100%; max-width: 450px; margin-bottom: 0; }
     </style>
 </head>
 <body>
 
 <header>
-    <b id="view-title">JotaGarden</b>
-    <span>🌿</span>
+    <b style="font-size: 1.4rem;" id="view-title">Início</b>
+    <div style="font-size: 1.5rem;">🌿</div>
 </header>
 
-<div class="search-bar" id="search-box">
-    <input type="text" id="globalSearch" placeholder="Procurar..." oninput="ui.render()">
+<div class="search-container" id="search-box">
+    <input type="text" id="globalSearch" placeholder="🔍 Procurar na horta ou wiki..." oninput="ui.render()">
 </div>
 
-<main class="main-content">
+<main class="main-content" id="scroll-area">
     <section id="page-dash" class="page active"></section>
     <section id="page-horta" class="page">
         <button class="btn-main" onclick="ui.modal('modal-planta', true)">+ Registar Plantação</button>
         <div id="draw-horta"></div>
     </section>
     <section id="page-wiki" class="page">
-        <button class="btn-main" onclick="ui.modal('modal-wiki', true)">+ Nova Espécie</button>
+        <button class="btn-main" onclick="ui.modal('modal-wiki', true)">+ Nova Espécie na Wiki</button>
         <div id="draw-wiki"></div>
     </section>
     <section id="page-book" class="page">
-        <button class="btn-main" onclick="ui.modal('modal-book', true)">+ Nova Nota</button>
+        <button class="btn-main" onclick="ui.modal('modal-book', true)">+ Nova Nota Geral</button>
         <div id="draw-book"></div>
     </section>
     <section id="page-config" class="page">
         <div class="card">
-            <h3>🌓 Personalização</h3>
-            <button class="btn-main btn-sec" onclick="logic.toggleTheme()">Alternar Tema</button>
-            <hr style="opacity:0.1; margin:20px 0;">
-            <h3>📍 Gerir Zonas</h3>
-            <div style="display:flex; gap:8px;">
-                <input type="text" id="z-input" placeholder="Ex: Estufa">
+            <h3>🌓 Aparência</h3>
+            <button class="btn-main btn-sec" onclick="logic.toggleTheme()">Alternar Dark Mode</button>
+            <hr style="opacity:0.1; margin:25px 0;">
+            <h3>📍 Zonas de Cultivo</h3>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="z-input" placeholder="Ex: Canteiro A">
                 <button class="btn-main" style="width:80px" onclick="logic.addZona()">OK</button>
             </div>
             <div id="draw-zonas" style="margin-top:15px"></div>
-            <hr style="opacity:0.1; margin:20px 0;">
-            <button class="btn-main" style="background:#fb8c00" onclick="logic.export()">📥 Backup (Exportar)</button>
-            <button class="btn-main btn-sec" onclick="document.getElementById('fileIn').click()">📤 Backup (Importar)</button>
+            <hr style="opacity:0.1; margin:25px 0;">
+            <h3>💾 Dados e Segurança</h3>
+            <button class="btn-main" style="background:#f39c12" onclick="logic.export()">📥 Exportar Backup</button>
+            <button class="btn-main btn-sec" onclick="document.getElementById('fileIn').click()">📤 Importar Backup</button>
             <input type="file" id="fileIn" style="display:none" onchange="logic.import(event)">
         </div>
     </section>
@@ -116,40 +122,41 @@
 
 <div id="modal-planta" class="modal">
     <div class="modal-content">
-        <h3>🌱 Nova Planta</h3>
-        <select id="p-nome">
-            <option value="">Selecionar da Wiki...</option>
-        </select>
+        <h3 style="margin-top:0">🌱 Nova Plantação</h3>
+        <label><small>Espécie (Vem da Wiki)</small></label>
+        <select id="p-nome"></select>
+        <label><small>Data de Plantio</small></label>
         <input type="date" id="p-data">
+        <label><small>Onde plantou?</small></label>
         <select id="p-zona"></select>
-        <textarea id="p-nota" placeholder="Observações..."></textarea>
-        <button class="btn-main" onclick="logic.savePlanta()">Confirmar</button>
+        <textarea id="p-nota" placeholder="Notas sobre esta plantação específica..."></textarea>
+        <button class="btn-main" onclick="logic.savePlanta()">Confirmar Registo</button>
         <button class="btn-main btn-sec" onclick="ui.modal('modal-planta', false)">Cancelar</button>
     </div>
 </div>
 
 <div id="modal-wiki" class="modal">
     <div class="modal-content">
-        <h3>📖 Nova Espécie</h3>
-        <input type="text" id="w-nome" placeholder="Ex: Tomate Rosa">
-        <input type="number" id="w-dias" placeholder="Dias até colher">
-        <input type="text" id="w-temp" placeholder="Temp. Ideal (ex: 20-30°C)">
-        <textarea id="w-info" placeholder="Rega, Sol, Adubação..."></textarea>
-        <button class="btn-main" onclick="logic.saveWiki()">Guardar</button>
-        <button class="btn-main btn-sec" onclick="ui.modal('modal-wiki', false)">Cancelar</button>
+        <h3 style="margin-top:0">📖 Nova Espécie</h3>
+        <input type="text" id="w-nome" placeholder="Nome da espécie">
+        <input type="number" id="w-dias" placeholder="Dias para colheita (ex: 90)">
+        <input type="text" id="w-temp" placeholder="Temperatura ideal (ex: 15-25°C)">
+        <textarea id="w-info" placeholder="Instruções de rega e sol..."></textarea>
+        <button class="btn-main" onclick="logic.saveWiki()">Guardar na Wiki</button>
+        <button class="btn-main btn-sec" onclick="ui.modal('modal-wiki', false)">Sair</button>
     </div>
 </div>
 
 <div id="modal-book" class="modal">
     <div class="modal-content">
         <h3>📒 Nova Nota</h3>
-        <input type="text" id="b-tit" placeholder="Título da dica">
+        <input type="text" id="b-tit" placeholder="Título">
         <select id="b-cat">
             <option>💡 Dicas</option><option>🪄 Truques</option><option>🐛 Pragas</option><option>📝 Geral</option>
         </select>
         <textarea id="b-txt" placeholder="Conteúdo..."></textarea>
         <button class="btn-main" onclick="logic.saveBook()">Guardar</button>
-        <button class="btn-main btn-sec" onclick="ui.modal('modal-book', false)">Sair</button>
+        <button class="btn-main btn-sec" onclick="ui.modal('modal-book', false)">Cancelar</button>
     </div>
 </div>
 
