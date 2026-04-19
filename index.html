@@ -22,8 +22,29 @@
         .page.active { display: block; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.03); }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; margin-bottom: 8px; }
+        .card-mini {
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--p);
+    color: white;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.card-mini h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.card-mini p {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
         
         /* Modais Blindados */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
