@@ -145,25 +145,25 @@
 
 <script src="db.js"></script>
 <script src="app.js"></script>
-<script>
+
+    <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js', { scope: './' })
+            // Repara no caminho: /jotagarden/sw.js
+            navigator.serviceWorker.register('/jotagarden/sw.js', { scope: '/jotagarden/' })
                 .then(reg => {
-                    console.log('🚀 SW Registado com sucesso!');
-                    // Força atualização se houver mudanças
+                    console.log('🚀 Service Worker Ativo em jotagarden!');
                     reg.update();
                 })
-                .catch(err => console.error('❌ Falha no SW:', err));
+                .catch(err => console.error('❌ Erro no SW:', err));
         });
     }
 
-    // Truque para o Chrome: Capturar o evento de instalação
+    // Evento para capturar a instalação no Chrome
     window.addEventListener('beforeinstallprompt', (e) => {
-        console.log('✅ App pronta para ser instalada!');
-        // Se quiseres podes guardar o evento num botão teu
+        // Impede que o mini-infobar apareça em alguns dispositivos
+        console.log('👍 App pronta para instalar');
     });
 </script>
-
 </body>
 </html>
