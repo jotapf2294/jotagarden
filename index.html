@@ -55,25 +55,74 @@
         .page.active { display: block; animation: pageIn 0.3s ease-out; }
         @keyframes pageIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Cards Estilizados */
-        .card, .card-lunar, .card-sauda, .modal-content {
-            background: var(--card); color: var(--txt); border-radius: var(--radius) !important;
-            padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow); border: none; overflow: hidden;
-        }
-        .card-lunar { background: linear-gradient(135deg, #1a2a3a, #000) !important; color: white !important; display: flex; align-items: center; gap: 15px; }
-        .card-sauda { background: var(--p) !important; color: var(--txt-rev) !important; display: flex; justify-content: space-between; align-items: center; }
+        /* --- Novo Estilo de Card Profissional --- */
+.card {
+    background: var(--card);
+    border-radius: 20px; /* Cantos arredondados como nas imagens */
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06); /* Sombra suave */
+    display: flex; /* Divide o card em Esquerda e Direita */
+    justify-content: space-between; /* Espaço entre info e ações */
+    align-items: flex-start; /* Alinha o conteúdo ao topo */
+    transition: 0.2s;
+}
 
-        /* Formulários e Botões */
-        input, select, textarea { 
-            width: 100%; padding: 15px; margin: 10px 0; border-radius: 16px; 
-            border: 1px solid rgba(0,0,0,0.08); background: var(--bg); color: var(--txt); font-size: 16px;
-        }
-        .btn-main { 
-            background: var(--p); color: var(--txt-rev); border: none; padding: 18px; 
-            border-radius: 20px; width: 100%; font-weight: bold; cursor: pointer; transition: 0.2s;
-        }
-        .btn-main:active { transform: scale(0.97); opacity: 0.9; }
-        .btn-sec { background: var(--btn-alt) !important; margin-top: 8px; }
+/* Zona de Informação (Esquerda) */
+.card-info {
+    flex: 1; /* Ocupa o espaço disponível à esquerda */
+    padding-right: 15px; /* Espaço para não bater nas ações */
+}
+
+.card-title {
+    font-weight: bold;
+    font-size: 1rem;
+    color: var(--txt);
+    margin: 0 0 8px 0; /* Espaço abaixo do título */
+    display: block;
+}
+
+.card-details {
+    display: flex;
+    gap: 12px; /* Espaço entre os ícones e textos */
+    color: #666; /* Cor mais suave para detalhes */
+    font-size: 0.85rem;
+    align-items: center;
+    margin-top: 5px;
+}
+
+/* Zona de Ações (Direita) */
+.card-actions {
+    display: flex;
+    flex-direction: column; /* Botões um por baixo do outro */
+    gap: 12px; /* Espaço vertical entre botões */
+    align-items: center; /* Centraliza os ícones */
+    width: 40px; /* Largura fixa para a coluna de ações */
+}
+
+/* Estilo para os botões de ação */
+.btn-action {
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 1.2rem; /* Tamanho confortável para clicar */
+    transition: 0.2s;
+    line-height: 1;
+}
+
+.btn-action:active {
+    transform: scale(0.9); /* Feedback visual ao clicar */
+}
+
+.btn-action.edit {
+    color: var(--p); /* Verde da App */
+}
+
+.btn-action.del {
+    color: #e74c3c; /* Vermelho Erro */
+}
+
 
         /* Navbar Inferior */
         .nav-bar { 
