@@ -1,12 +1,10 @@
-// db.js - Dexie Database Configuration
-const db = new Dexie('JotaGarden_v6');
-
+const db = new Dexie('JotaGardenDB');
 db.version(1).stores({
     zonas: '++id, nome',
     wiki: '++id, especie, tempo, temp',
-    plantas: '++id, variedade, zonaId, data, notas',
-    book: '++id, titulo, categoria, conteudo',
-    config: 'id, value' // Para guardar Dark Mode e outras preferências
+    plantas: '++id, variedade, zonaId, data',
+    book: '++id, titulo, categoria',
+    config: 'id'
 });
 
 window.db = db;
