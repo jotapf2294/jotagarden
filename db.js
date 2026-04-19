@@ -1,10 +1,8 @@
 const db = new Dexie('JotaGardenDB');
 db.version(1).stores({
     zonas: '++id, nome',
-    wiki: '++id, especie, tempo, temp',
-    plantas: '++id, variedade, zonaId, data',
-    book: '++id, titulo, categoria',
-    config: 'id'
+    wiki: '++id, especie, tempo, temp, info',
+    plantas: '++id, variedade, zonaId, data, nota',
+    book: '++id, titulo, categoria, conteudo',
+    config: 'id, val'
 });
-
-window.db = db;
