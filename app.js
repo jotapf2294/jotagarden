@@ -38,21 +38,24 @@ const ui = {
         const bk = await db.book.toArray();
         const lua = lunar.getDetails();
         let html = `
-            <div class="card" style="background: linear-gradient(135deg, #2c3e50, #000); color: #fff; border:none;">
-                <div style="display:flex; align-items:center; gap:15px;">
-                    <span style="font-size:2.5rem">${lua.i}</span>
-                    <div>
-                        <h4 style="margin:0; color:#ffeb3b;">${lua.f}</h4>
-                        <p style="margin:0; font-size:0.85rem; opacity:0.9;">${lua.d}</p>
+            <div class="card" style="background: linear-gradient(135deg, #1a2a3a, #000); color: #fff; padding: 12px 15px; margin-bottom: 10px; border:none;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:2rem">${lua.i}</span>
+                    <div style="flex:1">
+                        <h4 style="margin:0; color:#ffeb3b; font-size:0.9rem;">${lua.f}</h4>
+                        <p style="margin:0; font-size:0.75rem; opacity:0.8;">${lua.d}</p>
                     </div>
                 </div>
             </div>
 
-            <div class="card" style="background: linear-gradient(135deg, #2c3e50, #000); color: #fff; border:none;">
-                <div style="display:flex; align-items:center; gap:15px;">
-                <h2>Olá, Jota! 👋</h2>
-                <p>Tens ${ps.length} cultivos em curso.</p>
-            </div>`;
+            <div class="card-mini">
+                <div>
+                    <h2>Olá, Jota! 👋</h2>
+                    <p>${ps.length} plantas ativas</p>
+                </div>
+                <div style="font-size: 1.5rem; opacity: 0.3;">🌿</div>
+            </div>
+        `;
         
         // Alertas de Colheita
         const hoje = new Date();
