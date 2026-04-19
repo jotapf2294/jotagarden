@@ -35,14 +35,15 @@ const ui = {
     console.log("Dark Mode ativo:", isDark);
     },
 
-    render: async function() {
+        render: async function() {
+        const page = document.querySelector('.page.active').id;
         const search = document.getElementById('globalSearch').value.toLowerCase();
-        
-        if(this.view === 'inicio') this.drawDash();
-        if(this.view === 'horta') this.drawHorta(search);
-        if(this.view === 'wiki') this.drawWiki(search);
-        if(this.view === 'book') this.drawBook(search);
-        if(this.view === 'config') this.drawConfig();
+
+        if(page === 'page-dash') await this.drawDash();
+        if(page === 'page-horta') await this.drawHorta(search);
+        if(page === 'page-wiki') await this.drawWiki(search);
+        if(page === 'page-book') await this.drawBook(search);
+        if(page === 'page-config') await this.drawConfig();
     },
 
     drawDash: async function() {
@@ -218,32 +219,35 @@ const ui = {
 };
 
 const logic = {
-        savePlanta: async function() {
-        const v = document.getElementById('p-nome').value;
-        const z = document.getElementById('p-zona').value;
-        const d = document.getElementById('p-data').value;
-        
-        if(!v) return alert("Escreve o nome da planta!");
-        if(!z) return alert("Cria primeiro uma Zona nas Definições!");
+    // ... outras funções ...
 
-        try {
-            await db.plantas.add({ 
-                variedade: v, 
-                zonaId: parseInt(z), 
-                data: d, 
-                nota: document.getElementById('p-nota').value 
-            });
-            
-            // Limpar campos
-            document.getElementById('p-nome').value = "";
-            document.getElementById('p-nota').value = "";
-            
-            ui.modal('modal-planta', false); 
-            ui.render();
-        } catch (err) {
-            console.error("Erro ao salvar:", err);
-        }
+    savePlanta: async function() {
+        const p = {
+            variedade: document.getElementById('p-nome').value,
+            data: document.getElementById('p-data').value,
+            zonaId: parseInt(document.getElementById('p-zona').value),
+            nota: document.getElementById('p-nota').value
+        };
+
+        if(!p.variedade || !p.data) return alert("Preenche os campos!");
+
+        await db.plantas.add(p); // Adiciona à base de dados
+        ui.modal('modal-planta', false); // Fecha o modal
+        
+        // --- O SEGREDO ESTÁ AQUI ---
+        await ui.render(); // Força o Dashboard e a Horta a atualizarem-se agora!
     },
+
+    del: async function(tabela, id) {
+        if(!confirm("Apagar este registo?")) return;
+        
+        await db[tabela].delete(id); // Apaga da base de dados
+        
+        // --- E AQUI TAMBÉM ---
+        await ui.render(); // Remove o card do ecrã imediatamente
+    }
+    },
+
     saveWiki: async function() {
         const e = document.getElementById('w-nome').value;
         const t = document.getElementById('w-dias').value;
