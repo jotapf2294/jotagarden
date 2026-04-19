@@ -51,22 +51,26 @@ const ui = {
         const bk = await db.book.toArray();
         const lua = lunar.getDetails();
         let html = `
-            <div class="card-lunar">
-                <span>${lua.i}</span>
+        <div class="card-lunar">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <span style="font-size:2.5rem">${lua.i}</span>
                 <div>
-                    <h4>${lua.f}</h4>
-                    <p>${lua.d}</p>
+                    <h4 style="margin:0; color:#ffeb3b;">${lua.f}</h4>
+                    <p style="margin:0; font-size:0.8rem; opacity:0.9;">${lua.d}</p>
                 </div>
             </div>
+        </div>
 
-            <div class="card-sauda-mini">
-                <div class="info">
-                    <h2>Olá, Jota! 👋</h2>
-                    <p>${ps.length} plantas cultivadas em curso.</p>
+        <div class="card-sauda-mini">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h2 style="margin:0; font-size:1.2rem;">Olá, Jota! 👋</h2>
+                    <p style="margin:5px 0 0 0; font-size:0.9rem; opacity:0.9;">Tens ${ps.length} cultivos em curso.</p>
                 </div>
-                <div class="icon">🌿</div>
+                <span style="font-size:1.8rem; opacity:0.4;">🌿</span>
             </div>
-        `;
+        </div>
+    `;
         
         // Alertas de Colheita
         const hoje = new Date();
