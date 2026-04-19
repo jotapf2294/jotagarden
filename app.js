@@ -46,10 +46,14 @@ const ui = {
     },
 
     drawDash: async function() {
-    const ps = await db.plantas.toArray();
-    const ws = await db.wiki.toArray();
+    // 1. Puxar todos os dados necessários
+    const [ps, ws] = await Promise.all([
+        db.plantas.toArray(),
+        db.wiki.toArray()
+    ]);
     const lua = lunar.getDetails(); 
 
+    // 2. Cabeçalho e Widget Lunar
     let html = `
         <div class="card-lunar">
             <span>${lua.i}</span>
@@ -60,11 +64,13 @@ const ui = {
         </div>
 
         <div class="card-sauda-mini">
-            <div>
-                <h2>Olá, Jota! 👋</h2>
-                <p>Tens ${ps.length} cultivos em curso.</p>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h2 style="margin:0; font-size:1.2rem;">Olá, Jota! 👋</h2>
+                    <p style="margin:5px 0 0 0; font-size:0.9rem; opacity:0.9;">Tens <b>${ps.length}</b> cultivos ativos.</p>
+                </div>
+                <span style="font-size:1.8rem; opacity:0.4;">🌿</span>
             </div>
-            <span style="font-size:1.8rem; opacity:0.4;">🌿</span>
         </div>
         
         <h3 style="margin: 20px 0 10px 5px; font-size: 1rem; color: var(--p);">🚀 Próximas Colheitas</h3>
@@ -72,36 +78,38 @@ const ui = {
 
     const hoje = new Date();
     hoje.setHours(0,0,0,0);
+    let alertasEncontrados = 0;
 
-    let alertasContagem = 0;
-
+    // 3. Lógica de Cruzamento de Dados (Horta + Wiki)
     ps.forEach(p => {
-        // MATCH INTELIGENTE: Remove espaços e ignora maiúsculas
-        const wikiMatch = ws.find(w => w.especie.trim().toLowerCase() === p.variedade.trim().toLowerCase());
+        // Match robusto: remove espaços e ignora maiúsculas
+        const especieWiki = ws.find(w => w.especie.trim().toLowerCase() === p.variedade.trim().toLowerCase());
 
-        if (wikiMatch) {
+        if (especieWiki) {
             const dataPlantio = new Date(p.data);
             const dataColheita = new Date(dataPlantio);
-            dataColheita.setDate(dataColheita.getDate() + parseInt(wikiMatch.tempo));
+            dataColheita.setDate(dataColheita.getDate() + parseInt(especieWiki.tempo));
 
             const diffTempo = dataColheita - hoje;
             const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
 
-            // Só mostra se faltar menos de 15 dias ou se já passou do tempo
-            if (diffDias <= 15) {
-                alertasContagem++;
-                const corAlerta = diffDias <= 0 ? '#e74c3c' : (diffDias <= 5 ? 'var(--a)' : 'var(--p)');
-                const msgAlerta = diffDias <= 0 ? 'PRONTO A COLHER!' : `Faltam ${diffDias} dias`;
-
+            // Mostra alertas de colheita para os próximos 30 dias (ou se já passou)
+            if (diffDias <= 30) {
+                alertasEncontrados++;
+                const jaPassou = diffDias <= 0;
+                const cor = jaPassou ? '#e74c3c' : (diffDias <= 7 ? '#f39c12' : 'var(--p)');
+                
                 html += `
-                    <div class="card" style="border-left: 6px solid ${corAlerta}; padding: 15px;">
+                    <div class="card" style="border-left: 6px solid ${cor}; padding: 15px; margin-bottom: 10px;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <div>
                                 <b style="font-size:1rem;">${p.variedade}</b><br>
-                                <small style="color:#666;">Plantado em: ${dataPlantio.toLocaleDateString()}</small>
+                                <small style="opacity:0.7;">Plantado em: ${dataPlantio.toLocaleDateString()}</small>
                             </div>
                             <div style="text-align:right;">
-                                <span style="color:${corAlerta}; font-weight:bold; font-size:0.85rem;">${msgAlerta}</span>
+                                <span style="color:${cor}; font-weight:bold; font-size:0.8rem;">
+                                    ${jaPassou ? 'PRONTO A COLHER!' : `Faltam ${diffDias} dias`}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -110,13 +118,14 @@ const ui = {
         }
     });
 
-    if (alertasContagem === 0) {
-        html += `<p style="text-align:center; opacity:0.5; font-size:0.85rem; margin-top:20px;">Sem colheitas para os próximos 15 dias.</p>`;
+    if (alertasEncontrados === 0) {
+        html += `<div class="card" style="text-align:center; opacity:0.6; font-size:0.85rem; padding:30px;">
+                    Nenhuma colheita prevista com base nos dados da Wiki.
+                 </div>`;
     }
 
     document.getElementById('page-dash').innerHTML = html;
 },
-
 
     drawHorta: async function(s) {
     const [ps, zs, ws] = await Promise.all([
