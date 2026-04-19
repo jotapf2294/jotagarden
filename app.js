@@ -48,7 +48,8 @@ const ui = {
                 </div>
             </div>
 
-            <div class="card" style="background:var(--p); color:white">
+            <div class="card" style="background: linear-gradient(135deg, #2c3e50, #000); color: #fff; border:none;">
+                <div style="display:flex; align-items:center; gap:15px;">
                 <h2>Olá, Jota! 👋</h2>
                 <p>Tens ${ps.length} cultivos em curso.</p>
             </div>`;
