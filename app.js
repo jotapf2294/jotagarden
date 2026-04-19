@@ -50,15 +50,75 @@ const ui = {
 
     // --- RENDERIZADORES ---
 
-    renderDash: async function() {
-        const pCount = await db.plantas.count();
-        const bCount = await db.book.count();
-        document.getElementById('st-p').innerText = pCount;
-        document.getElementById('st-b').innerText = bCount;
-        
-        const ultimas = await db.plantas.reverse().limit(3).toArray();
-        document.getElementById('dash-summary').innerHTML = '<h4>Últimas Plantações:</h4>' + 
-            ultimas.map(u => `<div class="card">${u.variedade}</div>`).join('');
+        renderDash: async function() {
+        try {
+            const [plantas, wikis, notas] = await Promise.all([
+                db.plantas.toArray(),
+                db.wiki.toArray(),
+                db.book.toArray()
+            ]);
+
+            document.getElementById('st-p').innerText = plantas.length;
+            document.getElementById('st-b').innerText = notas.length;
+
+            let html = "";
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+
+            // 1. Lógica de Colheitas Próximas
+            const alertasColheita = [];
+            plantas.forEach(p => {
+                const wikiRef = wikis.find(w => w.especie.toLowerCase() === p.variedade.toLowerCase());
+                if(wikiRef && p.data) {
+                    const dColheita = new Date(p.data);
+                    dColheita.setDate(dColheita.getDate() + wikiRef.tempo);
+                    
+                    const diasParaColher = Math.ceil((dColheita - hoje) / (1000 * 60 * 60 * 24));
+                    
+                    if(diasParaColher <= 7 && diasParaColher >= 0) {
+                        alertasColheita.push({ nome: p.variedade, dias: diasParaColher });
+                    }
+                }
+            });
+
+            if(alertasColheita.length > 0) {
+                html += `<div class="card" style="border-left: 5px solid var(--a); background: #fffde7;">
+                            <h4 style="margin:0; color:#f57c00;">🔔 Próximas Colheitas</h4>`;
+                alertasColheita.forEach(a => {
+                    html += `<p style="margin:5px 0; font-size:0.9rem;">O <b>${a.nome}</b> estará pronto em ${a.dias === 0 ? '<b>HOJE!</b>' : a.dias + ' dias'}.</p>`;
+                });
+                html += `</div>`;
+            }
+
+            // 2. Dica Aleatória do teu Book
+            if(notas.length > 0) {
+                const randomNota = notas[Math.floor(Math.random() * notas.length)];
+                html += `
+                    <div class="card" style="background: #e3f2fd; border-left: 5px solid #2196f3;">
+                        <small style="color:#1976d2; font-weight:bold;">💡 RELEMBRA O TEU BOOK</small>
+                        <h4 style="margin:5px 0;">${randomNota.titulo}</h4>
+                        <p style="font-size:0.85rem; margin:0;">${randomNota.conteudo.substring(0, 100)}...</p>
+                    </div>`;
+            }
+
+            // 3. Resumo de Atividade (Últimos 3 dias)
+            const recentes = plantas.filter(p => {
+                const dias = Math.floor((hoje - new Date(p.data)) / (1000*60*60*24));
+                return dias <= 3;
+            });
+
+            if(recentes.length > 0) {
+                html += `<h4>🆕 Plantado Recentemente:</h4>`;
+                recentes.forEach(r => {
+                    html += `<div class="card">🌱 <b>${r.variedade}</b> - Boa sorte com este cultivo!</div>`;
+                });
+            } else if (plantas.length === 0) {
+                html += `<div class="card" style="text-align:center;">Ainda não tens plantas. <br><button class="btn-main" onclick="ui.nav('horta')">Começar a Plantar</button></div>`;
+            }
+
+            document.getElementById('dash-summary').innerHTML = html;
+
+        } catch (e) { console.error("Erro no Dash:", e); }
     },
 
     renderHorta: async function() {
