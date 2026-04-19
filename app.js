@@ -223,22 +223,45 @@ const logic = {
         await db.plantas.add(p); ui.modal('modal-planta', false); ui.render();
     },
     saveWiki: async function() {
-        const w = { 
-            especie: document.getElementById('w-nome').value, 
-            categoria: document.getElementById('w-cat').value, // Novo campo
-            tempo: parseInt(document.getElementById('w-dias').value), 
-            temp: document.getElementById('w-temp').value, 
-            info: document.getElementById('w-info').value 
-        };
-        if(!w.especie || !w.tempo) return alert("Preenche os campos obrigatórios!");
-        await db.wiki.add(w); 
-        ui.modal('modal-wiki', false); 
-        ui.render();
-    },
-    saveBook: async function() {
-        const b = { titulo: document.getElementById('b-tit').value, categoria: document.getElementById('b-cat').value, conteudo: document.getElementById('b-txt').value };
-        if(!b.titulo) return;
-        await db.book.add(b); ui.modal('modal-book', false); ui.render();
+    const id = document.getElementById('w-edit-id').value;
+    const w = { 
+        especie: document.getElementById('w-nome').value, 
+        categoria: document.getElementById('w-cat').value,
+        tempo: parseInt(document.getElementById('w-dias').value), 
+        temp: document.getElementById('w-temp').value, 
+        info: document.getElementById('w-info').value 
+    };
+
+    if(id) {
+        await db.wiki.update(parseInt(id), w);
+        document.getElementById('w-edit-id').value = ""; // Limpar após editar
+    } else {
+        await db.wiki.add(w);
+    }
+    
+    ui.modal('modal-wiki', false);
+    document.querySelector('#modal-wiki .btn-main').innerText = "Guardar na Wiki"; // Reset botão
+    ui.render();
+},
+
+saveBook: async function() {
+    const id = document.getElementById('b-edit-id').value;
+    const b = { 
+        titulo: document.getElementById('b-tit').value, 
+        categoria: document.getElementById('b-cat').value, 
+        conteudo: document.getElementById('b-txt').value 
+    };
+
+    if(id) {
+        await db.book.update(parseInt(id), b);
+        document.getElementById('b-edit-id').value = "";
+    } else {
+        await db.book.add(b);
+    }
+
+    ui.modal('modal-book', false);
+    document.querySelector('#modal-book .btn-main').innerText = "Guardar";
+    ui.render();
     },
     toggleBookCat: function(cat) {
         if (ui.expandedBookCats.has(cat)) {
@@ -247,6 +270,30 @@ const logic = {
             ui.expandedBookCats.add(cat);
         }
         ui.render();
+    },
+    editWiki: async function(id) {
+        const item = await db.wiki.get(id);
+        document.getElementById('w-edit-id').value = id;
+        document.getElementById('w-nome').value = item.especie;
+        document.getElementById('w-cat').value = item.categoria || "☀️ Hortícolas de Verão";
+        document.getElementById('w-dias').value = item.tempo;
+        document.getElementById('w-temp').value = item.temp;
+        document.getElementById('w-info').value = item.info;
+        
+        ui.modal('modal-wiki', true);
+        // Mudar o texto do botão para indicar edição
+        document.querySelector('#modal-wiki .btn-main').innerText = "Atualizar Espécie";
+    },
+
+    editBook: async function(id) {
+        const item = await db.book.get(id);
+        document.getElementById('b-edit-id').value = id;
+        document.getElementById('b-tit').value = item.titulo;
+        document.getElementById('b-cat').value = item.categoria;
+        document.getElementById('b-txt').value = item.conteudo;
+        
+        ui.modal('modal-book', true);
+        document.querySelector('#modal-book .btn-main').innerText = "Atualizar Nota";
     },
     addZona: async function() {
         const n = document.getElementById('z-input').value;
