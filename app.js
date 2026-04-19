@@ -46,48 +46,77 @@ const ui = {
     },
 
     drawDash: async function() {
-        const ps = await db.plantas.toArray();
-        const ws = await db.wiki.toArray();
-        const bk = await db.book.toArray();
-        const lua = lunar.getDetails();
-        let html = `
+    const ps = await db.plantas.toArray();
+    const ws = await db.wiki.toArray();
+    const lua = lunar.getDetails(); 
+
+    let html = `
         <div class="card-lunar">
-            <div style="display:flex; align-items:center; gap:15px;">
-                <span style="font-size:2.5rem">${lua.i}</span>
-                <div>
-                    <h4 style="margin:0; color:#ffeb3b;">${lua.f}</h4>
-                    <p style="margin:0; font-size:0.8rem; opacity:0.9;">${lua.d}</p>
-                </div>
+            <span>${lua.i}</span>
+            <div>
+                <h4>${lua.f}</h4>
+                <p>${lua.d}</p>
             </div>
         </div>
 
         <div class="card-sauda-mini">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <h2 style="margin:0; font-size:1.2rem;">Olá, Jota! 👋</h2>
-                    <p style="margin:5px 0 0 0; font-size:0.9rem; opacity:0.9;">Tens ${ps.length} cultivos em curso.</p>
-                </div>
-                <span style="font-size:1.8rem; opacity:0.4;">🌿</span>
+            <div>
+                <h2>Olá, Jota! 👋</h2>
+                <p>Tens ${ps.length} cultivos em curso.</p>
             </div>
+            <span style="font-size:1.8rem; opacity:0.4;">🌿</span>
         </div>
-    `;
         
-        // Alertas de Colheita
-        const hoje = new Date();
-        hoje.setHours(0,0,0,0);
-        ps.forEach(p => {
-            const w = ws.find(x => x.especie.toLowerCase() === p.variedade.toLowerCase());
-            if(w) {
-                const col = new Date(p.data); col.setDate(col.getDate() + w.tempo);
-                const diff = Math.ceil((col - hoje) / (86400000));
-                if(diff <= 7 && diff >= 0) {
-                    html += `<div class="card" style="border-left:5px solid var(--a)">
-                        <b>🍎 Colheita Próxima:</b> ${p.variedade}<br><small>Faltam ${diff} dias</small></div>`;
-                }
+        <h3 style="margin: 20px 0 10px 5px; font-size: 1rem; color: var(--p);">🚀 Próximas Colheitas</h3>
+    `;
+
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+
+    let alertasContagem = 0;
+
+    ps.forEach(p => {
+        // MATCH INTELIGENTE: Remove espaços e ignora maiúsculas
+        const wikiMatch = ws.find(w => w.especie.trim().toLowerCase() === p.variedade.trim().toLowerCase());
+
+        if (wikiMatch) {
+            const dataPlantio = new Date(p.data);
+            const dataColheita = new Date(dataPlantio);
+            dataColheita.setDate(dataColheita.getDate() + parseInt(wikiMatch.tempo));
+
+            const diffTempo = dataColheita - hoje;
+            const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
+
+            // Só mostra se faltar menos de 15 dias ou se já passou do tempo
+            if (diffDias <= 15) {
+                alertasContagem++;
+                const corAlerta = diffDias <= 0 ? '#e74c3c' : (diffDias <= 5 ? 'var(--a)' : 'var(--p)');
+                const msgAlerta = diffDias <= 0 ? 'PRONTO A COLHER!' : `Faltam ${diffDias} dias`;
+
+                html += `
+                    <div class="card" style="border-left: 6px solid ${corAlerta}; padding: 15px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <b style="font-size:1rem;">${p.variedade}</b><br>
+                                <small style="color:#666;">Plantado em: ${dataPlantio.toLocaleDateString()}</small>
+                            </div>
+                            <div style="text-align:right;">
+                                <span style="color:${corAlerta}; font-weight:bold; font-size:0.85rem;">${msgAlerta}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
             }
-        });
-        document.getElementById('page-dash').innerHTML = html;
-    },
+        }
+    });
+
+    if (alertasContagem === 0) {
+        html += `<p style="text-align:center; opacity:0.5; font-size:0.85rem; margin-top:20px;">Sem colheitas para os próximos 15 dias.</p>`;
+    }
+
+    document.getElementById('page-dash').innerHTML = html;
+},
+
 
     drawHorta: async function(s) {
         const [ps, zs, ws] = await Promise.all([db.plantas.toArray(), db.zonas.toArray(), db.wiki.toArray()]);
