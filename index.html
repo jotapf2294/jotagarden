@@ -2,117 +2,89 @@
 <html lang="pt-pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JotaGarden</title>
-    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>JotaGarden Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/dexie@4.0.8/dist/dexie.min.js"></script>
     <style>
         :root {
-    /* Cores Tema Claro */
-    --p: #2e7d32;
-    --bg: #f5f7f5;
-    --card: #ffffff;
-    --txt: #2c3e50;
-    --txt-rev: #ffffff;
-    --btn-alt: #546e7a;
-    --radius: 24px; /* O arredondamento que queres */
-    --shadow: 0 8px 20px rgba(0,0,0,0.06);
-}
+            --p: #2e7d32; --bg: #f5f7f5; --card: #ffffff; --txt: #2c3e50;
+            --txt-rev: #ffffff; --btn-alt: #546e7a; --radius: 24px;
+            --shadow: 0 8px 24px rgba(0,0,0,0.06);
+        }
+        body.dark {
+            --bg: #121212; --card: #1e1e1e; --txt: #eceff1; --p: #81c784;
+        }
 
-body.dark {
-    /* Cores Tema Escuro */
-    --bg: #121212;
-    --card: #1e1e1e;
-    --txt: #eceff1;
-    --p: #81c784;
-}
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; margin: 0; 
+            background: var(--bg); color: var(--txt); height: 100vh; 
+            display: flex; flex-direction: column; overflow: hidden; transition: 0.3s;
+        }
 
-/* --- Base --- */
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; transition: background 0.3s, color 0.3s; }
-body { 
-    font-family: system-ui, -apple-system, sans-serif; 
-    margin: 0; background: var(--bg); color: var(--txt); 
-    height: 100vh; overflow: hidden; display: flex; flex-direction: column; 
-}
+        header { background: var(--p); color: var(--txt-rev); padding: 20px; z-index: 10; display: flex; justify-content: space-between; }
+        .search-bar { background: var(--p); padding: 0 15px 15px; border-radius: 0 0 20px 20px; }
+        #globalSearch { 
+            width: 100%; border: none; padding: 12px 20px; border-radius: 50px; 
+            background: var(--card); color: var(--txt); font-size: 16px;
+        }
 
-/* --- Layout --- */
-header { background: var(--p); color: var(--txt-rev); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 10; }
-.search-bar { background: var(--p); padding: 0 15px 15px 15px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
-#globalSearch { width: 100%; border: none; padding: 12px 20px; border-radius: 50px; font-size: 16px; outline: none; background: var(--card); color: var(--txt); }
+        .main-content { flex: 1; overflow-y: auto; padding: 20px 15px 120px; }
+        .page { display: none; }
+        .page.active { display: block; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-.main-content { flex: 1; overflow-y: auto; padding: 20px 15px 100px 15px; }
-.page { display: none; }
-.page.active { display: block; animation: fadeIn 0.3s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Componentes de Cards */
+        .card, .card-lunar, .card-sauda, .modal-content {
+            background: var(--card); color: var(--txt); border-radius: var(--radius) !important;
+            padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); border: none; position: relative;
+        }
+        .card-lunar { background: linear-gradient(135deg, #1a2a3a, #000) !important; color: white !important; }
+        .card-sauda { background: var(--p) !important; color: var(--txt-rev) !important; }
 
-/* --- CARDS UNIFICADOS (O que pediste) --- */
-.card, .card-lunar, .card-sauda-mini, .modal-content {
-    background-color: var(--card);
-    color: var(--txt);
-    border-radius: var(--radius) !important;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: var(--shadow);
-    border: none !important;
-    overflow: hidden;
-    position: relative;
-}
-
-/* Cores específicas para os cards do Dash */
-.card-lunar { background: linear-gradient(135deg, #1a2a3a, #000) !important; color: white !important; }
-.card-sauda-mini { background: var(--p) !important; color: var(--txt-rev) !important; }
-
-/* --- Botões e Inputs --- */
-.btn-main { 
-    background: var(--p); color: var(--txt-rev); border: none; 
-    padding: 16px; border-radius: 18px; width: 100%; 
-    font-weight: bold; cursor: pointer; margin-bottom: 10px;
-}
-.btn-sec { background: var(--btn-alt) !important; }
-
-input, select, textarea { 
-    width: 100%; padding: 14px; margin: 8px 0; 
-    border: 1px solid rgba(0,0,0,0.1); border-radius: 15px; 
-    background: var(--card); color: var(--txt); font-size: 16px; 
-}
-
-/* --- Navbar --- */
-.nav-bar { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; padding: 10px 5px; border-top: 1px solid rgba(0,0,0,0.05); z-index: 1000; }
-.nav-btn { flex: 1; border: none; background: none; color: #90a4ae; font-size: 0.7rem; }
-.nav-btn.active { color: var(--p); font-weight: bold; }
-.nav-btn i { display: block; font-size: 1.5rem; margin-bottom: 4px; }
-
-/* --- Modais --- */
-.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-content { background: var(--card); width: 90%; max-width: 400px; padding: 25px; border-radius: 24px; max-height: 85vh; overflow-y: auto; }
-
-        input, select, textarea { width: 100%; padding: 14px; margin: 10px 0; border: 1.5px solid #eee; border-radius: 12px; background: var(--bg); color: var(--txt); font-size: 16px; }
-        .btn-main { background: var(--p); color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; }
-        .btn-main:active { transform: scale(0.97); background: var(--p-dark); }
-        .btn-sec { background: #546e7a; margin-top: 8px; }
+        /* Formulários */
+        input, select, textarea { 
+            width: 100%; padding: 14px; margin: 8px 0; border-radius: 16px; 
+            border: 1px solid rgba(0,0,0,0.1); background: var(--card); color: var(--txt); font-size: 16px;
+        }
+        .btn-main { 
+            background: var(--p); color: var(--txt-rev); border: none; padding: 16px; 
+            border-radius: 18px; width: 100%; font-weight: bold; cursor: pointer;
+        }
+        .btn-sec { background: var(--btn-alt) !important; margin-top: 8px; }
 
         /* Navbar */
-        .nav-bar { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; padding: 10px 5px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid rgba(0,0,0,0.05); z-index: 1000; }
-        .nav-btn { flex: 1; border: none; background: none; color: #90a4ae; font-size: 0.7rem; cursor: pointer; transition: 0.2s; }
-        .nav-btn.active { color: var(--p); transform: translateY(-3px); font-weight: bold; }
+        .nav-bar { 
+            position: fixed; bottom: 0; width: 100%; background: var(--card); 
+            display: flex; padding: 10px 5px env(safe-area-inset-bottom); 
+            border-top: 1px solid rgba(0,0,0,0.05); z-index: 1000; 
+        }
+        .nav-btn { flex: 1; border: none; background: none; color: #90a4ae; font-size: 0.7rem; cursor: pointer; }
+        .nav-btn.active { color: var(--p); font-weight: bold; }
         .nav-btn i { display: block; font-size: 1.5rem; margin-bottom: 4px; }
+
+        /* Modais */
+        .modal { 
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); 
+            z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(8px);
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <span id="view-title">Inicio</span>
-    <div id="header-icons">🌿</div>
+    <b id="view-title">JotaGarden</b>
+    <span>🌿</span>
 </header>
 
-<div class="search-bar" id="search-container">
-    <input type="text" id="globalSearch" placeholder="🔍 Procurar..." oninput="ui.render()">
+<div class="search-bar" id="search-box">
+    <input type="text" id="globalSearch" placeholder="Procurar..." oninput="ui.render()">
 </div>
 
 <main class="main-content">
     <section id="page-dash" class="page active"></section>
     <section id="page-horta" class="page">
-        <button class="btn-main" onclick="ui.modal('modal-planta', true)">+ Registar Planta</button>
+        <button class="btn-main" onclick="ui.modal('modal-planta', true)">+ Registar Plantação</button>
         <div id="draw-horta"></div>
     </section>
     <section id="page-wiki" class="page">
@@ -120,24 +92,24 @@ input, select, textarea {
         <div id="draw-wiki"></div>
     </section>
     <section id="page-book" class="page">
-        <button class="btn-main" onclick="ui.modal('modal-book', true)">+ Nova</button>
+        <button class="btn-main" onclick="ui.modal('modal-book', true)">+ Nova Nota</button>
         <div id="draw-book"></div>
     </section>
     <section id="page-config" class="page">
         <div class="card">
-            <h3>⚙️ Dark Mode</h3>
-            <button class="btn-main btn-sec" onclick="logic.toggleTheme()">🌓 Alterar</button>
-            <hr style="opacity: 0.1; margin: 20px 0;">
-            <h4>📍 Zonas</h4>
-            <div style="display:flex; gap:10px;">
+            <h3>🌓 Personalização</h3>
+            <button class="btn-main btn-sec" onclick="logic.toggleTheme()">Alternar Tema</button>
+            <hr style="opacity:0.1; margin:20px 0;">
+            <h3>📍 Gerir Zonas</h3>
+            <div style="display:flex; gap:8px;">
                 <input type="text" id="z-input" placeholder="Ex: Estufa">
-                <button class="btn-main" style="width:80px;" onclick="logic.addZona()">OK</button>
+                <button class="btn-main" style="width:80px" onclick="logic.addZona()">OK</button>
             </div>
-            <div id="draw-zonas" style="margin-top:15px;"></div>
-            <hr style="opacity: 0.1; margin: 20px 0;">
-            <button class="btn-main" style="background:var(--a)" onclick="logic.export()">📥 Exportar Backup</button>
+            <div id="draw-zonas" style="margin-top:15px"></div>
+            <hr style="opacity:0.1; margin:20px 0;">
+            <button class="btn-main" style="background:#fb8c00" onclick="logic.export()">📥 Backup (Exportar)</button>
+            <button class="btn-main btn-sec" onclick="document.getElementById('fileIn').click()">📤 Backup (Importar)</button>
             <input type="file" id="fileIn" style="display:none" onchange="logic.import(event)">
-            <button class="btn-main btn-sec" onclick="document.getElementById('fileIn').click()">📤 Importar Backup</button>
         </div>
     </section>
 </main>
@@ -145,31 +117,33 @@ input, select, textarea {
 <div id="modal-planta" class="modal">
     <div class="modal-content">
         <h3>🌱 Nova Planta</h3>
-        <input type="text" id="p-nome" placeholder="Variedade (ex: Tomate Rosa)">
+        <select id="p-nome">
+            <option value="">Selecionar da Wiki...</option>
+        </select>
         <input type="date" id="p-data">
         <select id="p-zona"></select>
-        <textarea id="p-nota" placeholder="Notas..."></textarea>
+        <textarea id="p-nota" placeholder="Observações..."></textarea>
         <button class="btn-main" onclick="logic.savePlanta()">Confirmar</button>
-        <button class="btn-main btn-sec" onclick="ui.modal('modal-planta', false)">Sair</button>
+        <button class="btn-main btn-sec" onclick="ui.modal('modal-planta', false)">Cancelar</button>
     </div>
 </div>
 
 <div id="modal-wiki" class="modal">
     <div class="modal-content">
         <h3>📖 Nova Espécie</h3>
-        <input type="text" id="w-nome" placeholder="Nome da espécie">
+        <input type="text" id="w-nome" placeholder="Ex: Tomate Rosa">
         <input type="number" id="w-dias" placeholder="Dias até colher">
-        <input type="text" id="w-temp" placeholder="Temp. ideal">
-        <textarea id="w-info" placeholder="Rega, Sol, etc."></textarea>
+        <input type="text" id="w-temp" placeholder="Temp. Ideal (ex: 20-30°C)">
+        <textarea id="w-info" placeholder="Rega, Sol, Adubação..."></textarea>
         <button class="btn-main" onclick="logic.saveWiki()">Guardar</button>
-        <button class="btn-main btn-sec" onclick="ui.modal('modal-wiki', false)">Sair</button>
+        <button class="btn-main btn-sec" onclick="ui.modal('modal-wiki', false)">Cancelar</button>
     </div>
 </div>
 
 <div id="modal-book" class="modal">
     <div class="modal-content">
         <h3>📒 Nova Nota</h3>
-        <input type="text" id="b-tit" placeholder="Título">
+        <input type="text" id="b-tit" placeholder="Título da dica">
         <select id="b-cat">
             <option>💡 Dicas</option><option>🪄 Truques</option><option>🐛 Pragas</option><option>📝 Geral</option>
         </select>
