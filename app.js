@@ -21,6 +21,19 @@ const ui = {
             document.getElementById('p-data').valueAsDate = new Date();
         }
     },
+    
+    toggleTheme: async function() {
+    // 1. Alterna a classe no HTML
+    document.body.classList.toggle('dark');
+    
+    // 2. Verifica se ficou dark ou não
+    const isDark = document.body.classList.contains('dark');
+    
+    // 3. Guarda na base de dados para não perderes a escolha ao fechar
+    await db.config.put({ id: 'theme', val: isDark });
+    
+    console.log("Dark Mode ativo:", isDark);
+    },
 
     render: async function() {
         const search = document.getElementById('globalSearch').value.toLowerCase();
