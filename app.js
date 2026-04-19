@@ -16,6 +16,7 @@ const lunar = {
 const ui = {
     view: 'dash',
     expandedZones: new Set(),
+    expandedBookCats: new Set(),
     nav: function(v, btn) {
     this.view = v;
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -128,9 +129,53 @@ const ui = {
     },
 
     drawBook: async function(s) {
-        const data = await db.book.filter(i => i.titulo.toLowerCase().includes(s)).toArray();
-        document.getElementById('draw-book').innerHTML = data.map(i => `<div class="card"><div style="display:flex;justify-content:space-between"><small style="color:var(--p)">${i.categoria}</small><button onclick="logic.del('book', ${i.id})" style="border:none;background:none;color:red">✕</button></div><b style="display:block;margin:5px 0">${i.titulo}</b><p style="font-size:0.9rem;opacity:0.8">${i.conteudo}</p></div>`).join('');
-    },
+    const data = await db.book.toArray();
+    // Filtrar primeiro pela pesquisa
+    const filtered = data.filter(i => 
+        i.titulo.toLowerCase().includes(s) || 
+        i.conteudo.toLowerCase().includes(s) ||
+        i.categoria.toLowerCase().includes(s)
+    );
+
+    // Obter categorias únicas presentes nos dados filtrados
+    const categorias = [...new Set(filtered.map(i => i.categoria))];
+    
+    let html = "";
+
+    categorias.forEach(cat => {
+        const notasDaCat = filtered.filter(i => i.categoria === cat);
+        const isOpen = ui.expandedBookCats.has(cat);
+
+        // Cabeçalho da Categoria
+        html += `
+            <div onclick="logic.toggleBookCat('${cat}')" style="display:flex; justify-content:space-between; align-items:center; margin:20px 5px 10px; cursor:pointer; background:rgba(0,0,0,0.02); padding:10px; border-radius:12px;">
+                <h4 style="margin:0; color:var(--p); display:flex; align-items:center; gap:8px; font-size:1rem;">
+                    <span>📂</span> ${cat} 
+                    <small style="font-weight:normal; opacity:0.5; font-size:0.8rem;">(${notasDaCat.length})</small>
+                </h4>
+                <span style="transition:0.3s; transform: rotate(${isOpen ? '90deg' : '0deg'}); opacity:0.5;">▶</span>
+            </div>
+        `;
+
+        // Notas da Categoria (Só aparecem se expandido)
+        if (isOpen) {
+            notasDaCat.forEach(i => {
+                html += `
+                    <div class="card" style="animation: pageIn 0.2s ease-out; margin-bottom:10px; border-left: 4px solid var(--p);">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <b style="display:block; color:var(--txt);">${i.titulo}</b>
+                            <button onclick="event.stopPropagation(); logic.del('book', ${i.id})" style="border:none; background:none; color:#e74c3c; padding:0 5px; font-weight:bold;">✕</button>
+                        </div>
+                        <p style="font-size:0.9rem; margin:8px 0 0; opacity:0.8; line-height:1.4;">${i.conteudo}</p>
+                    </div>
+                `;
+            });
+        }
+    });
+
+    document.getElementById('draw-book').innerHTML = html || 
+        '<p style="text-align:center; padding:40px; opacity:0.5;">Nenhuma nota encontrada.</p>';
+},
 
     drawConfig: async function() {
         const zs = await db.zonas.toArray();
@@ -153,6 +198,14 @@ const logic = {
         const b = { titulo: document.getElementById('b-tit').value, categoria: document.getElementById('b-cat').value, conteudo: document.getElementById('b-txt').value };
         if(!b.titulo) return;
         await db.book.add(b); ui.modal('modal-book', false); ui.render();
+    },
+    toggleBookCat: function(cat) {
+        if (ui.expandedBookCats.has(cat)) {
+            ui.expandedBookCats.delete(cat);
+        } else {
+            ui.expandedBookCats.add(cat);
+        }
+        ui.render();
     },
     addZona: async function() {
         const n = document.getElementById('z-input').value;
