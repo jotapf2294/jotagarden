@@ -37,7 +37,7 @@ const ui = {
         const ws = await db.wiki.toArray();
         const bk = await db.book.toArray();
         let html = `<div class="card" style="background:var(--p); color:white">
-            <h2>Olá! 👋</h2><p>Tens ${ps.length} plantas ativas e ${bk.length} notas no teu book.</p></div>`;
+            <h2>Olá, Jota👋</h2><p>Tens ${ps.length} plantas ativas e ${bk.length} notas no teu book.</p></div>`;
         
         // Alertas de Colheita
         const hoje = new Date();
