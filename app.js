@@ -119,23 +119,58 @@ const ui = {
 
 
     drawHorta: async function(s) {
-        const [ps, zs, ws] = await Promise.all([db.plantas.toArray(), db.zonas.toArray(), db.wiki.toArray()]);
-        let html = "";
-        zs.forEach(z => {
-            const fil = ps.filter(p => p.zonaId == z.id && p.variedade.toLowerCase().includes(s));
-            if(fil.length > 0 || (s==='' && zs.length > 0)) {
-                html += `<h4 style="color:var(--p); margin:20px 0 10px 5px;">📍 ${z.nome}</h4>`;
-                fil.forEach(p => {
-                    const dias = Math.floor((new Date() - new Date(p.data)) / 86400000);
-                    html += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-                        <div><b>${p.variedade}</b><br><small>⏳ ${dias} dias de vida</small></div>
-                        <button onclick="logic.del('plantas', ${p.id})" style="border:none; background:none; color:red; padding:10px;">✕</button>
+    // Carregamos as plantas, as zonas e a wiki ao mesmo tempo para performance
+    const [ps, zs, ws] = await Promise.all([
+        db.plantas.toArray(), 
+        db.zonas.toArray(), 
+        db.wiki.toArray()
+    ]);
+    
+    let html = "";
+    
+    zs.forEach(z => {
+        const fil = ps.filter(p => p.zonaId == z.id && p.variedade.toLowerCase().includes(s));
+        
+        if(fil.length > 0) {
+            html += `<h4 style="color:var(--p); margin:25px 0 12px 5px; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                        <span>📍</span> ${z.nome}
+                     </h4>`;
+            
+            fil.forEach(p => {
+                const dias = Math.floor((new Date() - new Date(p.data)) / 86400000);
+                
+                // --- NOVA LÓGICA: Procurar dados na Wiki ---
+                const wikiInfo = ws.find(w => w.especie.trim().toLowerCase() === p.variedade.trim().toLowerCase());
+                
+                // Se encontrar na Wiki mostra a temp, senão mostra "N/A"
+                const tempIdeal = wikiInfo ? wikiInfo.temp : "--";
+                const diasColheita = wikiInfo ? wikiInfo.tempo : null;
+                
+                html += `
+                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding: 18px;">
+                        <div>
+                            <b style="font-size:1.1rem; display:block; margin-bottom:4px;">${p.variedade}</b>
+                            <div style="display:flex; gap:12px; align-items:center;">
+                                <small style="opacity:0.8; display:flex; align-items:center; gap:4px;">
+                                    ⏳ ${dias} dias
+                                </small>
+                                <small style="color:var(--p); font-weight:600; display:flex; align-items:center; gap:4px;">
+                                    🌡️ ${tempIdeal}
+                                </small>
+                            </div>
+                        </div>
+                        <button onclick="logic.del('plantas', ${p.id})" 
+                                style="border:none; background:rgba(231, 76, 60, 0.1); color:#e74c3c; width:35px; height:35px; border-radius:10px; font-weight:bold;">
+                            ✕
+                        </button>
                     </div>`;
-                });
-            }
-        });
-        document.getElementById('draw-horta').innerHTML = html || '<p style="text-align:center; opacity:0.5;">Nada encontrado.</p>';
-    },
+            });
+        }
+    });
+    
+    document.getElementById('draw-horta').innerHTML = html || 
+        '<div style="text-align:center; padding:40px; opacity:0.5;">Sem plantas registadas nesta zona.</div>';
+},
 
     drawWiki: async function(s) {
         const data = await db.wiki.filter(i => i.especie.toLowerCase().includes(s)).toArray();
