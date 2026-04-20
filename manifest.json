@@ -1,9 +1,0 @@
-{
-  "name": "JotaGarden OS",
-  "short_name": "JotaGarden",
-  "start_url": "index.html",
-  "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#7fcc8d",
-  "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/891/891041.png", "sizes": "512x512", "type": "image/png" }]
-}
