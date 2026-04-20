@@ -80,7 +80,7 @@
 <section id="page-horta"><div id="draw-horta"></div></section>
 <section id="page-book"><div id="draw-book"></div></section>
 <section id="page-wiki">
-    <button class="btn-main" onclick="ui.openModal('modal-wiki')" style="margin-bottom:20px">📖 Nova Espécie</button>
+    <button class="btn-main" onclick="ui.openModal('modal-wiki')" style="margin-bottom:20px">➕ Nova Espécie</button>
     <div id="draw-wiki"></div>
 </section>
 
@@ -103,7 +103,7 @@
         <h3>📍 Zonas</h3>
         <div style="display:flex; gap:10px">
             <input type="text" id="new-zone" class="input-form" placeholder="Ex: Estufa">
-            <button class="btn-main" style="width:80px; margin:8px 0" onclick="logic.addZone()">OK</button>
+            <button class="btn-main" style="width:80px; margin:8px 0" onclick="logic.addZone()">➕</button>
         </div>
         <div id="draw-zones"></div>
     </div>
@@ -111,8 +111,7 @@
 
 <div id="modal-plantar" class="modal">
     <div class="modal-content">
-        <h3>🌱 Novo Plantio</h3>
-        <input type="text" id="p-nome" class="input-form" placeholder="Nome da Planta">
+        <h3>🌱 Novo Registo</h3>
         <label><small>Espécie (Adiciona na Wiki se não vires nada)</small></label>
         <select id="p-especie" class="input-form"></select>
         <label><small>Zona (Cria em Config se não vires nada)</small></label>
@@ -126,7 +125,7 @@
 
 <div id="modal-wiki" class="modal">
     <div class="modal-content">
-        <h3>📖 Nova Espécie</h3>
+        <h3>➕ Nova Espécie</h3>
         <input type="text" id="w-especie" class="input-form" placeholder="Nome">
         <select id="w-cat" class="input-form">
             <option value="Folhas">🥬 Folhas</option>
