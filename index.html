@@ -311,19 +311,32 @@ const ui = {
     drawHorta: async function(s) {
     const [ps, zs] = await Promise.all([db.plantas.toArray(), db.zonas.toArray()]);
     let html = "";
+    
     zs.forEach(z => {
         const items = ps.filter(p => p.zonaId == z.id && p.variedade.toLowerCase().includes(s));
         if(items.length > 0) {
             const open = this.exp.horta.has(z.id);
             html += `<div style="padding:12px; background:var(--p-light); border-radius:15px; margin:10px 0; display:flex; justify-content:space-between; cursor:pointer" onclick="logic.toggleExp('horta',${z.id})">
                 <b>📍 ${z.nome}</b><span>${open?'▼':'▶'}</span></div>`;
+            
             if(open) {
                 items.forEach(p => {
-                    const h = p.ultimaRega ? Math.floor((new Date() - new Date(p.ultimaRega))/3600000) : '?';
+                    const hRega = p.ultimaRega ? Math.floor((new Date() - new Date(p.ultimaRega))/3600000) : '?';
+                    
+                    // CÁLCULO DOS DIAS DE VIDA
+                    const dataPlantio = new Date(p.data);
+                    const hoje = new Date();
+                    const diffTempo = Math.abs(hoje - dataPlantio);
+                    const diasVida = Math.floor(diffTempo / (1000 * 60 * 60 * 24));
+
                     html += `
                     <div class="card" style="display:block;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div><b>${p.variedade}</b><br><small style="color:var(--p)">💧 Rega: ${h}h atrás</small></div>
+                            <div>
+                                <b>${p.variedade}</b><br>
+                                <small style="color:var(--p)">💧 ${hRega}h atrás</small>
+                                <small style="margin-left:10px; opacity:0.7">📅 ${diasVida} dias de vida</small>
+                            </div>
                             <div style="display:flex; gap:10px">
                                 <button class="btn-act" onclick="logic.regar(${p.id})">💧</button>
                                 <button class="btn-act" onclick="logic.colher(${p.id})">✅</button>
