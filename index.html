@@ -143,31 +143,31 @@
         <div id="draw-book"></div>
     </section>
     <section id="page-config" class="page">
-        <div class="card config-group">
-            <h3 style="margin:0 0 10px 0">⚙️ Personalização</h3>
-            <button class="btn-main btn-sec" onclick="logic.toggleTheme()" style="margin:0">
-                Alternar Dark Mode
-            </button>
+    <div class="config-card">
+        <h3>⚙️ Personalização</h3>
+        <button class="btn-main btn-sec" onclick="logic.toggleTheme()" style="margin:0">
+            Alternar Dark Mode
+        </button>
+    </div>
+
+    <div class="config-card">
+        <h3>📍 Minhas Zonas</h3>
+        <div class="zona-input-group">
+            <input type="text" id="z-input" placeholder="Ex: Estufa, Canteiro A...">
+            <button class="btn-main" onclick="logic.addZona()" style="padding:0">OK</button>
         </div>
-        <div class="card config-group">
-            <h3 style="margin:0 0 10px 0">📍 Minhas Zonas</h3>
-            <div class="input-row">
-                <input type="text" id="z-input" placeholder="Ex: Estufa, Canteiro A...">
-                <button class="btn-main" onclick="logic.addZona()">OK</button>
-            </div>
-            <div id="draw-zonas" style="margin-top:10px"></div>
+        <div id="draw-zonas"></div>
+    </div>
+
+    <div class="config-card">
+        <h3>💾 Backup</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button class="btn-main" style="background:#f39c12; margin:0; font-size:0.8rem;" onclick="logic.export()">📥 Exportar</button>
+            <button class="btn-main btn-sec" style="margin:0; font-size:0.8rem;" onclick="document.getElementById('fileIn').click()">📤 Importar</button>
         </div>
-        <div class="card config-group">
-            <h3 style="margin:0 0 10px 0">💾 Dados e Backup</h3>
-            <button class="btn-main" style="background:#f39c12; margin:5px 0" onclick="logic.export()">
-                📥 Exportar Backup
-            </button>
-            <button class="btn-main btn-sec" style="margin:5px 0" onclick="document.getElementById('fileIn').click()">
-                📤 Importar Backup
-            </button>
-            <input type="file" id="fileIn" style="display:none" onchange="logic.import(event)">
-        </div>
-    </section>
+        <input type="file" id="fileIn" style="display:none" onchange="logic.import(event)">
+    </div>
+</section>
 </main>
 
 <div id="modal-planta" class="modal">
@@ -322,22 +322,44 @@ const ui = {
     },
 
     drawWiki: async function(s) {
-        const data = await db.wiki.toArray();
-        const filtered = data.filter(i => i.especie.toLowerCase().includes(s));
-        const cats = [...new Set(filtered.map(i => i.categoria))];
-        let html = "";
-        cats.forEach(c => {
-            const open = this.exp.wiki.has(c);
-            const items = filtered.filter(i => i.categoria === c);
-            html += `<div class="cat-header" onclick="logic.toggleExp('wiki','${c}')"><b>📚 ${c}</b><span>${open?'▼':'▶'}</span></div>`;
-            if(open) {
-                items.forEach(i => {
-                    html += `<div class="card"><div class="card-info"><b class="card-title">${i.especie}</b><div class="card-sub"><span>⏱️ ${i.tempo} dias</span><span>🌡️ ${i.temp}</span></div></div><div class="card-actions"><button class="btn-act" onclick="logic.prepareEdit('wiki',${i.id})" style="color:var(--p)">✏️</button><button class="btn-act" onclick="logic.del('wiki',${i.id})" style="color:red">✕</button></div></div>`;
-                });
-            }
-        });
-        document.getElementById('draw-wiki').innerHTML = html;
-    },
+    const data = await db.wiki.toArray();
+    const filtered = data.filter(i => i.especie.toLowerCase().includes(s));
+    const cats = [...new Set(filtered.map(i => i.categoria))];
+    let html = "";
+    
+    cats.forEach(c => {
+        const open = this.exp.wiki.has(c);
+        const items = filtered.filter(i => i.categoria === c);
+        html += `<div class="cat-header" onclick="logic.toggleExp('wiki','${c}')"><b>📚 ${c}</b><span>${open?'▼':'▶'}</span></div>`;
+        
+        if(open) {
+            items.forEach(i => {
+                html += `
+                <div class="card" style="flex-direction: column; align-items: stretch;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div class="card-info">
+                            <b class="card-title">${i.especie}</b>
+                            <div class="card-sub">
+                                <span>⏱️ ${i.tempo} dias</span>
+                                <span>🌡️ ${i.temp}</span>
+                            </div>
+                        </div>
+                        <div class="card-actions" style="flex-direction: row; width: auto; gap: 10px;">
+                            <button class="btn-act" onclick="logic.prepareEdit('wiki',${i.id})" style="color:var(--p)">✏️</button>
+                            <button class="btn-act" onclick="logic.del('wiki',${i.id})" style="color:red">✕</button>
+                        </div>
+                    </div>
+                    
+                    ${i.info ? `
+                    <div style="margin-top:12px; padding:12px; background:rgba(0,0,0,0.03); border-radius:12px; font-size:0.9rem; line-height:1.4; color:var(--txt); border-left: 3px solid #ccc;">
+                        ${i.info}
+                    </div>` : ''}
+                </div>`;
+            });
+        }
+    });
+    document.getElementById('draw-wiki').innerHTML = html || '<p align="center" style="opacity:0.5;">Nenhuma espécie na wiki.</p>';
+},
 
     drawBook: async function(s) {
         const data = await db.book.toArray();
