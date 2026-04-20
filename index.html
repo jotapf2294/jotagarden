@@ -108,19 +108,16 @@
     </div>
 </section>
 
-<div id="modal-plantar" class="modal">
-    <div class="modal-content">
-        <h3>🌱 Novo Registo</h3>
-        <label><small>Espécie (Adiciona na Wiki se não vires nada)</small></label>
-        <select id="p-especie" class="input-form"></select>
-        <label><small>Zona (Cria em Config se não vires nada)</small></label>
-        <select id="p-zona" class="input-form"></select>
-        <input type="date" id="p-data" class="input-form">
-        <textarea id="p-nota" class="input-form" placeholder="Notas..." style="height:80px"></textarea>
-        <button class="btn-main" id="btn-save-plantio" onclick="logic.savePlantio()">Confirmar</button>
-        <button class="btn-main btn-sec" onclick="ui.closeModal('modal-plantar')">Cancelar</button>
-    </div>
-</div>
+<div id="modal-plantar" class="modal"><div class="modal-content">
+    <h3>🌱 Novo Plantio</h3>
+    <input type="text" id="p-nome" class="input-form" placeholder="Nome da Planta">
+    <select id="p-especie" class="input-form"></select>
+    <select id="p-zona" class="input-form"></select>
+    <input type="date" id="p-data" class="input-form">
+    <textarea id="p-nota" class="input-form" placeholder="Notas..." style="height:80px"></textarea>
+    <button class="btn-main" onclick="logic.savePlantio()">Confirmar</button>
+    <button class="btn-main btn-sec" onclick="ui.closeModal('modal-plantar')">Cancelar</button>
+</div></div>
 
 <div id="modal-wiki" class="modal">
     <div class="modal-content">
