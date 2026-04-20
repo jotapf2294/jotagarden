@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JotaGarden Pro</title>
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <style>
+        :root {
+            --p: #7fcc8d; --p-light: rgba(127, 204, 141, 0.2);
+            --bg: #121212; --card: #1e1e1e;
+            --txt: #ffffff; --txt-alt: #a0a0a0;
+            --danger: #ff5252; --shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; 
+            background: var(--bg); color: var(--txt); 
+            overflow-x: hidden; padding-bottom: 80px;
+        }
+        
+        /* HEADER & SEARCH */
+        header { 
+            padding: 20px; background: var(--p); 
+            border-radius: 0 0 30px 30px; position: sticky; top: 0; z-index: 100; 
+        }
+        .search-bar {
+            background: rgba(0,0,0,0.2); border: none; border-radius: 20px;
+            padding: 12px 20px; width: 100%; color: white; outline: none;
+        }
+
+        /* NAVIGATION */
+        .nav-bar {
+            position: fixed; bottom: 0; width: 100%; background: #1a1a1a;
+            display: flex; justify-content: space-around; padding: 10px 0;
+            border-top: 1px solid #333; z-index: 1000;
+        }
+        .nav-item { 
+            text-align: center; font-size: 0.7rem; color: var(--txt-alt); cursor: pointer;
+        }
+
+        /* PAGES & CARDS */
+        section { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .card { 
+            background: var(--card); border-radius: 20px; padding: 16px; 
+            margin-bottom: 15px; box-shadow: var(--shadow);
+        }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .badge { 
+            background: var(--p-light); color: var(--p); padding: 4px 10px; 
+            border-radius: 10px; font-size: 0.75rem; font-weight: bold;
+        }
+        .note-box { 
+            background: rgba(255,255,255,0.03); border-radius: 10px; 
+            padding: 10px; margin-top: 10px; font-size: 0.85rem; 
+            font-style: italic; border-left: 3px solid var(--p);
+        }
+
+        /* MODALS */
+        .modal { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); 
+            display: none; align-items: center; justify-content: center; z-index: 2000;
+        }
+        .modal-content { 
+            background: var(--card); width: 90%; max-width: 400px; 
+            padding: 25px; border-radius: 25px; 
+        }
+        .input-form {
+            width: 100%; padding: 12px; margin: 8px 0; background: #2a2a2a;
+            border: 1px solid #444; border-radius: 12px; color: white; outline: none;
+        }
+        .btn-main { 
+            width: 100%; padding: 14px; border: none; border-radius: 15px; 
+            font-weight: bold; cursor: pointer; margin-top: 10px;
+            background: var(--p); color: #000;
+        }
+
+        /* COMPONENTES ESPECÍFICOS */
+        .zone-group { 
+            background: var(--p-light); padding: 12px; border-radius: 15px; 
+            margin: 15px 0 10px 0; display: flex; justify-content: space-between; 
+            align-items: center; cursor: pointer;
+        }
+        .btn-act { 
+            background: #2a2a2a; border: none; padding: 8px; 
+            border-radius: 10px; font-size: 1.2rem; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <input type="text" id="search" class="search-bar" placeholder="🔍 Procurar na JotaGarden..." oninput="ui.render()">
+</header>
+
+<section id="page-inicio" class="active">
+    <div id="lunar-card" class="card" style="background: linear-gradient(135deg, #0f2027, #203a43);">
+        <div style="display:flex; align-items:center; gap:20px">
+            <div id="moon-icon" style="font-size: 3rem;">🌙</div>
+            <div>
+                <b id="moon-phase">A carregar...</b><br>
+                <small id="moon-tip">Dica lunar para hoje</small>
+            </div>
+        </div>
+    </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px">
+        <button class="btn-main" onclick="ui.openModal('modal-plantar')">➕ Plantar</button>
+        <button class="btn-main" style="background:#444; color:white" onclick="ui.openModal('modal-nota')">📝 Nota</button>
+    </div>
+    <h3>📅 Sugestões de Plantio</h3>
+    <div id="draw-sugestoes"></div>
+</section>
+
+<section id="page-horta">
+    <div id="draw-horta"></div>
+</section>
+
+<section id="page-wiki">
+    <button class="btn-main" onclick="ui.openModal('modal-wiki')">📚 Nova Espécie</button>
+    <div id="draw-wiki"></div>
+</section>
+
+<section id="page-config">
+    <div class="card">
+        <h3>⚙️ Configurações</h3>
+        <label>Temperatura Média (°C)</label>
+        <input type="number" id="cfg-temp" class="input-form" onchange="logic.saveConfig('temp', this.value)">
+        <button class="btn-main" onclick="logic.exportData()">💾 Exportar Backup</button>
+        <input type="file" id="import-file" style="display:none" onchange="logic.importData(event)">
+        <button class="btn-main" style="background:#444; color:white" onclick="document.getElementById('import-file').click()">📥 Importar Backup</button>
+    </div>
+    <div class="card">
+        <h3>📍 Gerir Zonas</h3>
+        <div style="display:flex; gap:10px">
+            <input type="text" id="new-zone" class="input-form" placeholder="Ex: Estufa">
+            <button class="btn-main" style="width:80px" onclick="logic.addZone()">OK</button>
+        </div>
+        <div id="draw-zones"></div>
+    </div>
+</section>
+
+<div id="modal-plantar" class="modal">
+    <div class="modal-content">
+        <h3>🌱 Novo Plantio</h3>
+        <input type="text" id="p-nome" class="input-form" placeholder="Nome (ex: Cherry 1)">
+        <select id="p-especie" class="input-form"></select>
+        <select id="p-zona" class="input-form"></select>
+        <input type="date" id="p-data" class="input-form">
+        <textarea id="p-nota" class="input-form" placeholder="Observações..." style="height:80px"></textarea>
+        <button class="btn-main" onclick="logic.savePlantio()">Confirmar</button>
+        <button class="btn-main" style="background:none; color:var(--txt-alt)" onclick="ui.closeModal('modal-plantar')">Cancelar</button>
+    </div>
+</div>
+
+<div id="modal-wiki" class="modal">
+    <div class="modal-content">
+        <h3>📖 Info da Espécie</h3>
+        <input type="text" id="w-especie" class="input-form" placeholder="Nome da Espécie">
+        <select id="w-cat" class="input-form">
+            <option value="Folhas">🥬 Folhas</option>
+            <option value="Frutos">🍅 Frutos</option>
+            <option value="Raízes">🥕 Raízes</option>
+        </select>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+            <input type="number" id="w-tempo" class="input-form" placeholder="Dias Ciclo">
+            <input type="number" id="w-temp" class="input-form" placeholder="Temp Ideal">
+        </div>
+        <textarea id="w-info" class="input-form" placeholder="Notas técnicas..." style="height:80px"></textarea>
+        <button class="btn-main" onclick="logic.saveWiki()">Guardar</button>
+        <button class="btn-main" style="background:none; color:var(--txt-alt)" onclick="ui.closeModal('modal-wiki')">Fechar</button>
+    </div>
+</div>
+
+<footer class="nav-bar">
+    <div class="nav-item" onclick="ui.tab('inicio')">🏠<br>Início</div>
+    <div class="nav-item" onclick="ui.tab('horta')">🌱<br>Horta</div>
+    <div class="nav-item" onclick="ui.tab('wiki')">📖<br>Wiki</div>
+    <div class="nav-item" onclick="ui.tab('config')">⚙️<br>Config</div>
+</footer>
+
+<script>
+/** * BASE DE DADOS - DEXIE PRO 
+ */
+const db = new Dexie("JotaGardenDB");
+db.version(1).stores({
+    plantas: '++id, variedade, especie, zonaId, data, ultimaRega, conteudo',
+    wiki: '++id, especie, categoria, tempo, temp, info',
+    zones: '++id, nome',
+    config: 'id, valor'
+});
+
+/** * LÓGICA DE NEGÓCIO 
+ */
+const logic = {
+    savePlantio: async function() {
+        const p = {
+            variedade: document.getElementById('p-nome').value || document.getElementById('p-especie').value,
+            especie: document.getElementById('p-especie').value,
+            zonaId: parseInt(document.getElementById('p-zona').value),
+            data: document.getElementById('p-data').value,
+            conteudo: document.getElementById('p-nota').value,
+            ultimaRega: new Date().toISOString()
+        };
+        if(!p.especie || !p.zonaId) return alert("Preencha espécie e zona!");
+        await db.plantas.add(p);
+        ui.closeModal('modal-plantar');
+        ui.render();
+    },
+
+    regarZona: async function(id) {
+        if(!confirm("Regar zona inteira?")) return;
+        const agora = new Date().toISOString();
+        await db.plantas.where('zonaId').equals(id).modify({ ultimaRega: agora });
+        ui.render();
+    },
+
+    saveWiki: async function() {
+        const w = {
+            especie: document.getElementById('w-especie').value,
+            categoria: document.getElementById('w-cat').value,
+            tempo: parseInt(document.getElementById('w-tempo').value) || 0,
+            temp: parseInt(document.getElementById('w-temp').value) || 0,
+            info: document.getElementById('w-info').value
+        };
+        await db.wiki.add(w);
+        ui.closeModal('modal-wiki');
+        ui.render();
+    },
+
+    addZone: async function() {
+        const nome = document.getElementById('new-zone').value;
+        if(nome) await db.zones.add({ nome });
+        document.getElementById('new-zone').value = "";
+        ui.render();
+    },
+
+    saveConfig: async function(id, valor) {
+        await db.config.put({ id, valor });
+        ui.render();
+    },
+
+    exportData: async function() {
+        const data = {
+            plantas: await db.plantas.toArray(),
+            wiki: await db.wiki.toArray(),
+            zones: await db.zones.toArray(),
+            config: await db.config.toArray()
+        };
+        const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "JotaGarden_Backup.json";
+        a.click();
+    }
+};
+
+/** * INTERFACE DE UTILIZADOR (UI)
+ */
+const ui = {
+    currentTab: 'inicio',
+    exp: { horta: new Set(), wiki: new Set() },
+
+    init: async function() {
+        // Preencher data de hoje por defeito
+        document.getElementById('p-data').valueAsDate = new Date();
+        const cfgTemp = await db.config.get('temp');
+        if(cfgTemp) document.getElementById('cfg-temp').value = cfgTemp.valor;
+        this.render();
+    },
+
+    tab: function(id) {
+        this.currentTab = id;
+        document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+        document.getElementById('page-' + id).classList.add('active');
+        this.render();
+    },
+
+    render: async function() {
+        const s = document.getElementById('search').value.toLowerCase();
+        if(this.currentTab === 'horta') this.drawHorta(s);
+        if(this.currentTab === 'wiki') this.drawWiki(s);
+        if(this.currentTab === 'config') this.drawConfig();
+        if(this.currentTab === 'inicio') this.drawInicio();
+        this.updateSelectors();
+    },
+
+    drawHorta: async function(s) {
+        const [ps, zs] = await Promise.all([db.plantas.toArray(), db.zones.toArray()]);
+        let html = "";
+        zs.forEach(z => {
+            const items = ps.filter(p => p.zonaId == z.id && p.variedade.toLowerCase().includes(s));
+            if(items.length > 0) {
+                const open = this.exp.horta.has(z.id);
+                html += `
+                <div class="zone-group" onclick="ui.toggle('horta', ${z.id})">
+                    <b>📍 ${z.nome}</b>
+                    <div style="display:flex; align-items:center; gap:10px">
+                        <button class="badge" style="border:none" onclick="event.stopPropagation(); logic.regarZona(${z.id})">💧 Tudo</button>
+                        <span>${open?'▼':'▶'}</span>
+                    </div>
+                </div>`;
+                if(open) {
+                    items.forEach(p => {
+                        const h = p.ultimaRega ? Math.floor((new Date() - new Date(p.ultimaRega))/3600000) : '?';
+                        const dias = p.data ? Math.floor((new Date() - new Date(p.data))/(1000*60*60*24)) : 0;
+                        html += `
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <b>${p.variedade}</b><br>
+                                    <small style="color:var(--p)">💧 ${h}h atrás</small>
+                                    <span class="badge">📅 ${dias < 0 ? 0 : dias} dias</span>
+                                </div>
+                                <div style="display:flex; gap:8px">
+                                    <button class="btn-act" onclick="db.plantas.update(${p.id}, {ultimaRega: new Date().toISOString()}).then(()=>ui.render())">💧</button>
+                                    <button class="btn-act" onclick="logic.del('plantas', ${p.id})" style="color:var(--danger)">✕</button>
+                                </div>
+                            </div>
+                            ${p.conteudo ? `<div class="note-box">📝 ${p.conteudo}</div>` : ''}
+                        </div>`;
+                    });
+                }
+            }
+        });
+        document.getElementById('draw-horta').innerHTML = html || '<p style="text-align:center; opacity:0.5">Nada plantado nesta zona.</p>';
+    },
+
+    drawWiki: async function(s) {
+        const ws = await db.wiki.toArray();
+        const cats = ["Folhas", "Frutos", "Raízes"];
+        document.getElementById('draw-wiki').innerHTML = cats.map(c => {
+            const items = ws.filter(w => w.categoria === c && w.especie.toLowerCase().includes(s));
+            if(!items.length) return "";
+            const open = this.exp.wiki.has(c);
+            return `
+            <div class="zone-group" onclick="ui.toggle('wiki', '${c}')">
+                <b>📚 ${c}</b><span>${open?'▼':'▶'}</span>
+            </div>
+            ${open ? items.map(i => `
+                <div class="card">
+                    <div class="card-header">
+                        <div><b>${i.especie}</b><br><small>${i.tempo} dias | ${i.temp}ºC</small></div>
+                        <button class="btn-act" onclick="logic.del('wiki', ${i.id})" style="color:var(--danger)">✕</button>
+                    </div>
+                    ${i.info ? `<div class="note-box" style="border-left-color: #555">📖 ${i.info}</div>` : ''}
+                </div>`).join('') : ''}`;
+        }).join('');
+    },
+
+    drawInicio: async function() {
+        const cfg = await db.config.get('temp');
+        const temp = cfg ? parseInt(cfg.valor) : 0;
+        const wiki = await db.wiki.toArray();
+        const sug = wiki.filter(w => Math.abs(w.temp - temp) <= 5);
+        
+        document.getElementById('draw-sugestoes').innerHTML = sug.map(s => `
+            <div class="card" style="border-left: 5px solid var(--p)">
+                <b>${s.especie}</b><br>
+                <small>Ideal para os teus ${temp}ºC atuais!</small>
+            </div>
+        `).join('') || '<p class="note-box">Sem sugestões. Define a temperatura em Config!</p>';
+    },
+
+    drawConfig: async function() {
+        const zs = await db.zones.toArray();
+        document.getElementById('draw-zones').innerHTML = zs.map(z => `
+            <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333">
+                <span>📍 ${z.nome}</span>
+                <span onclick="logic.del('zones', ${z.id})" style="color:var(--danger)">✕</span>
+            </div>
+        `).join('');
+    },
+
+    updateSelectors: async function() {
+        const [zs, ws] = await Promise.all([db.zones.toArray(), db.wiki.toArray()]);
+        document.getElementById('p-zona').innerHTML = zs.map(z => `<option value="${z.id}">${z.nome}</option>`).join('');
+        document.getElementById('p-especie').innerHTML = ws.map(w => `<option value="${w.especie}">${w.especie}</option>`).join('');
+    },
+
+    toggle: function(tab, id) {
+        if(this.exp[tab].has(id)) this.exp[tab].delete(id);
+        else this.exp[tab].add(id);
+        this.render();
+    },
+
+    openModal: function(id) { document.getElementById(id).style.display = 'flex'; },
+    closeModal: function(id) { document.getElementById(id).style.display = 'none'; },
+
+    del: async function(table, id) {
+        if(confirm("Apagar registo definitivamente?")) {
+            await db[table].delete(id);
+            this.render();
+        }
+    }
+};
+
+// Iniciar Aplicação
+ui.init();
+</script>
+</body>
+</html>
