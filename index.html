@@ -114,6 +114,7 @@
             </div>
             <button class="btn-main btn-sec" style="margin-top:15px" onclick="logic.toggleTheme()">Alternar Dark/Light Mode</button>
         </div>
+
         <div class="card">
             <h3>📍 Zonas</h3>
             <div style="display:flex; gap:8px;">
@@ -160,24 +161,30 @@
         </div>
     </div>
 
-<div id="modal-wiki" class="modal"><div class="modal-content">
-    <h3>📖 Info da Espécie</h3>
-    <input type="text" id="w-nome" placeholder="Nome (Ex: Tomate Cherry)">
-    <select id="w-cat">
-        <option>☀️ Hortícolas de Verão</option><option>🥬 Folhas</option>
-        <option>🥕 Raízes</option><option>🌿 Aromáticas</option><option>🍓 Frutos</option>
-    </select>
-    <div class="grid-2">
-        <input type="number" id="w-dias" placeholder="Dias até colheita">
-        <input type="text" id="w-temp" placeholder="Temp: 15-25">
+<div id="modal-wiki" class="modal">
+    <div class="modal-content">
+        <h3>📖 Info da Espécie</h3>
+        
+        <input type="text" id="w-especie" placeholder="Nome da Espécie" class="input-form">
+        <select id="w-cat" class="input-form">
+            <option value="Folhas">🥬 Folhas</option>
+            <option value="Frutos">🍅 Frutos</option>
+            <option value="Raízes">🥕 Raízes</option>
+            <option value="Flores">🌸 Flores</option>
+        </select>
+        
+        <div class="grid-2">
+            <input type="number" id="w-tempo" placeholder="Dias até colheita" class="input-form">
+            <input type="number" id="w-temp" placeholder="Temp. Ideal ºC" class="input-form">
+        </div>
+
+        <textarea id="w-info" placeholder="Notas técnicas (ex: Solo rico em azoto, rega moderada...)" class="input-form" style="height:80px; margin-top:10px;"></textarea>
+        
+        <div class="grid-2">
+            <button class="btn-main" onclick="logic.saveWiki()">Guardar na Wiki</button>
+            <button class="btn-main btn-sec" onclick="ui.closeModal('modal-wiki')">Fechar</button>
+        </div>
     </div>
-    <div class="grid-2">
-        <select id="w-mes-ini"><option value="1">Semeia em: Jan</option><option value="2">Fev</option><option value="3">Mar</option><option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select>
-        <select id="w-mes-fim"><option value="1">Até: Jan</option><option value="2">Fev</option><option value="3">Mar</option><option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select>
-    </div>
-    <button class="btn-main" onclick="logic.saveWiki()">Guardar na Wiki</button>
-    <button class="btn-main btn-sec" onclick="ui.closeModal('modal-wiki')" style="margin-top:10px">Fechar</button>
-</div></div>
 
 <div id="modal-book" class="modal"><div class="modal-content">
     <h3>📒 Nova Nota</h3>
@@ -456,9 +463,35 @@ const logic = {
 },
 
     saveWiki: async function() {
-        const w = { especie: document.getElementById('w-nome').value, categoria: document.getElementById('w-cat').value, tempo: parseInt(document.getElementById('w-dias').value), temp: document.getElementById('w-temp').value, mesInicio: parseInt(document.getElementById('w-mes-ini').value), mesFim: parseInt(document.getElementById('w-mes-fim').value) };
-        await db.wiki.add(w); ui.closeModal('modal-wiki'); ui.render();
-    },
+    const especie = document.getElementById('w-especie').value;
+    const categoria = document.getElementById('w-cat').value;
+    const tempo = document.getElementById('w-tempo').value;
+    const temp = document.getElementById('w-temp').value;
+    const info = document.getElementById('w-info').value; // Lê a nova nota
+
+    if (!especie) return alert("Escreve o nome da espécie!");
+
+    const novoItem = {
+        especie,
+        categoria,
+        tempo: parseInt(tempo) || 0,
+        temp: parseInt(temp) || 0,
+        info: info, // Guarda na base de dados
+        // Adiciona aqui os meses se já tiveres essa lógica
+    };
+
+    try {
+        await db.wiki.add(novoItem);
+        ui.closeModal('modal-wiki');
+        ui.render(); // Atualiza a lista da Wiki e o seletor do plantio
+        alert("✅ Espécie adicionada à Wiki!");
+        
+        // Limpar o campo para a próxima
+        document.getElementById('w-info').value = "";
+    } catch (err) {
+        console.error("Erro na Wiki:", err);
+    }
+},
 
     saveBook: async function() {
         const b = { titulo: document.getElementById('b-tit').value, conteudo: document.getElementById('b-txt').value };
