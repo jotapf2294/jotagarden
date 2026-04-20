@@ -17,6 +17,29 @@
             font-family: system-ui, -apple-system, sans-serif; margin: 0; background: var(--bg); 
             color: var(--txt); height: 100vh; display: flex; flex-direction: column; overflow: hidden; 
         }
+        #page-config {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .config-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .input-row input { flex: 1; margin: 0; }
+        .input-row button { width: auto; min-width: 80px; margin: 0; 
+         }
 
         /* Top Bar & Search */
         .header-container { background: var(--p); padding: 15px 15px 20px; border-radius: 0 0 30px 30px; z-index: 100; }
@@ -96,22 +119,33 @@
         <div id="draw-book"></div>
     </section>
     <section id="page-config" class="page">
-        <div class="card">
-            <h3>⚙️ Configurações</h3>
-            <button class="btn-main btn-sec" onclick="logic.toggleTheme()">Alternar Dark Mode</button>
-            <hr style="opacity:0.1; margin:20px 0;">
-            <h4>Zonas</h4>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="z-input" placeholder="Nova Zona...">
-                <button class="btn-main" style="width:80px" onclick="logic.addZona()">OK</button>
-            </div>
-            <div id="draw-zonas"></div>
-            <hr style="opacity:0.1; margin:20px 0;">
-            <button class="btn-main" style="background:#f39c12" onclick="logic.export()">📥 Exportar Backup</button>
-            <button class="btn-main btn-sec" onclick="document.getElementById('fileIn').click()">📤 Importar Backup</button>
-            <input type="file" id="fileIn" style="display:none" onchange="logic.import(event)">
+    <div class="card config-group">
+        <h3 style="margin:0 0 10px 0">⚙️ Personalização</h3>
+        <button class="btn-main btn-sec" onclick="logic.toggleTheme()" style="margin:0">
+            Alternar Dark Mode
+        </button>
+    </div>
+
+    <div class="card config-group">
+        <h3 style="margin:0 0 10px 0">📍 Minhas Zonas</h3>
+        <div class="input-row">
+            <input type="text" id="z-input" placeholder="Ex: Estufa, Canteiro A...">
+            <button class="btn-main" onclick="logic.addZona()">OK</button>
         </div>
-    </section>
+        <div id="draw-zonas" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card config-group">
+        <h3 style="margin:0 0 10px 0">💾 Dados e Backup</h3>
+        <button class="btn-main" style="background:#f39c12; margin:5px 0" onclick="logic.export()">
+            📥 Exportar Backup
+        </button>
+        <button class="btn-main btn-sec" style="margin:5px 0" onclick="document.getElementById('fileIn').click()">
+            📤 Importar Backup
+        </button>
+        <input type="file" id="fileIn" style="display:none" onchange="logic.import(event)">
+    </div>
+</section>
 </main>
 
 <div id="modal-planta" class="modal">
@@ -353,12 +387,13 @@ const ui = {
     },
 
     drawConfig: async function() {
-        const zs = await db.zonas.toArray();
-        document.getElementById('draw-zonas').innerHTML = zs.map(z => `
-            <div class="card" style="padding:10px 15px; margin-top:5px">
-                <b>${z.nome}</b><button class="btn-act" onclick="logic.del('zonas',${z.id})" style="color:red">✕</button>
-            </div>`).join('');
-    }
+    const zs = await db.zonas.toArray();
+    document.getElementById('draw-zonas').innerHTML = zs.map(z => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(0,0,0,0.03); border-radius:12px; margin-bottom:8px;">
+            <span style="font-weight:bold;">${z.nome}</span>
+            <button class="btn-act" onclick="logic.del('zonas',${z.id})" style="color:red; font-size:1.1rem;">✕</button>
+        </div>`).join('');
+}
 };
 
 const logic = {
