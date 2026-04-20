@@ -196,28 +196,16 @@ db.version(23).stores({
 const logic = {
     savePlantio: async function() {
     try {
-        // Captura os elementos com segurança (? garante que não crasha se não existir)
         const elEspecie = document.getElementById('p-especie');
         const elZona = document.getElementById('p-zona');
         const elData = document.getElementById('p-data');
         const elNota = document.getElementById('p-nota');
-        const elVariedade = document.getElementById('p-nome'); // O campo que pode estar a faltar
+        const elVariedade = document.getElementById('p-nome');
 
-        // Validação básica de segurança
-        if (!elEspecie || !elZona) {
-            alert("Erro crítico: Elementos do formulário não encontrados.");
-            return;
-        }
+        if (!elEspecie.value || !elZona.value) return alert("⚠️ Seleciona Espécie e Local!");
 
-        if (!elEspecie.value || !elZona.value) {
-            alert("⚠️ Seleciona primeiro a Espécie e o Local!");
-            return;
-        }
-
-        // Criar o objeto de dados
         const d = {
             especie: elEspecie.value,
-            // Se o campo variedade (p-nome) não existir no HTML, usamos a espécie como nome
             variedade: (elVariedade && elVariedade.value.trim()) ? elVariedade.value.trim() : elEspecie.value, 
             zonaId: parseInt(elZona.value),
             data: elData.value || new Date().toISOString().split('T')[0],
@@ -225,27 +213,19 @@ const logic = {
             ultimaRega: new Date().toISOString()
         };
 
-        // Gravar na Base de Dados
         await db.plantas.add(d);
         
-        // Abrir a zona na UI
-        ui.expanded.horta diretamente:
-if (ui.expanded && ui.expanded.horta) {
-    ui.expanded.horta.add(d.zonaId); 
-} 
+        // CORREÇÃO AQUI: Usar 'ui' em vez de 'this'
+        if (ui.expanded && ui.expanded.horta) {
+            ui.expanded.horta.add(d.zonaId); 
+        }
 
-        // Fechar modal e atualizar ecrã
         ui.closeModal('modal-plantar');
-        
-        // Limpeza de campos (com verificação se existem)
-        if (elVariedade) elVariedade.value = "";
-        if (elNota) elNota.value = "";
-        
         setTimeout(() => ui.render(), 150);
 
     } catch (err) {
-        console.error("Erro no savePlantio:", err);
-        alert("Erro ao guardar: " + err.message);
+        console.error(err);
+        alert("Erro: " + err.message);
     }
 },
 
