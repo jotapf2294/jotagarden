@@ -3,151 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>JotaGarden OS</title>
-    <link rel="stylesheet" href="style.css">
+    
+    <!-- PWA Manifest (crie um ficheiro manifest.json ao lado) -->
     <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2ecc71">
-<meta name="apple-mobile-web-app-capable" content="yes">
-    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
-      .then(() => console.log("JotaGarden: Service Worker Ativo"))
-      .catch(err => console.log("Erro SW:", err));
-  }
-</script>
+    
+    <!-- Dexie.js via CDN (versão mais recente estável em 2026) -->
+    <script src="https://cdn.jsdelivr.net/npm/dexie@4.0.8/dist/dexie.min.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<header>
-    <div class="search-container">
-        <input type="text" id="search" placeholder="🔍 Pesquisar na horta, wiki ou notas..." oninput="ui.render()">
-    </div>
-</header>
-
-<main id="app-content">
-    <section id="page-inicio" class="active">
-        <div class="moon-card" id="moon-display">
-            <span class="moon-icon">🌑</span>
-            <div class="moon-info">
-                <b class="moon-phase-name">Carregando Lua...</b>
-                <p class="moon-advice">Dica para hoje...</p>
+    <!-- HEADER FIXO -->
+    <header class="glass-header">
+        <div class="header-content">
+            <div class="logo">
+                <span class="neon-text">🌱</span>
+                <h1>JotaGarden OS</h1>
+            </div>
+            
+            <!-- Pesquisa Global -->
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="global-search" 
+                    placeholder="🔎 Pesquisar na Horta ou Wiki..." 
+                    autocomplete="off">
+            </div>
+            
+            <div class="header-actions">
+                <button id="btn-moon" class="icon-btn" title="Fase da Lua">
+                    <span id="moon-icon" class="moon-emoji">🌕</span>
+                </button>
             </div>
         </div>
-        <div class="quick-actions">
-            <button class="btn-primary" onclick="ui.openModal('modal-plantar')">🌱 Plantar Agora</button>
-            <button class="btn-secondary" onclick="ui.openModal('modal-book')">📒 Novo Registo</button>
-        </div>
-        <div id="stats-summary" class="stats-grid"></div>
-    </section>
+    </header>
 
-    <section id="page-horta">
-        <div class="section-header">
-            <h2>Minha Horta</h2>
-            <button class="btn-circle" onclick="ui.openModal('modal-plantar')">+</button>
-        </div>
-        <div id="draw-horta"></div>
-    </section>
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main id="main-content" class="main-content"></main>
 
-    <section id="page-book">
-        <div class="section-header">
-            <h2>Livro de Registos</h2>
-            <button class="btn-circle" onclick="ui.openModal('modal-book')">+</button>
+    <!-- NAVEGAÇÃO INFERIOR FLUTUANTE (DOCK) -->
+    <nav class="bottom-nav glass">
+        <div class="nav-item active" data-section="home">
+            <div class="nav-icon">🏠</div>
+            <span class="nav-label">Início</span>
         </div>
-        <div id="draw-book"></div>
-    </section>
-
-    <section id="page-wiki">
-        <div class="section-header">
-            <h2>Wiki de Espécies</h2>
-            <button class="btn-circle" onclick="ui.openModal('modal-wiki')">+</button>
+        <div class="nav-item" data-section="horta">
+            <div class="nav-icon">🌿</div>
+            <span class="nav-label">Horta</span>
         </div>
-        <div id="draw-wiki"></div>
-    </section>
-
-    <section id="page-config">
-        <h2>Definições</h2>
-        <div class="card settings">
-            <div class="setting-item">
-                <span>Modo Escuro</span>
-                <label class="switch">
-                    <input type="checkbox" id="dark-toggle" checked onchange="logic.toggleTheme()">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <hr>
-            <button class="btn-full" onclick="logic.exportBackup()">💾 Exportar Backup (JSON)</button>
-            <button class="btn-full btn-outline" onclick="document.getElementById('import-file').click()">📥 Importar Dados</button>
-            <input type="file" id="import-file" hidden onchange="logic.importBackup(event)">
+        <div class="nav-item" data-section="wiki">
+            <div class="nav-icon">📖</div>
+            <span class="nav-label">Wiki</span>
         </div>
-
-        <h3>📍 Gerir Zonas</h3>
-        <div class="zone-input-group">
-            <input type="text" id="new-zone-name" placeholder="Ex: Estufa, Canteiro A">
-            <button onclick="logic.addZone()">Adicionar</button>
+        <div class="nav-item" data-section="diario">
+            <div class="nav-icon">📓</div>
+            <span class="nav-label">Diário</span>
         </div>
-        <div id="draw-zones"></div>
-    </section>
-</main>
+        <div class="nav-item" data-section="config">
+            <div class="nav-icon">⚙️</div>
+            <span class="nav-label">Config</span>
+        </div>
+    </nav>
 
-<div id="modal-plantar" class="modal"><div class="modal-content">
-    <h3>🌱 Novo Plantio</h3>
-    <label>Espécie (da Wiki)</label>
-    <select id="p-especie" class="input-field"></select>
-    <label>Variedade</label>
-    <input type="text" id="p-nome" class="input-field" placeholder="Ex: Coração de Boi">
-    <label>Zona</label>
-    <select id="p-zona" class="input-field"></select>
-    <label>Data</label>
-    <input type="date" id="p-data" class="input-field">
-    <textarea id="p-nota" class="input-field" placeholder="Observações extras..."></textarea>
-    <div class="modal-footer">
-        <button class="btn-confirm" onclick="logic.savePlantio()">Confirmar</button>
-        <button class="btn-cancel" onclick="ui.closeModal('modal-plantar')">Fechar</button>
+    <!-- MODAL ÚNICO (reutilizado por JS) -->
+    <div id="modal" class="modal">
+        <div class="modal-content glass" id="modal-inner">
+            <!-- Conteúdo dinâmico inserido via JS -->
+        </div>
     </div>
-</div></div>
 
-<div id="modal-wiki" class="modal"><div class="modal-content">
-    <h3>📖 Nova Espécie na Wiki</h3>
-    <input type="text" id="w-especie" class="input-field" placeholder="Nome da Planta">
-    <select id="w-cat" class="input-field">
-        <option value="Folhas">🥬 Folhas</option>
-        <option value="Frutos">🍅 Frutos</option>
-        <option value="Raízes">🥕 Raízes</option>
-        <option value="Aromáticas">🌿 Aromáticas</option>
-    </select>
-    <input type="number" id="w-tempo" class="input-field" placeholder="Dias até colheita">
-    <textarea id="w-info" class="input-field" placeholder="Notas de cultivo..."></textarea>
-    <div class="modal-footer">
-        <button class="btn-confirm" onclick="logic.saveWiki()">Guardar</button>
-        <button class="btn-cancel" onclick="ui.closeModal('modal-wiki')">Fechar</button>
-    </div>
-</div></div>
-
-<div id="modal-book" class="modal"><div class="modal-content">
-    <h3>📒 Novo Registo no Diário</h3>
-    <input type="text" id="b-titulo" class="input-field" placeholder="Assunto">
-    <select id="b-cat" class="input-field">
-        <option value="Geral">📝 Geral</option>
-        <option value="Adubação">🟤 Adubação</option>
-        <option value="Colheita">🧺 Colheita</option>
-        <option value="Pragas">🐛 Pragas</option>
-    </select>
-    <textarea id="b-texto" class="input-field" placeholder="Escreve aqui..." style="height:150px"></textarea>
-    <div class="modal-footer">
-        <button class="btn-confirm" onclick="logic.saveBook()">Registar</button>
-        <button class="btn-cancel" onclick="ui.closeModal('modal-book')">Fechar</button>
-    </div>
-</div></div>
-
-<nav class="bottom-nav">
-    <div class="nav-item active" onclick="ui.tab('inicio', this)">🏠<span>Início</span></div>
-    <div class="nav-item" onclick="ui.tab('horta', this)">🌱<span>Horta</span></div>
-    <div class="nav-item" onclick="ui.tab('book', this)">📒<span>Diário</span></div>
-    <div class="nav-item" onclick="ui.tab('wiki', this)">📖<span>Wiki</span></div>
-    <div class="nav-item" onclick="ui.tab('config', this)">⚙️<span>Config</span></div>
-</nav>
-
-<script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
