@@ -229,8 +229,10 @@ const logic = {
         await db.plantas.add(d);
         
         // Abrir a zona na UI
-        if (!this.expanded.horta) this.expanded.horta = new Set();
-        this.expanded.horta.add(d.zonaId); 
+        ui.expanded.horta diretamente:
+if (ui.expanded && ui.expanded.horta) {
+    ui.expanded.horta.add(d.zonaId); 
+} 
 
         // Fechar modal e atualizar ecrã
         ui.closeModal('modal-plantar');
