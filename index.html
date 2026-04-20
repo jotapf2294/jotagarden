@@ -184,20 +184,51 @@
 </div></div>
 
 <div id="modal-wiki" class="modal"><div class="modal-content">
-    <h3>📖 Wiki Espécie</h3>
-    <input type="hidden" id="w-id">
-    <input type="text" id="w-nome" placeholder="Nome">
-    <select id="w-cat">
-        <option>☀️ Hortícolas de Verão</option><option>🥕 Raízes e Bolbos</option>
-        <option>🥬 Couves e Folhas</option><option>🌿 Ervas Aromáticas</option>
-        <option>🍓 Frutos e Outros</option>
-    </select>
-    <input type="number" id="w-dias" placeholder="Dias até colher">
-    <input type="text" id="w-temp" placeholder="Temperatura (ex: 20-25°C)">
-    <textarea id="w-info" placeholder="Escreve aqui as notas desta planta..."></textarea>
-    <button class="btn-main" onclick="logic.saveWiki()">Guardar</button>
-    <button class="btn-main btn-sec" onclick="ui.closeModal('modal-wiki')" style="margin-top:10px">Cancelar</button>
-</div></div>
+<div id="modal-wiki" class="modal">
+    <div class="modal-content">
+        <h3>📖 Espécie</h3>
+        <input type="hidden" id="w-id">
+        <input type="text" id="w-nome" placeholder="Nome">
+        <select id="w-cat">
+            <option>☀️ Hortícolas de Verão</option>
+            <option>🥕 Raízes</option>
+            <option>🥬 Folhas</option>
+            <option>🌿 Aromáticas</option>
+            <option>🍓 Frutos</option>
+        </select>
+        <input type="number" id="w-dias" placeholder="Dias para colher">
+        <input type="text" id="w-temp" placeholder="Temp. Ideal (ex: 20°C)">
+        
+        <div class="grid-2">
+            <div>
+                <label><small>Mês Início</small></label>
+                <select id="w-mes-ini">
+                    <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+                    <option value="3">Março</option><option value="4">Abril</option>
+                    <option value="5">Maio</option><option value="6">Junho</option>
+                    <option value="7">Julho</option><option value="8">Agosto</option>
+                    <option value="9">Setembro</option><option value="10">Outubro</option>
+                    <option value="11">Novembro</option><option value="12">Dezembro</option>
+                </select>
+            </div>
+            <div>
+                <label><small>Mês Fim</small></label>
+                <select id="w-mes-fim">
+                    <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+                    <option value="3">Março</option><option value="4">Abril</option>
+                    <option value="5">Maio</option><option value="6">Junho</option>
+                    <option value="7">Julho</option><option value="8">Agosto</option>
+                    <option value="9">Setembro</option><option value="10">Outubro</option>
+                    <option value="11">Novembro</option><option value="12">Dezembro</option>
+                </select>
+            </div>
+        </div>
+
+        <textarea id="w-info" placeholder="Notas técnicas..."></textarea>
+        <button class="btn-main" onclick="logic.saveWiki()">Guardar</button>
+        <button class="btn-main btn-sec" onclick="ui.closeModal('modal-wiki')" style="margin-top:10px">Fechar</button>
+    </div>
+</div>
 
 <div id="modal-book" class="modal"><div class="modal-content">
     <h3>📒 Nota do Livro</h3>
@@ -302,6 +333,41 @@ const ui = {
             ${dicaHtml}
             <h3 style="margin: 25px 0 10px 5px; font-size: 1.1rem;">🚀 Próximas Colheitas</h3>
             <div id="next-harvests">`;
+        
+        // Meses das "Próximas Colheitas":
+const mesAtual = new Date().getMonth() + 1; // 1 a 12
+const mesesNomes = ["","Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+
+const sugestoes = ws.filter(w => {
+    if(!w.mesInicio || !w.mesFim) return false;
+    // Lógica para lidar com períodos que atravessam o ano (ex: Nov a Fev)
+    if (w.mesInicio <= w.mesFim) {
+        return mesAtual >= w.mesInicio && mesAtual <= w.mesFim;
+    } else {
+        return mesAtual >= w.mesInicio || mesAtual <= w.mesFim;
+    }
+});
+
+html += `
+    <h3 style="margin: 25px 0 10px 5px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+        📅 Sugestões de ${mesesNomes[mesAtual]}
+    </h3>
+    <div style="display: flex; overflow-x: auto; gap: 12px; padding-bottom: 10px; scrollbar-width: none;">`;
+
+if (sugestoes.length > 0) {
+    sugestoes.forEach(s => {
+        html += `
+            <div class="card" style="min-width: 140px; margin-bottom: 0; padding: 15px; text-align: center; flex-shrink: 0; background: var(--p-light); border: 1px solid var(--p);">
+                <div style="font-size: 1.5rem; margin-bottom: 5px;">🌱</div>
+                <b style="font-size: 0.9rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.especie}</b>
+                <small style="font-size: 0.7rem; opacity: 0.7;">Ideal agora</small>
+            </div>`;
+    });
+} else {
+    html += `<p style="font-size: 0.9rem; opacity: 0.5; padding: 10px;">Sem sugestões para este mês. Adiciona épocas na Wiki!</p>`;
+}
+
+html += `</div>`;
 
         // Lógica de colheitas (mantém a que já tinhas...)
         const hoje = new Date();
@@ -444,10 +510,18 @@ const logic = {
         ui.closeModal('modal-planta'); ui.render();
     },
     saveWiki: async function() {
-        const id = document.getElementById('w-id').value;
-        const data = { especie: document.getElementById('w-nome').value, categoria: document.getElementById('w-cat').value, tempo: parseInt(document.getElementById('w-dias').value), temp: document.getElementById('w-temp').value, info: document.getElementById('w-info').value };
-        id ? await db.wiki.update(parseInt(id), data) : await db.wiki.add(data);
-        ui.closeModal('modal-wiki'); ui.render();
+    const d = { 
+        especie: document.getElementById('w-nome').value, 
+        categoria: document.getElementById('w-cat').value, 
+        tempo: parseInt(document.getElementById('w-dias').value), 
+        temp: document.getElementById('w-temp').value, 
+        info: document.getElementById('w-info').value,
+        mesInicio: parseInt(document.getElementById('w-mes-ini').value), // Novo
+        mesFim: parseInt(document.getElementById('w-mes-fim').value)    // Novo
+    };
+    await db.wiki.add(d); 
+    ui.closeModal('modal-wiki'); 
+    ui.render();
     },
     saveBook: async function() {
         const id = document.getElementById('b-id').value;
