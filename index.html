@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+1<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
@@ -95,6 +95,41 @@
             border-radius: 8px; padding: 12px; color: #fff; margin-bottom: 10px;
         }
         body.light-mode input, body.light-mode select, body.light-mode textarea { color: #000; }
+
+/* Forçar uma coluna na Wiki e no Diário para melhor leitura */
+#wiki-container, #diary-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.wiki-card-content {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Info técnica em 2 colunas dentro do card */
+    gap: 8px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 10px;
+}
+
+.wiki-notes-area {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-color);
+    opacity: 0.9;
+    white-space: pre-wrap; /* Mantém as quebras de linha das tuas notas */
+}
+
+.months-badge {
+    grid-column: span 2;
+    background: rgba(57, 255, 20, 0.1);
+    padding: 4px 8px;
+    border-radius: 6px;
+    color: var(--accent);
+    font-size: 0.75rem;
+}
 
         /* --- ESPECÍFICO --- */
         .badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--accent); color: var(--accent); }
@@ -424,21 +459,42 @@
 
             // --- WIKI ---
             async renderWiki() {
-                const container = document.getElementById('wiki-container');
-                const species = await db.species.toArray();
-                container.innerHTML = species.map(s => `
-                    <div class="glass-card" style="margin-bottom:0">
-                        <div class="flex-between">
-                            <strong>${s.name}</strong>
-                            <i class="fa-solid fa-pen" onclick="ui.openSpeciesModal(${s.id})"></i>
-                        </div>
-                        <div style="font-size:10px; color:var(--accent); margin-bottom:5px;">${s.category}</div>
-                        <div style="font-size:10px; opacity:0.7">
-                            🌡️ ${s.temp}°C | ⏱️ ${s.harvest} dias
-                        </div>
-                    </div>
-                `).join('');
-            },
+    const container = document.getElementById('wiki-container');
+    const species = await db.species.toArray();
+    
+    // Função auxiliar para traduzir números de meses em nomes curtos
+    const getMonthNames = (csv) => {
+        if(!csv) return "Não definido";
+        const names = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        return csv.split(',').map(m => names[parseInt(m)-1]).join(', ');
+    };
+
+    container.innerHTML = species.map(s => `
+        <div class="glass-card fade-in">
+            <div class="flex-between">
+                <h3 style="margin:0; color:var(--accent); font-size: 1.3rem;">${s.name}</h3>
+                <button class="btn-ghost" style="padding: 5px 10px;" onclick="ui.openSpeciesModal(${s.id})">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+            </div>
+            
+            <div class="badge" style="margin-top: 5px;">${s.category}</div>
+
+            <div class="wiki-card-content">
+                <span><i class="fa-solid fa-temperature-half"></i> ${s.temp || '--'}°C</span>
+                <span><i class="fa-solid fa-hourglass-half"></i> ${s.harvest || '--'} dias</span>
+                <div class="months-badge">
+                    <i class="fa-solid fa-calendar-days"></i> Sementeira: ${getMonthNames(s.months)}
+                </div>
+            </div>
+
+            <div class="wiki-notes-area">
+                <strong><i class="fa-solid fa-clipboard-list"></i> Notas de Cultivo:</strong><br>
+                ${s.notes || '<span class="text-muted">Sem notas registadas para esta espécie.</span>'}
+            </div>
+        </div>
+    `).join('');
+},
 
             async openSpeciesModal(id = null) {
                 const s = id ? await db.species.get(id) : null;
