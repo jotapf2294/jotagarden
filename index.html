@@ -99,6 +99,24 @@
         .nav-btn.active { color: var(--p); font-weight: bold; }
         .nav-btn i { display: block; font-size: 1.5rem; margin-bottom: 4px; }
 
+/* Cortar texto da dica no Início */
+.line-clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Número de linhas antes de cortar */
+    -webkit-box-orient: vertical;  
+    overflow: hidden;
+}
+
+.btn-ver-mais {
+    color: var(--p);
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-decoration: underline;
+    cursor: pointer;
+    display: inline-block;
+    margin-top: 5px;
+}
+
         /* Modal */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 20px; }
         .modal-content { background: var(--card); border-radius: 30px; padding: 25px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
@@ -254,69 +272,65 @@ const ui = {
     },
 
     drawDash: async function() {
-    const [ps, ws, bs] = await Promise.all([
-        db.plantas.toArray(), 
-        db.wiki.toArray(),
-        db.book.toArray()
-    ]);
-    
-    const l = lunar.get();
-    
-    // Escolher uma dica aleatória do Livro
-    const dicaAleatoria = bs.length > 0 
-        ? bs[Math.floor(Math.random() * bs.length)] 
-        : { titulo: "Dica", conteudo: "Regista as tuas dicas no Livro para as veres aqui!" };
-
-    let html = `
-        <div class="card card-lunar">
-            <span>${l.i}</span>
-            <div><b>${l.f}</b><br><small>${l.d}</small></div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-            <button class="btn-main" onclick="ui.openModal('modal-planta')" style="margin:0; padding:12px; font-size:0.8rem; background:#1b5e20;">➕ Plantar</button>
-            <button class="btn-main" onclick="ui.openModal('modal-book')" style="margin:0; padding:12px; font-size:0.8rem; background:#455a64;">📝 Nota Rápida</button>
-        </div>
-
-        <div class="card" style="border-left: 5px solid #fbc02d; background: #fff9c4; color: #5d4037;">
-            <b style="font-size:0.8rem; text-transform:uppercase; opacity:0.7;">💡 Dica do Dia</b>
-            <div style="margin-top:5px;">
-                <strong>${dicaAleatoria.titulo}:</strong> ${dicaAleatoria.conteudo}
-            </div>
-        </div>
-
-        <h3 style="margin: 20px 0 10px 5px;">🚀 Próximas Colheitas</h3>
-        <div id="next-harvests">`;
-
-    // Lógica para calcular colheitas próximas
-    const colheitas = ps.map(p => {
-        const infoWiki = ws.find(w => w.especie === p.variedade);
-        if (!infoWiki) return null;
+    try {
+        const ps = await db.plantas.toArray() || [];
+        const ws = await db.wiki.toArray() || [];
+        const bs = await db.book.toArray() || [];
+        const l = lunar.get();
         
-        const dataPlantio = new Date(p.data);
-        const diasPassados = Math.floor((new Date() - dataPlantio) / 86400000);
-        const diasRestantes = infoWiki.tempo - diasPassados;
-        
-        return { nome: p.variedade, restante: diasRestantes };
-    }).filter(item => item !== null && item.restante <= 15 && item.restante > -5) // Mostra o que falta 15 dias ou passou 5
-      .sort((a, b) => a.restante - b.restante);
-
-    if (colheitas.length > 0) {
-        colheitas.forEach(c => {
-            const status = c.restante <= 0 ? "✅ Pronto!" : `falta ${c.restante} dias`;
-            const cor = c.restante <= 0 ? "#2e7d32" : "#ef6c00";
-            html += `
-                <div class="card" style="padding: 12px 18px; margin-bottom: 8px; flex-direction: row; align-items: center; justify-content: space-between;">
-                    <span><b>${c.nome}</b></span>
-                    <span style="color: ${cor}; font-weight: bold; font-size: 0.85rem;">${status}</span>
+        let dicaHtml = "";
+        if (bs.length > 0) {
+            const dica = bs[Math.floor(Math.random() * bs.length)];
+            dicaHtml = `
+                <div class="card" style="border-left: 5px solid #fbc02d; background: rgba(251, 192, 45, 0.1); color: var(--txt);">
+                    <b style="font-size:0.7rem; text-transform:uppercase; opacity:0.6;">💡 DICA DO DIA</b>
+                    <div style="margin-top:5px;">
+                        <strong style="display:block; margin-bottom:2px;">${dica.titulo}</strong>
+                        <div class="line-clamp" id="dica-texto">${dica.conteudo}</div>
+                        <span class="btn-ver-mais" onclick="logic.goToNote('${dica.titulo}')">Ver mais...</span>
+                    </div>
                 </div>`;
-        });
-    } else {
-        html += `<p style="text-align:center; opacity:0.5; font-size:0.9rem;">Nada para colher nos próximos 15 dias.</p>`;
-    }
+        }
 
-    html += `</div>`;
-    document.getElementById('page-dash').innerHTML = html;
+        // Resto do HTML do Dash (Ações rápidas e Colheitas)
+        let html = `
+            <div class="card card-lunar"><span>${l.i}</span><div><b>${l.f}</b><br><small>${l.d}</small></div></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0;">
+                <button class="btn-main" onclick="ui.openModal('modal-planta')" style="margin:0; padding:12px; font-size:0.85rem; background:var(--p);">➕ Plantar</button>
+                <button class="btn-main" onclick="ui.openModal('modal-book')" style="margin:0; padding:12px; font-size:0.85rem; background:#546e7a;">📝 Nota Rápida</button>
+            </div>
+            ${dicaHtml}
+            <h3 style="margin: 25px 0 10px 5px; font-size: 1.1rem;">🚀 Próximas Colheitas</h3>
+            <div id="next-harvests">`;
+
+        // Lógica de colheitas (mantém a que já tinhas...)
+        const hoje = new Date();
+        const colheitas = ps.map(p => {
+            const infoWiki = ws.find(w => w.especie === p.variedade);
+            if (!infoWiki) return null;
+            const diasDesdePlantio = Math.floor((hoje - new Date(p.data)) / 86400000);
+            const falta = parseInt(infoWiki.tempo) - diasDesdePlantio;
+            return { nome: p.variedade, restante: falta };
+        }).filter(item => item !== null).sort((a, b) => a.restante - b.restante);
+
+        if (colheitas.length > 0) {
+            colheitas.forEach(c => {
+                const pronto = c.restante <= 0;
+                const cor = pronto ? "#2e7d32" : "#ef6c00";
+                html += `
+                    <div class="card" style="padding: 15px; margin-bottom: 10px; flex-direction: row; align-items: center; justify-content: space-between; border-right: 4px solid ${cor};">
+                        <span><b>${c.nome}</b></span>
+                        <span style="color: ${cor}; font-weight: bold; font-size: 0.8rem;">${pronto ? "✅ Pronto!" : "falta "+c.restante+" dias"}</span>
+                    </div>`;
+            });
+        } else {
+            html += `<div style="text-align:center; padding: 20px; opacity:0.5;">Sem colheitas previstas.</div>`;
+        }
+
+        html += `</div>`;
+        document.getElementById('page-dash').innerHTML = html;
+
+    } catch (e) { console.error(e); }
 },
 
     drawHorta: async function(s) {
@@ -446,6 +460,16 @@ const logic = {
         if(type === 'wiki') { const item = await db.wiki.get(id); await ui.openModal('modal-wiki', true); document.getElementById('w-id').value = id; document.getElementById('w-nome').value = item.especie; document.getElementById('w-cat').value = item.categoria; document.getElementById('w-dias').value = item.tempo; document.getElementById('w-temp').value = item.temp; document.getElementById('w-info').value = item.info; }
         if(type === 'book') { const item = await db.book.get(id); await ui.openModal('modal-book', true); document.getElementById('b-id').value = id; document.getElementById('b-tit').value = item.titulo; document.getElementById('b-cat').value = item.categoria; document.getElementById('b-txt').value = item.conteudo; }
     },
+
+// Adiciona isto dentro do objeto const logic = { ... }
+goToNote: function(titulo) {
+    // 1. Define o termo de pesquisa como o título da nota
+    document.getElementById('globalSearch').value = titulo;
+    // 2. Simula o clique no botão "Livro" da barra de navegação
+    const btnBook = document.querySelectorAll('.nav-btn')[3]; // O 4º botão é o Livro
+    ui.nav('book', btnBook);
+},
+
     addZona: async function() { const n = document.getElementById('z-input').value; if(n) await db.zonas.add({ nome: n }); document.getElementById('z-input').value = ""; ui.render(); },
     del: async function(table, id) { if(confirm("Apagar registo?")) { await db[table].delete(id); ui.render(); } },
     toggleTheme: async function() { document.body.classList.toggle('dark'); await db.config.put({ id: 'theme', val: document.body.classList.contains('dark') }); },
