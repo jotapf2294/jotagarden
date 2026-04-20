@@ -325,18 +325,39 @@ const ui = {
     },
 
     drawWiki: async function(s) {
-        const ws = await db.wiki.toArray();
-        const cats = ["Folhas", "Frutos", "Raízes", "Aromáticas"];
-        document.getElementById('draw-wiki').innerHTML = cats.map(c => {
-            const items = ws.filter(w => w.categoria === c && w.especie.toLowerCase().includes(s));
-            const open = this.expanded.wiki.has(c);
-            return `<div class="group-header" onclick="ui.toggle('wiki', '${c}')"><b>📚 ${c}</b> <span>${open?'▼':'▶'}</span></div>` +
-            (open ? items.map(i => `<div class="card">
-                <div style="display:flex; justify-content:space-between"><b>${i.especie}</b> <span onclick="ui.del('wiki', ${i.id})" style="color:var(--danger)">✕</span></div>
-                <div class="note-box">${i.info || 'Sem notas.'}</div>
-            </div>`).join('') : "");
-        }).join('');
-    },
+    const ws = await db.wiki.toArray();
+    // Definimos as categorias fixas para manter a ordem
+    const cats = ["Folhas", "Frutos", "Raízes", "Aromáticas"];
+    
+    document.getElementById('draw-wiki').innerHTML = cats.map(c => {
+        const items = ws.filter(w => w.categoria === c && w.especie.toLowerCase().includes(s));
+        const open = this.expanded.wiki.has(c);
+        
+        let h = `<div class="group-header" onclick="ui.toggle('wiki', '${c}')">
+                    <b>📚 ${c}</b> 
+                    <span>${items.length} espécies ${open ? '▼' : '▶'}</span>
+                 </div>`;
+        
+        if (open) {
+            h += items.map(i => `
+                <div class="card" style="border-left: 4px solid var(--p)">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+                        <b style="font-size:1.1rem">${i.especie} 
+                           <span style="color:var(--p); font-size:0.85rem; margin-left:8px; opacity:0.8">
+                             ⏱️ ${i.tempo || '?'} dias
+                           </span>
+                        </b>
+                        <button class="btn-act" onclick="ui.del('wiki', ${i.id})" style="color:var(--danger); background:none; border:none; font-size:1.2rem">×</button>
+                    </div>
+                    <div class="note-box" style="background: rgba(255,255,255,0.05); padding:10px; border-radius:10px">
+                        ${i.info ? i.info : '<i style="opacity:0.5">Sem notas técnicas...</i>'}
+                    </div>
+                </div>
+            `).join('');
+        }
+        return h;
+    }).join('');
+},
 
     drawBook: async function(s) {
         const entries = await db.book.toArray();
