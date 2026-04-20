@@ -185,7 +185,7 @@
 
 <script>
 const db = new Dexie("JotaGarden_Final");
-db.version(99).stores({
+db.version(23).stores({
     plantas: '++id, variedade, especie, zonaId, data, ultimaRega',
     wiki: '++id, especie, categoria, tempo, info',
     zones: '++id, nome',
