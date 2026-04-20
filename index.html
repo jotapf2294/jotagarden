@@ -9,6 +9,13 @@
 <meta name="theme-color" content="#2ecc71">
 <meta name="apple-mobile-web-app-capable" content="yes">
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log("JotaGarden: Service Worker Ativo"))
+      .catch(err => console.log("Erro SW:", err));
+  }
+</script>
 </head>
 <body>
 
