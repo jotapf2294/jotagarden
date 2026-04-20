@@ -198,7 +198,6 @@ const logic = {
     try {
         // 1. Capturar os elementos
         const elEspecie = document.getElementById('p-especie');
-        const elNome = document.getElementById('p-nome');
         const elZona = document.getElementById('p-zona');
         const elData = document.getElementById('p-data');
         const elNota = document.getElementById('p-nota');
@@ -212,7 +211,7 @@ const logic = {
         // 3. Criar o objeto com proteção contra valores nulos
         const d = {
             especie: elEspecie.value,
-            variedade: elNome.value.trim() || elEspecie.value, 
+            elEspecie.value, 
             zonaId: parseInt(elZona.value),
             data: elData.value || new Date().toISOString().split('T')[0], // Se data estiver vazia, usa hoje
             conteudo: elNota.value.trim(),
@@ -233,7 +232,6 @@ const logic = {
         setTimeout(() => ui.render(), 100);
 
         // Limpar os campos para a próxima vez
-        elNome.value = "";
         elNota.value = "";
         
     } catch (err) {
