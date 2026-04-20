@@ -43,7 +43,12 @@ const logic = {
 
     // ---- Diário ----
     async getDiaryEntries() { return await db.diary.orderBy('date').reverse().toArray(); },
-    async addDiaryEntry(category, text, date) { return await db.diary.add({ category, text, date }); },
+    async addDiaryEntry(category, title, text, date) { 
+        return await db.diary.add({ category, title, text, date }); 
+    },
+    async updateDiaryEntry(id, category, title, text, date) {
+        return await db.diary.update(id, { category, title, text, date });
+    },
 
     // ---- Dashboard e Utilitários ----
     async getStats() {
@@ -311,6 +316,44 @@ const ui = {
         });
     },
 
+       async editDiaryEntry(entryId = null) {
+        let entry = entryId ? await logic.getDiaryEntryById(entryId) : null;
+        
+        this.showModal(`
+            <h3>${entry ? 'Editar' : 'Novo'} Registo</h3>
+            <input type="text" id="diary-title" placeholder="Título do Registo" value="${entry?.title || ''}">
+            <select id="diary-cat">
+                <option value="Geral" ${entry?.category === 'Geral' ? 'selected' : ''}>Geral</option>
+                <option value="Adubação" ${entry?.category === 'Adubação' ? 'selected' : ''}>Adubação</option>
+                <option value="Colheita" ${entry?.category === 'Colheita' ? 'selected' : ''}>Colheita</option>
+            </select>
+            <input type="date" id="diary-date" value="${entry?.date || new Date().toISOString().split('T')[0]}">
+            <textarea id="diary-text" placeholder="Escreve aqui as tuas notas...">${entry?.text || ''}</textarea>
+            <button class="btn-primary mt-10" id="save-diary" style="width:100%">Guardar</button>
+        `);
+
+        this.bindEvent('save-diary', 'click', async () => {
+            const data = {
+                title: document.getElementById('diary-title').value,
+                cat: document.getElementById('diary-cat').value,
+                date: document.getElementById('diary-date').value,
+                text: document.getElementById('diary-text').value
+            };
+
+            if (data.title && data.text) {
+                if (entry) {
+                    await logic.updateDiaryEntry(entry.id, data.cat, data.title, data.text, data.date);
+                } else {
+                    await logic.addDiaryEntry(data.cat, data.title, data.text, data.date);
+                }
+                this.closeModal();
+                this.renderDiary();
+            } else {
+                alert("Preenche o título e a nota!");
+            }
+        });
+    },
+
     // --- Renderização de Views ---
     renderView(viewId) {
         document.getElementById('global-search').value = ''; // Limpa search ao trocar tab
@@ -410,23 +453,31 @@ const ui = {
         `).join('');
     },
 
-    async renderDiary() {
+        async renderDiary() {
         const container = document.getElementById('diary-container');
-        if(!container) return;
-
+        if (!container) return;
         const entries = await logic.getDiaryEntries();
-        container.innerHTML = entries.map(e => {
-            let icon = 'fa-pen';
-            if(e.category === 'Adubação') icon = 'fa-flask';
-            if(e.category === 'Colheita') icon = 'fa-basket-shopping';
 
-            return `
-            <div class="glass-card fade-in" style="border-left: 3px solid var(--accent-color);">
-                <h4><i class="fa-solid ${icon}"></i> ${e.category} <span style="float:right; font-weight:normal; font-size: 0.8rem;">${e.date}</span></h4>
-                <p class="mt-10">${e.text}</p>
-            </div>`;
-        }).join('');
+        container.innerHTML = entries.map(e => `
+            <div class="glass-card fade-in">
+                <div class="diary-header-row">
+                    <div class="diary-title-area">
+                        <h4>${e.title || 'Sem Título'}</h4>
+                        <div class="diary-meta">
+                            <span><i class="fa-solid fa-tag"></i> ${e.category}</span>
+                            <span><i class="fa-solid fa-calendar"></i> ${e.date}</span>
+                        </div>
+                    </div>
+                    <div class="diary-actions">
+                        <button class="btn-action-icon" onclick="ui.editDiaryEntry(${e.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-action-icon" onclick="ui.deleteDiaryEntry(${e.id})" style="color:var(--danger-color)"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="diary-note">${e.text}</div>
+            </div>
+        `).join('');
     },
+
 
     // --- Ações delegadas para o HTML ---
     async deleteZone(id) {
