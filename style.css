@@ -1,386 +1,125 @@
-/* -----------------------------------------------------------
-   JotaGarden OS - Design System Premium v3.0
-   Foco: Fluidez, Hierarquia Visual e Feedback Tátil
------------------------------------------------------------ */
-
 :root {
-    /* Paleta Dark Otimizada (Fundo puro para OLED) */
-    --bg: #000000;
-    --card: #161618; /* Cartão ligeiramente mais claro que o fundo */
-    --card-hover: #1c1c1e;
-    --border: #2c2c2e; /* Linhas de separação subtis */
-    
-    /* Cores de Destaque (Verde Natureza Vibrante) */
-    --p: #34d399; /* Verde Esmeralda Suave */
-    --p-dark: #10b981;
-    --p-light: rgba(52, 211, 153, 0.15);
-    
-    /* Tipografia e Estados */
-    --txt: #ffffff;
-    --txt-dim: #8e8e93; /* Cinza secundário Apple style */
-    --danger: #ff453a; /* Vermelho iOS */
-    --accent: #0a84ff; /* Azul iOS para links/info */
-    
-    /* Sombras e Raios (Subtis e Modernos) */
-    --radius-lg: 24px; /* Para modais e grandes cartões */
-    --radius-md: 16px; /* Para cartões padrão e botões */
-    --radius-sm: 10px; /* Para inputs e elementos pequenos */
-    --shadow-sm: 0 2px 8px rgba(0,0,0,0.4);
-    --shadow-md: 0 8px 24px rgba(0,0,0,0.5);
-    
-    /* Transições Global */
-    --tr: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Paleta Neon & Glass */
+    --bg: #0a0b10;
+    --card: rgba(255, 255, 255, 0.05); /* Efeito Vidro */
+    --card-solid: #1c1e26;
+    --p: #00ff88; /* Verde Neon */
+    --p-dark: #00bd65;
+    --accent: #00d1ff; /* Azul Ciano */
+    --danger: #ff4d4d;
+    --txt: #f0f0f0;
+    --txt-dim: #a0a0b0;
+    --border: rgba(255, 255, 255, 0.1);
+    --glass-blur: blur(12px);
 }
 
-/* Modo Claro Otimizado */
-body.light-mode {
-    --bg: #f2f2f7;
-    --card: #ffffff;
-    --card-hover: #f9f9f9;
-    --border: #e5e5ea;
-    --txt: #1c1c1e;
-    --txt-dim: #636366;
-    --p: #10b981;
-    --p-dark: #059669;
-    --p-light: rgba(16, 185, 129, 0.1);
-    --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
-    --shadow-md: 0 8px 20px rgba(0,0,0,0.1);
-}
-
-/* -----------------------------------------------------------
-   RESET & BÁSICOS
------------------------------------------------------------ */
-* { 
-    box-sizing: border-box; 
-    -webkit-tap-highlight-color: transparent; /* Remove o flash azul no mobile */
-    outline: none; 
-}
-
-html, body {
-    height: 100%;
-    overflow: hidden; /* Importante para o scroll interno */
-}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 
 body { 
-    margin: 0; 
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg); 
-    color: var(--txt); 
-    transition: var(--tr);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    display: flex;
-    flex-direction: column;
+    margin: 0; font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
+    background: var(--bg); color: var(--txt); 
+    background-image: radial-gradient(circle at 50% -20%, #1a2a22 0%, #0a0b10 100%);
+    min-height: 100vh;
 }
 
-/* Scrollbar Subtil */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-/* -----------------------------------------------------------
-   LAYOUT PRINCIPAL
------------------------------------------------------------ */
+/* HEADER COM GRADIENTE */
 header { 
-    padding: 20px; 
-    background: var(--card); /* Mudança para cartão para destacar o input */
-    border-radius: 0 0 var(--radius-lg) var(--radius-lg); 
-    position: sticky; 
-    top: 0; 
-    z-index: 100; 
-    box-shadow: var(--shadow-sm);
+    padding: 25px 20px; 
+    background: linear-gradient(to bottom, rgba(10,11,16,0.9), rgba(10,11,16,0.6));
+    backdrop-filter: var(--glass-blur);
     border-bottom: 1px solid var(--border);
-    transition: var(--tr);
+    position: sticky; top: 0; z-index: 100;
 }
 
 .search-container input {
-    width: 100%; 
-    padding: 14px 20px; 
-    border-radius: var(--radius-md); 
-    border: 1px solid var(--border);
-    background: var(--bg); /* Input escuro sobre header claro */
-    color: var(--txt); 
-    font-size: 1rem;
-    transition: var(--tr);
+    width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border);
+    background: rgba(255,255,255,0.05); color: white; font-size: 1rem;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
 }
 
-.search-container input:focus {
-    border-color: var(--p);
-    box-shadow: 0 0 0 3px var(--p-light);
-}
-
-main {
-    flex: 1;
-    overflow-y: auto; /* Scroll apenas no conteúdo */
-    -webkit-overflow-scrolling: touch; /* Scroll fluido no iOS */
-}
-
-section { 
-    display: none; 
-    padding: 20px 20px 120px 20px; /* Padding bottom extra para a nav */
-    animation: slideUp 0.5s var(--tr); 
-}
-
-section.active { display: block; }
-
-@keyframes slideUp { 
-    from { opacity: 0; transform: translateY(20px); } 
-    to { opacity: 1; transform: translateY(0); } 
-}
-
-/* -----------------------------------------------------------
-   COMPONENTES DE UI
------------------------------------------------------------ */
+/* CARTÕES ESTILO "GLASS" */
 .card { 
     background: var(--card); 
-    border-radius: var(--radius-md); 
-    padding: 20px; 
-    margin-bottom: 16px; 
-    box-shadow: var(--shadow-sm); 
+    backdrop-filter: var(--glass-blur);
     border: 1px solid var(--border);
-    transition: var(--tr);
+    border-radius: 20px; padding: 20px; 
+    margin-bottom: 15px; 
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.card:hover { background: var(--card-hover); border-color: #3a3a3c; }
+.card:active { transform: scale(0.98); }
 
-h2, h3 { margin-top: 0; font-weight: 700; letter-spacing: -0.5px; }
-h2 { font-size: 1.75rem; color: var(--p); }
-h3 { font-size: 1.3rem; margin-bottom: 15px; color: var(--txt); }
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding: 0 5px;
-}
-
-.section-header h2 { margin: 0; }
-
-/* Cabeçalhos de Grupo (Acordeões) */
+/* GRUPOS / ACORDEÕES */
 .group-header {
-    background: var(--card); 
-    padding: 18px 20px; 
-    border-radius: var(--radius-md);
-    margin: 12px 0; 
-    display: flex; 
-    justify-content: space-between;
-    align-items: center;
-    border-left: 5px solid var(--p); 
-    cursor: pointer;
-    box-shadow: var(--shadow-sm);
-    transition: var(--tr);
+    background: linear-gradient(90deg, rgba(0,255,136,0.1), transparent);
+    padding: 18px 20px; border-radius: 15px;
+    margin: 15px 0; display: flex; justify-content: space-between;
+    border-left: 4px solid var(--p); cursor: pointer;
+    border-top: 1px solid var(--border);
 }
 
-.group-header:hover { background: var(--card-hover); transform: translateX(2px); }
-.group-header b { font-size: 1.1rem; color: var(--txt); }
-.group-header span { color: var(--p); font-size: 0.9rem; font-weight: 600; }
+.group-header b { color: var(--p); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
 
-/* Caixa de Notas */
-.note-box { 
-    margin-top: 15px; 
-    padding: 15px; 
-    background: rgba(128,128,128,0.06); 
-    border-radius: var(--radius-sm); 
-    font-size: 0.95rem; 
-    border-left: 3px solid var(--p-dark);
-    color: var(--txt-dim);
-    line-height: 1.5;
-    white-space: pre-wrap;
-}
-
-.badge { 
-    font-size: 0.75rem; 
-    padding: 5px 12px; 
-    border-radius: 20px; 
-    font-weight: 700; 
-    text-transform: uppercase; 
-    background: var(--p-light);
-    color: var(--p);
-    letter-spacing: 0.5px;
-}
-
-/* -----------------------------------------------------------
-   BOTÕES E ESTADOS TÁTEIS
------------------------------------------------------------ */
+/* BOTÕES NEON */
 .btn-primary { 
-    background: var(--p); 
-    color: #000; 
-    border: none; 
-    padding: 16px; 
-    border-radius: var(--radius-md); 
-    font-weight: 700; 
-    font-size: 1rem;
-    width: 100%; 
-    cursor: pointer;
-    transition: var(--tr);
-    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: linear-gradient(135deg, var(--p), var(--p-dark));
+    color: #000; border: none; padding: 16px; border-radius: 14px; 
+    font-weight: 900; width: 100%; cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,255,136,0.3);
+    text-transform: uppercase;
 }
-
-.btn-primary:active { transform: scale(0.97); background: var(--p-dark); }
-
-.btn-secondary { 
-    background: var(--card); 
-    color: var(--txt); 
-    border: 1px solid var(--border);
-}
-.btn-secondary:hover { background: var(--card-hover); }
 
 .btn-circle {
-    width: 45px; height: 45px;
-    background: var(--p); color: #000;
-    border: none; border-radius: 50%;
-    font-size: 1.5rem; font-weight: bold;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: var(--tr);
-    box-shadow: var(--shadow-sm);
+    width: 55px; height: 55px; background: var(--p); color: #000;
+    border: none; border-radius: 50%; font-size: 1.8rem;
+    position: fixed; bottom: 100px; right: 20px; z-index: 99;
+    box-shadow: 0 0 20px rgba(0,255,136,0.4);
 }
-.btn-circle:active { transform: scale(0.9) rotate(90deg); }
 
-/* Ícones de ação dentro do card (Rega, Apagar) */
-.card-actions {
-    display: flex; gap: 15px; align-items: center;
-}
-.action-icon {
-    font-size: 1.3rem; cursor: pointer; transition: var(--tr); opacity: 0.7;
-}
-.action-icon:hover { opacity: 1; transform: scale(1.1); }
-.action-icon.delete { color: var(--danger); }
-.action-icon.water { color: var(--accent); }
-
-/* -----------------------------------------------------------
-   NAVEGAÇÃO INFERIOR (Apple Style)
------------------------------------------------------------ */
+/* NAVEGAÇÃO ESTILO FLOAT */
 .bottom-nav {
-    position: fixed; 
-    bottom: 0; 
-    width: 100%; 
-    background: rgba(22, 22, 24, 0.8); /* Translúcido */
-    backdrop-filter: blur(20px); /* Efeito de vidro */
-    -webkit-backdrop-filter: blur(20px);
-    display: flex; 
-    justify-content: space-around; 
-    padding: 12px 0 30px 0; /* Padding extra para iPhones novos */
-    border-top: 1px solid var(--border); 
-    z-index: 1000;
-    transition: var(--tr);
+    position: fixed; bottom: 15px; left: 15px; right: 15px;
+    background: rgba(28, 30, 38, 0.85);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border);
+    border-radius: 25px; display: flex; justify-content: space-around;
+    padding: 10px 5px; z-index: 1000;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
 .nav-item { 
-    color: var(--txt-dim); 
-    text-align: center; 
-    font-size: 0.7rem; 
-    cursor: pointer; 
-    transition: var(--tr);
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-    flex: 1;
+    color: var(--txt-dim); text-align: center; font-size: 0.7rem; 
+    padding: 10px; flex: 1; transition: 0.3s;
 }
 
-.nav-item i { font-size: 1.3rem; font-style: normal; margin-bottom: 2px; }
-.nav-item.active { color: var(--p); font-weight: 600; transform: translateY(-2px); }
-
-/* -----------------------------------------------------------
-   MODAIS E FORMULÁRIOS
------------------------------------------------------------ */
-.modal { 
-    position: fixed; inset: 0; 
-    background: rgba(0,0,0,0.8); /* Fundo semi-transparente */
-    backdrop-filter: blur(5px);
-    display: none; 
-    align-items: center; justify-content: center; 
-    z-index: 2000; 
-    padding: 20px;
-    opacity: 0; transition: opacity 0.3s ease;
+.nav-item.active { 
+    color: var(--p); filter: drop-shadow(0 0 8px var(--p));
+    transform: translateY(-5px);
 }
 
-.modal.show { opacity: 1; display: flex; }
-
+/* MODAL DARK PREMIUM */
 .modal-content { 
-    background: var(--card); 
-    width: 100%; max-width: 480px; 
-    padding: 30px; 
-    border-radius: var(--radius-lg); 
-    max-height: 85vh; 
-    overflow-y: auto;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-md);
-    transform: scale(0.9); transition: transform 0.3s ease;
+    background: #14161d; 
+    border: 1px solid var(--p);
+    border-radius: 30px; padding: 30px; 
+    box-shadow: 0 0 50px rgba(0,255,136,0.1);
 }
-
-.modal.show .modal-content { transform: scale(1); }
 
 .input-field {
-    width: 100%; 
-    padding: 14px; 
-    margin: 10px 0 18px 0; 
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border); 
-    background: var(--bg); 
-    color: var(--txt);
-    font-size: 1rem;
-    transition: var(--tr);
+    width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px;
+    border: 1px solid var(--border); background: #0a0b10; color: var(--txt);
 }
 
-.input-field:focus { border-color: var(--p); box-shadow: 0 0 0 3px var(--p-light); }
-textarea.input-field { height: 120px; resize: none; line-height: 1.4; }
-label <small> { color: var(--txt-dim); font-weight: 600; margin-left: 3px; }
+.input-field:focus { border-color: var(--p); box-shadow: 0 0 10px rgba(0,255,136,0.2); }
 
-.modal-footer {
-    display: flex; gap: 12px; margin-top: 25px;
+/* BADGES E ICONES */
+.badge { 
+    background: rgba(0,255,136,0.15); color: var(--p);
+    padding: 5px 12px; border-radius: 10px; font-weight: bold; font-size: 0.8rem;
 }
 
-.btn-confirm { @extend .btn-primary; }
-.btn-cancel { @extend .btn-secondary; width: 100%; border-radius: var(--radius-md); padding: 16px; font-weight: bold; cursor: pointer; border: none; }
-
-/* -----------------------------------------------------------
-   ELEMENTOS ESPECÍFICOS DA ABA INÍCIO
------------------------------------------------------------ */
-.moon-card {
-    background: linear-gradient(135deg, var(--card), #2c2c2e);
-    border-radius: var(--radius-md);
-    padding: 25px;
-    margin-bottom: 20px;
-    display: flex; align-items: center; gap: 20px;
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--border);
-}
-
-.moon-icon { font-size: 3.5rem; }
-.moon-phase-name { font-size: 1.4rem; color: var(--p); letter-spacing: -0.5px; }
-.moon-advice { color: var(--txt-dim); margin: 5px 0 0 0; font-size: 0.95rem; line-height: 1.4; }
-
-.quick-actions {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;
-}
-
-/* -----------------------------------------------------------
-   ELEMENTOS ESPECÍFICOS DA ABA CONFIG
------------------------------------------------------------ */
-.setting-item {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 15px 5px;
-}
-
-/* Toggle Switch (Apple Style) */
-.switch { position: relative; display: inline-block; width: 50px; height: 28px; }
-.switch input { opacity: 0; width: 0; height: 0; }
-.slider {
-    position: absolute; cursor: pointer; inset: 0;
-    background-color: #3a3a3c; transition: .4s; border-radius: 34px;
-}
-.slider:before {
-    position: absolute; content: ""; height: 24px; width: 24px; left: 2px; bottom: 2px;
-    background-color: white; transition: .4s; border-radius: 50%;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-input:checked + .slider { background-color: var(--p); }
-input:checked + .slider:before { transform: translateX(22px); }
-
-.zone-input-group {
-    display: flex; gap: 10px; margin-bottom: 20px;
-}
-.zone-input-group input { flex: 1; margin: 0; }
-.zone-input-group button { 
-    background: var(--p); color: #000; border: none; padding: 0 20px; 
-    border-radius: var(--radius-sm); font-weight: bold; cursor: pointer;
+.note-box { 
+    background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px;
+    margin-top: 10px; border: 1px dashed var(--border); color: #ccc;
 }
