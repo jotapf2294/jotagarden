@@ -3,241 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-<script>
-  // Regista o Service Worker para permitir instalação
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-  }
-</script>
-
-    <title>JotaGarden PRO</title>
+    <title>JotaGarden Ultra PRO</title>
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/dexie@4.0.8/dist/dexie.min.js"></script>
     <style>
         :root {
-            --p: #2e7d32; --bg: #f4f7f4; --card: #ffffff; --txt: #2c3e50;
-            --radius: 24px; --shadow: 0 8px 20px rgba(0,0,0,0.06);
+            --p: #2e7d32; --p-light: rgba(46,125,50,0.1); --bg: #f4f7f4; 
+            --card: #ffffff; --txt: #2c3e50; --shadow: 0 8px 20px rgba(0,0,0,0.05);
+            --danger: #e53935; --warn: #ffa000; --accent: #795548;
         }
-        body.dark { --bg: #121212; --card: #1e1e1e; --txt: #eceff1; --p: #81c784; }
+        body.dark { --bg: #121212; --card: #1e1e1e; --txt: #eceff1; --p: #81c784; --p-light: rgba(129,199,132,0.1); }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { 
-            font-family: system-ui, -apple-system, sans-serif; margin: 0; background: var(--bg); 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; background: var(--bg); 
             color: var(--txt); height: 100vh; display: flex; flex-direction: column; overflow: hidden; 
         }
 
-        /* Header & Search */
-        .header-container { background: var(--p); padding: 15px 15px 20px; border-radius: 0 0 30px 30px; z-index: 100; }
+        /* UI Shell */
+        .header { background: var(--p); padding: 15px 15px 25px; border-radius: 0 0 30px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         #globalSearch { 
-            width: 100%; border: none; padding: 16px 22px; border-radius: 50px; 
-            background: var(--card); color: var(--txt); font-size: 16px; box-shadow: var(--shadow);
-            margin-top: env(safe-area-inset-top);
+            width: 100%; border: none; padding: 16px 20px; border-radius: 50px; 
+            background: var(--card); color: var(--txt); box-shadow: var(--shadow);
+            margin-top: env(safe-area-inset-top); font-size: 1rem;
         }
 
-        /* Main Layout */
         .main-content { flex: 1; overflow-y: auto; padding: 15px 15px 120px; scroll-behavior: smooth; }
         .page { display: none; }
-        .page.active { display: block; animation: fadeIn 0.3s ease; }
+        .page.active { display: block; animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Estilo dos Cards e Listas */
-        .cat-header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 15px; margin: 20px 0 10px; background: rgba(0,0,0,0.03);
-            border-radius: 15px; cursor: pointer; border-left: 5px solid var(--p);
+        /* Cards & Elements */
+        .card { background: var(--card); border-radius: 24px; padding: 18px; margin-bottom: 15px; box-shadow: var(--shadow); }
+        .card-lunar { background: linear-gradient(135deg, #1a2a3a, #000) !important; color: white !important; display: flex; align-items: center; gap: 20px; }
+        .card-lunar span { font-size: 3.5rem; line-height: 1; }
+        
+        /* Dica do Dia */
+        .card-note { border-left: 5px solid #fbc02d; background: var(--p-light); }
+        .line-clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .btn-more { color: var(--p); font-weight: bold; cursor: pointer; font-size: 0.8rem; margin-top: 5px; display: inline-block; }
+
+        /* Sugestões Carrossel */
+        .sugestao-container { display: flex; overflow-x: auto; gap: 12px; padding: 5px 0 15px; scrollbar-width: none; }
+        .sugestao-container::-webkit-scrollbar { display: none; }
+        .card-sugestao { 
+            min-width: 140px; background: var(--card); border: 1.5px solid var(--p-light); 
+            border-radius: 20px; padding: 15px; text-align: center; flex-shrink: 0; transition: 0.2s;
         }
+        .card-sugestao:active { transform: scale(0.95); background: var(--p-light); }
 
-        .card {
-            background: var(--card); border-radius: 22px; padding: 18px; margin-bottom: 12px;
-            box-shadow: var(--shadow); display: flex; flex-direction: column; 
-        }
-        .card-row { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
-        .card-info { flex: 1; padding-right: 12px; }
-        .card-title { font-weight: 800; font-size: 1.05rem; display: block; margin-bottom: 6px; }
-        .card-sub { font-size: 0.85rem; opacity: 0.7; display: flex; gap: 12px; align-items: center; }
-
-        .card-actions { display: flex; gap: 15px; align-items: center; }
-        .btn-act { border: none; background: none; font-size: 1.3rem; cursor: pointer; padding: 0; }
-
-        /* Notas Estilizadas */
-        .card-note {
-            margin-top: 12px; padding: 12px; background: rgba(46,125,50,0.05); 
-            border-radius: 12px; font-size: 0.9rem; line-height: 1.4; border-left: 3px solid var(--p);
-        }
-
-        /* Dashboard */
-        .card-lunar { background: linear-gradient(135deg, #1a2a3a, #000) !important; color: white !important; flex-direction: row !important; align-items: center !important; gap: 20px; }
-        .card-sauda { background: var(--p) !important; color: white !important; flex-direction: row !important; }
-
-/* Aumentar especificamente o ícone da Lua */
-.card-lunar span { 
-    font-size: 4rem; /* Tamanho do ícone (podes aumentar para 3.5rem se quiseres ainda maior) */
-    line-height: 1;
-    filter: drop-shadow(0 0 10px rgba(255,255,255,0.3)); /* Um brilho suave para destacar */
-}
-        /* Configuração Arrumada */
-        .config-card { background: var(--card); border-radius: 22px; padding: 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; }
-        .zona-input-group { display: flex; gap: 10px; }
-        .zona-input-group input { flex: 1; margin: 0; }
-        .zona-input-group button { width: 70px; margin: 0; }
-        .zona-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: rgba(0,0,0,0.03); border-radius: 12px; }
-
-        /* Buttons & Forms */
-        .btn-main { background: var(--p); color: white; border: none; padding: 18px; border-radius: 20px; width: 100%; font-weight: bold; cursor: pointer; }
+        /* Buttons */
+        .btn-main { background: var(--p); color: white; border: none; padding: 15px; border-radius: 18px; font-weight: 800; width: 100%; cursor: pointer; }
         .btn-sec { background: #546e7a !important; }
-        input, select, textarea { width: 100%; padding: 15px; margin: 10px 0; border-radius: 15px; border: 1px solid rgba(0,0,0,0.1); background: var(--bg); color: var(--txt); }
+        .btn-act { border: none; background: none; font-size: 1.4rem; padding: 5px; cursor: pointer; filter: grayscale(0.3); }
+        .btn-act:hover { filter: grayscale(0); }
 
         /* Navbar */
         .nav-bar { 
             position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; 
             padding: 10px 5px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid rgba(0,0,0,0.05); 
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.03);
         }
-        .nav-btn { flex: 1; border: none; background: none; color: #90a4ae; font-size: 0.7rem; cursor: pointer; }
-        .nav-btn.active { color: var(--p); font-weight: bold; }
-        .nav-btn i { display: block; font-size: 1.5rem; margin-bottom: 4px; }
+        .nav-btn { flex: 1; border: none; background: none; color: #90a4ae; font-size: 0.7rem; font-weight: 600; text-align: center; }
+        .nav-btn.active { color: var(--p); }
+        .nav-btn i { display: block; font-size: 1.5rem; margin-bottom: 4px; font-style: normal; }
 
-/* Cortar texto da dica no Início */
-.line-clamp {
-    display: -webkit-box;
-    -webkit-line-clamp: 3; /* Número de linhas antes de cortar */
-    -webkit-box-orient: vertical;  
-    overflow: hidden;
-}
-
-.btn-ver-mais {
-    color: var(--p);
-    font-size: 0.8rem;
-    font-weight: bold;
-    text-decoration: underline;
-    cursor: pointer;
-    display: inline-block;
-    margin-top: 5px;
-}
-
-        /* Modal */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 20px; }
-        .modal-content { background: var(--card); border-radius: 30px; padding: 25px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
+        /* Modals */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 20px; }
+        .modal-content { background: var(--card); border-radius: 30px; padding: 25px; width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; }
+        
+        input, select, textarea { 
+            width: 100%; padding: 14px; margin: 8px 0; border-radius: 15px; 
+            border: 1px solid rgba(0,0,0,0.1); background: var(--bg); color: var(--txt); font-size: 1rem; 
+        }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
     </style>
 </head>
-<body>
-
-<div class="header-container" id="search-box">
+<body class="dark"> <div class="header">
     <input type="text" id="globalSearch" placeholder="🔍 Procurar na JotaGarden..." oninput="ui.render()">
 </div>
 
 <main class="main-content">
     <section id="page-dash" class="page active"></section>
-    
+
     <section id="page-horta" class="page">
-        <button class="btn-main" onclick="ui.openModal('modal-planta')" style="margin-bottom:15px">+ Registar na Horta</button>
+        <div class="grid-2">
+            <button class="btn-main" onclick="ui.openModal('modal-planta')">+ Plantar</button>
+            <button class="btn-main btn-sec" onclick="ui.openModal('modal-historico')">📜 Histórico</button>
+        </div>
         <div id="draw-horta"></div>
     </section>
 
     <section id="page-wiki" class="page">
-        <button class="btn-main" onclick="ui.openModal('modal-wiki')" style="margin-bottom:15px">+ Nova Espécie na Wiki</button>
+        <button class="btn-main" style="margin-bottom:15px" onclick="ui.openModal('modal-wiki')">+ Adicionar Espécie</button>
         <div id="draw-wiki"></div>
     </section>
 
     <section id="page-book" class="page">
-        <button class="btn-main" onclick="ui.openModal('modal-book')" style="margin-bottom:15px">+ Nova Nota Geral</button>
+        <button class="btn-main" style="margin-bottom:15px" onclick="ui.openModal('modal-book')">+ Nova Nota</button>
         <div id="draw-book"></div>
     </section>
 
     <section id="page-config" class="page">
-        <div class="config-card">
-            <h3>⚙️ Personalização</h3>
-            <button class="btn-main btn-sec" onclick="logic.toggleTheme()">Alternar Dark Mode</button>
-        </div>
-
-        <div class="config-card">
-            <h3>📍 Minhas Zonas</h3>
-            <div class="zona-input-group">
-                <input type="text" id="z-input" placeholder="Ex: Estufa...">
-                <button class="btn-main" onclick="logic.addZona()">OK</button>
+        <div class="card">
+            <h3>🌍 Clima e Tema</h3>
+            <label><small>Temperatura Média Atual (°C)</small></label>
+            <div style="display:flex; gap:8px;">
+                <input type="number" id="cfg-temp" placeholder="22" style="margin:0">
+                <button class="btn-main" style="width:70px" onclick="logic.saveTemp()">OK</button>
             </div>
-            <div id="draw-zonas"></div>
+            <button class="btn-main btn-sec" style="margin-top:15px" onclick="logic.toggleTheme()">Alternar Dark/Light Mode</button>
         </div>
-
-        <div class="config-card">
-            <h3>💾 Backup</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button class="btn-main" style="background:#f39c12;" onclick="logic.export()">📥 Exportar</button>
-                <button class="btn-main btn-sec" onclick="document.getElementById('fileIn').click()">📤 Importar</button>
+        <div class="card">
+            <h3>📍 Zonas</h3>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="z-input" placeholder="Nova Zona..." style="margin:0">
+                <button class="btn-main" style="width:70px" onclick="logic.addZona()">OK</button>
             </div>
-            <input type="file" id="fileIn" style="display:none" onchange="logic.import(event)">
+            <div id="draw-zonas" style="margin-top:15px"></div>
         </div>
+        <div class="card">
+            <h3>📊 Estatísticas</h3>
+            <div id="draw-stats"></div>
+        </div>
+        <button class="btn-main" style="background:#f39c12" onclick="logic.exportData()">💾 Exportar Backup</button>
     </section>
 </main>
 
 <div id="modal-planta" class="modal"><div class="modal-content">
-    <h3>🌱 Plantação</h3>
-    <input type="hidden" id="p-id">
+    <h3>🌱 Novo Registo</h3>
     <select id="p-nome"></select>
-    <input type="date" id="p-data">
     <select id="p-zona"></select>
-    <textarea id="p-nota" placeholder="Notas da plantação..."></textarea>
-    <button class="btn-main" onclick="logic.savePlanta()">Guardar</button>
+    <input type="date" id="p-data">
+    <textarea id="p-nota" placeholder="Alguma observação?"></textarea>
+    <button class="btn-main" onclick="logic.savePlanta()">Confirmar Plantio</button>
     <button class="btn-main btn-sec" onclick="ui.closeModal('modal-planta')" style="margin-top:10px">Cancelar</button>
 </div></div>
 
 <div id="modal-wiki" class="modal"><div class="modal-content">
-<div id="modal-wiki" class="modal">
-    <div class="modal-content">
-        <h3>📖 Espécie</h3>
-        <input type="hidden" id="w-id">
-        <input type="text" id="w-nome" placeholder="Nome">
-        <select id="w-cat">
-            <option>☀️ Hortícolas de Verão</option>
-            <option>🥕 Raízes</option>
-            <option>🥬 Folhas</option>
-            <option>🌿 Aromáticas</option>
-            <option>🍓 Frutos</option>
-        </select>
-        <input type="number" id="w-dias" placeholder="Dias para colher">
-        <input type="text" id="w-temp" placeholder="Temp. Ideal (ex: 20°C)">
-        
-        <div class="grid-2">
-            <div>
-                <label><small>Mês Início</small></label>
-                <select id="w-mes-ini">
-                    <option value="1">Janeiro</option><option value="2">Fevereiro</option>
-                    <option value="3">Março</option><option value="4">Abril</option>
-                    <option value="5">Maio</option><option value="6">Junho</option>
-                    <option value="7">Julho</option><option value="8">Agosto</option>
-                    <option value="9">Setembro</option><option value="10">Outubro</option>
-                    <option value="11">Novembro</option><option value="12">Dezembro</option>
-                </select>
-            </div>
-            <div>
-                <label><small>Mês Fim</small></label>
-                <select id="w-mes-fim">
-                    <option value="1">Janeiro</option><option value="2">Fevereiro</option>
-                    <option value="3">Março</option><option value="4">Abril</option>
-                    <option value="5">Maio</option><option value="6">Junho</option>
-                    <option value="7">Julho</option><option value="8">Agosto</option>
-                    <option value="9">Setembro</option><option value="10">Outubro</option>
-                    <option value="11">Novembro</option><option value="12">Dezembro</option>
-                </select>
-            </div>
-        </div>
-
-        <textarea id="w-info" placeholder="Notas técnicas..."></textarea>
-        <button class="btn-main" onclick="logic.saveWiki()">Guardar</button>
-        <button class="btn-main btn-sec" onclick="ui.closeModal('modal-wiki')" style="margin-top:10px">Fechar</button>
+    <h3>📖 Info da Espécie</h3>
+    <input type="text" id="w-nome" placeholder="Nome (Ex: Tomate Cherry)">
+    <select id="w-cat">
+        <option>☀️ Hortícolas de Verão</option><option>🥬 Folhas</option>
+        <option>🥕 Raízes</option><option>🌿 Aromáticas</option><option>🍓 Frutos</option>
+    </select>
+    <div class="grid-2">
+        <input type="number" id="w-dias" placeholder="Dias até colheita">
+        <input type="text" id="w-temp" placeholder="Temp: 15-25">
     </div>
-</div>
+    <div class="grid-2">
+        <select id="w-mes-ini"><option value="1">Semeia em: Jan</option><option value="2">Fev</option><option value="3">Mar</option><option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select>
+        <select id="w-mes-fim"><option value="1">Até: Jan</option><option value="2">Fev</option><option value="3">Mar</option><option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select>
+    </div>
+    <button class="btn-main" onclick="logic.saveWiki()">Guardar na Wiki</button>
+    <button class="btn-main btn-sec" onclick="ui.closeModal('modal-wiki')" style="margin-top:10px">Fechar</button>
+</div></div>
 
 <div id="modal-book" class="modal"><div class="modal-content">
-    <h3>📒 Nota do Livro</h3>
-    <input type="hidden" id="b-id">
+    <h3>📒 Nova Nota</h3>
     <input type="text" id="b-tit" placeholder="Título">
-    <select id="b-cat"><option>💡 Dicas</option><option>🪄 Truques</option><option>🐛 Pragas</option><option>📝 Geral</option></select>
-    <textarea id="b-txt" placeholder="Conteúdo da nota..."></textarea>
-    <button class="btn-main" onclick="logic.saveBook()">Guardar</button>
-    <button class="btn-main btn-sec" onclick="ui.closeModal('modal-book')" style="margin-top:10px">Cancelar</button>
+    <textarea id="b-txt" style="height:150px" placeholder="Conteúdo da nota..."></textarea>
+    <button class="btn-main" onclick="logic.saveBook()">Guardar Nota</button>
+    <button class="btn-main btn-sec" onclick="ui.closeModal('modal-book')" style="margin-top:10px">Fechar</button>
+</div></div>
+
+<div id="modal-historico" class="modal"><div class="modal-content">
+    <h3>📜 Histórico de Sucesso</h3>
+    <div id="draw-historico-lista"></div>
+    <button class="btn-main btn-sec" onclick="ui.closeModal('modal-historico')" style="margin-top:15px">Voltar</button>
 </div></div>
 
 <nav class="nav-bar">
@@ -248,24 +181,35 @@
     <button class="nav-btn" onclick="ui.nav('config', this)"><i>⚙️</i>Config</button>
 </nav>
 
-<script src="db.js"></script>
 <script>
+// --- DATABASE ---
+const db = new Dexie("JotaGardenDB");
+db.version(7).stores({
+    plantas: '++id, variedade, zonaId, data, ultimaRega',
+    wiki: '++id, especie, categoria, mesInicio, mesFim',
+    zonas: '++id, nome',
+    book: '++id, titulo',
+    config: 'id',
+    historico: '++id, variedade, dataColheita'
+});
+
+// --- LÓGICA LUNAR ---
 const lunar = {
     get: () => {
-        const lp = 2551443, now = new Date();
-        const nm = new Date('1970-01-07T20:35:00Z');
+        const lp = 2551443, now = new Date(), nm = new Date('1970-01-07T20:35:00Z');
         const phase = ((now.getTime() - nm.getTime()) / 1000) % lp;
         const p = Math.floor(phase / (24 * 3600)) + 1;
-        if (p < 2) return { f: "Lua Nova", i: "🌑", d: "Pausa e planeamento." };
-        if (p < 8) return { f: "Crescente", i: "🌒", d: "Semear folhas e frutos." };
-        if (p < 15) return { f: "Lua Cheia", i: "🌕", d: "Colheitas e força total." };
-        return { f: "Minguante", i: "🌘", d: "Podas e raízes." };
+        if (p < 2) return { f: "Lua Nova", i: "🌑", d: "Ideal para planear e adubar." };
+        if (p < 8) return { f: "Crescente", i: "🌒", d: "Semeia folhas e frutos." };
+        if (p < 15) return { f: "Lua Cheia", i: "🌕", d: "Energia máxima: Colheitas!" };
+        return { f: "Minguante", i: "🌘", d: "Podas e controlo de pragas." };
     }
 };
 
+// --- UI CONTROLLER ---
 const ui = {
     view: 'dash',
-    exp: { horta: new Set(), wiki: new Set(), book: new Set() },
+    exp: { horta: new Set(), wiki: new Set() },
 
     nav: function(v, btn) {
         this.view = v;
@@ -273,22 +217,19 @@ const ui = {
         document.getElementById(`page-${v}`).classList.add('active');
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        document.getElementById('search-box').style.display = (v === 'config') ? 'none' : 'block';
         this.render();
     },
 
-    openModal: async function(id, editData = null) {
+    openModal: async function(id, prefill = null) {
         document.getElementById(id).style.display = 'flex';
         if(id === 'modal-planta') {
             const [zs, ws] = await Promise.all([db.zonas.toArray(), db.wiki.toArray()]);
-            document.getElementById('p-zona').innerHTML = zs.map(z => `<option value="${z.id}">${z.nome}</option>`).join('');
-            document.getElementById('p-nome').innerHTML = ws.map(w => `<option value="${w.especie}">${w.especie}</option>`).join('');
+            document.getElementById('p-zona').innerHTML = zs.map(z => `<option value="${z.id}">${z.nome}</option>`).join('') || '<option>Cria uma zona primeiro!</option>';
+            document.getElementById('p-nome').innerHTML = ws.map(w => `<option value="${w.especie}">${w.especie}</option>`).join('') || '<option>Cria a espécie na Wiki!</option>';
             document.getElementById('p-data').valueAsDate = new Date();
+            if(prefill) document.getElementById('p-nome').value = prefill;
         }
-        if(!editData) {
-            document.getElementById(id).querySelectorAll('input, textarea').forEach(i => i.value = "");
-            document.getElementById(id).querySelectorAll('input[type="hidden"]').forEach(i => i.value = "");
-        }
+        if(id === 'modal-historico') this.drawHistorico();
     },
 
     closeModal: (id) => document.getElementById(id).style.display = 'none',
@@ -303,258 +244,178 @@ const ui = {
     },
 
     drawDash: async function() {
-    try {
-        const ps = await db.plantas.toArray() || [];
-        const ws = await db.wiki.toArray() || [];
-        const bs = await db.book.toArray() || [];
+        const [ps, ws, bs, cfgT] = await Promise.all([db.plantas.toArray(), db.wiki.toArray(), db.book.toArray(), db.config.get('tempMedia')]);
         const l = lunar.get();
-        
-        let dicaHtml = "";
-        if (bs.length > 0) {
-            const dica = bs[Math.floor(Math.random() * bs.length)];
-            dicaHtml = `
-                <div class="card" style="border-left: 5px solid #fbc02d; background: rgba(251, 192, 45, 0.1); color: var(--txt);">
-                    <b style="font-size:0.7rem; text-transform:uppercase; opacity:0.6;">💡 DICA DO DIA</b>
-                    <div style="margin-top:5px;">
-                        <strong style="display:block; margin-bottom:2px;">${dica.titulo}</strong>
-                        <div class="line-clamp" id="dica-texto">${dica.conteudo}</div>
-                        <span class="btn-ver-mais" onclick="logic.goToNote('${dica.titulo}')">Ver mais...</span>
-                    </div>
-                </div>`;
-        }
+        const tAtual = cfgT ? cfgT.val : null;
+        const mes = new Date().getMonth() + 1;
+        const dica = bs.length ? bs[Math.floor(Math.random()*bs.length)] : null;
 
-        // Resto do HTML do Dash (Ações rápidas e Colheitas)
         let html = `
             <div class="card card-lunar"><span>${l.i}</span><div><b>${l.f}</b><br><small>${l.d}</small></div></div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0;">
-                <button class="btn-main" onclick="ui.openModal('modal-planta')" style="margin:0; padding:12px; font-size:0.85rem; background:var(--p);">➕ Plantar</button>
-                <button class="btn-main" onclick="ui.openModal('modal-book')" style="margin:0; padding:12px; font-size:0.85rem; background:#546e7a;">📝 Nota Rápida</button>
-            </div>
-            ${dicaHtml}
-            <h3 style="margin: 25px 0 10px 5px; font-size: 1.1rem;">🚀 Próximas Colheitas</h3>
-            <div id="next-harvests">`;
-        
-        // Meses das "Próximas Colheitas":
-const mesAtual = new Date().getMonth() + 1; // 1 a 12
-const mesesNomes = ["","Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-
-const sugestoes = ws.filter(w => {
-    if(!w.mesInicio || !w.mesFim) return false;
-    // Lógica para lidar com períodos que atravessam o ano (ex: Nov a Fev)
-    if (w.mesInicio <= w.mesFim) {
-        return mesAtual >= w.mesInicio && mesAtual <= w.mesFim;
-    } else {
-        return mesAtual >= w.mesInicio || mesAtual <= w.mesFim;
-    }
-});
-
-html += `
-    <h3 style="margin: 25px 0 10px 5px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-        📅 Sugestões de ${mesesNomes[mesAtual]}
-    </h3>
-    <div style="display: flex; overflow-x: auto; gap: 12px; padding-bottom: 10px; scrollbar-width: none;">`;
-
-if (sugestoes.length > 0) {
-    sugestoes.forEach(s => {
-        html += `
-            <div class="card" style="min-width: 140px; margin-bottom: 0; padding: 15px; text-align: center; flex-shrink: 0; background: var(--p-light); border: 1px solid var(--p);">
-                <div style="font-size: 1.5rem; margin-bottom: 5px;">🌱</div>
-                <b style="font-size: 0.9rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.especie}</b>
-                <small style="font-size: 0.7rem; opacity: 0.7;">Ideal agora</small>
+            <div class="grid-2">
+                <button class="btn-main" onclick="ui.openModal('modal-planta')">➕ Plantar</button>
+                <button class="btn-main btn-sec" onclick="ui.openModal('modal-book')">📝 Nota</button>
             </div>`;
-    });
-} else {
-    html += `<p style="font-size: 0.9rem; opacity: 0.5; padding: 10px;">Sem sugestões para este mês. Adiciona épocas na Wiki!</p>`;
-}
 
-html += `</div>`;
-
-        // Lógica de colheitas (mantém a que já tinhas...)
-        const hoje = new Date();
-        const colheitas = ps.map(p => {
-            const infoWiki = ws.find(w => w.especie === p.variedade);
-            if (!infoWiki) return null;
-            const diasDesdePlantio = Math.floor((hoje - new Date(p.data)) / 86400000);
-            const falta = parseInt(infoWiki.tempo) - diasDesdePlantio;
-            return { nome: p.variedade, restante: falta };
-        }).filter(item => item !== null).sort((a, b) => a.restante - b.restante);
-
-        if (colheitas.length > 0) {
-            colheitas.forEach(c => {
-                const pronto = c.restante <= 0;
-                const cor = pronto ? "#2e7d32" : "#ef6c00";
-                html += `
-                    <div class="card" style="padding: 15px; margin-bottom: 10px; flex-direction: row; align-items: center; justify-content: space-between; border-right: 4px solid ${cor};">
-                        <span><b>${c.nome}</b></span>
-                        <span style="color: ${cor}; font-weight: bold; font-size: 0.8rem;">${pronto ? "✅ Pronto!" : "falta "+c.restante+" dias"}</span>
-                    </div>`;
-            });
-        } else {
-            html += `<div style="text-align:center; padding: 20px; opacity:0.5;">Sem colheitas previstas.</div>`;
+        if(dica) {
+            html += `<div class="card card-note">
+                <b style="font-size:0.7rem; opacity:0.6;">💡 DICA DO DIA</b>
+                <div style="margin-top:5px;"><strong>${dica.titulo}</strong><p class="line-clamp">${dica.conteudo}</p>
+                <span class="btn-more" onclick="logic.goToNote('${dica.titulo}')">Ler nota completa</span></div></div>`;
         }
 
-        html += `</div>`;
-        document.getElementById('page-dash').innerHTML = html;
+        // --- SUGESTÕES SMART ---
+        html += `<h3 style="margin:20px 0 10px 5px">📅 Sugestões de Plantio</h3>`;
+        if(!tAtual) {
+            html += `<div class="card" onclick="ui.nav('config', document.querySelectorAll('.nav-btn')[4])" style="text-align:center; border:2px dashed var(--p); cursor:pointer"><p>Define a temperatura nas Configurações para ver sugestões!</p></div>`;
+        } else {
+            const sugs = ws.filter(w => {
+                const range = w.temp.match(/\d+/g);
+                if(!range) return false;
+                const mesOk = w.mesInicio <= w.mesFim ? (mes >= w.mesInicio && mes <= w.mesFim) : (mes >= w.mesInicio || mes <= w.mesFim);
+                return mesOk && (tAtual >= parseInt(range[0]) && tAtual <= parseInt(range[1]));
+            });
+            if(sugs.length) {
+                html += `<div class="sugestao-container">`;
+                sugs.forEach(s => {
+                    html += `<div class="card-sugestao" onclick="ui.openModal('modal-planta', '${s.especie}')"><span>🌱</span><b class="s-name">${s.especie}</b><small>Ideal agora</small></div>`;
+                });
+                html += `</div>`;
+            } else { html += `<p style="opacity:0.5; font-size:0.9rem">Nada na Wiki compatível com ${tAtual}°C este mês.</p>`; }
+        }
 
-    } catch (e) { console.error(e); }
-},
+        // --- COLHEITAS PRÓXIMAS ---
+        html += `<h3 style="margin:20px 0 10px 5px">🚀 Próximas Colheitas</h3>`;
+        const colheitas = ps.map(p => {
+            const w = ws.find(x => x.especie === p.variedade);
+            if(!w) return null;
+            const dias = Math.floor((new Date() - new Date(p.data))/86400000);
+            return { n: p.variedade, r: w.tempo - dias };
+        }).filter(x => x && x.r < 15).sort((a,b) => a.r - b.r);
+
+        html += colheitas.map(c => `
+            <div class="card" style="padding:15px; display:flex; justify-content:space-between; align-items:center; border-right: 5px solid ${c.r<=0?'var(--p)':'var(--warn)'}">
+                <b>${c.n}</b><span>${c.r<=0?'✅ Pronto!':'falta '+c.r+' dias'}</span>
+            </div>`).join('') || '<p style="opacity:0.5">Sem colheitas para breve.</p>';
+
+        document.getElementById('page-dash').innerHTML = html;
+    },
 
     drawHorta: async function(s) {
-        const [ps, zs, ws] = await Promise.all([db.plantas.toArray(), db.zonas.toArray(), db.wiki.toArray()]);
+        const [ps, zs] = await Promise.all([db.plantas.toArray(), db.zonas.toArray()]);
         let html = "";
         zs.forEach(z => {
-            const fil = ps.filter(p => p.zonaId == z.id && p.variedade.toLowerCase().includes(s));
-            if(fil.length > 0) {
+            const items = ps.filter(p => p.zonaId == z.id && p.variedade.toLowerCase().includes(s));
+            if(items.length > 0) {
                 const open = this.exp.horta.has(z.id);
-                html += `<div class="cat-header" onclick="logic.toggleExp('horta',${z.id})"><b>📍 ${z.nome} (${fil.length})</b><span>${open?'▼':'▶'}</span></div>`;
+                html += `<div style="padding:12px; background:var(--p-light); border-radius:15px; margin:10px 0; display:flex; justify-content:space-between; cursor:pointer" onclick="logic.toggleExp('horta',${z.id})">
+                    <b>📍 ${z.nome}</b><span>${open?'▼':'▶'}</span></div>`;
                 if(open) {
-                    fil.forEach(p => {
-                        const w = ws.find(x => x.especie === p.variedade);
-                        const dias = Math.floor((new Date() - new Date(p.data)) / 86400000);
+                    items.forEach(p => {
+                        const h = p.ultimaRega ? Math.floor((new Date() - new Date(p.ultimaRega))/3600000) : '?';
                         html += `
-                        <div class="card">
-                            <div class="card-row">
-                                <div class="card-info">
-                                    <b class="card-title">${p.variedade}</b>
-                                    <div class="card-sub"><span>⏳ ${dias} dias</span><span>🌡️ ${w?w.temp:'--'}</span></div>
-                                </div>
-                                <div class="card-actions">
-                                    <button class="btn-act" onclick="logic.prepareEdit('planta',${p.id})">✏️</button>
-                                    <button class="btn-act" onclick="logic.del('plantas',${p.id})" style="color:red">✕</button>
-                                </div>
+                        <div class="card" style="display:flex; justify-content:space-between; align-items:center">
+                            <div><b>${p.variedade}</b><br><small>💧 Rega: ${h}h atrás</small></div>
+                            <div style="display:flex; gap:12px">
+                                <button class="btn-act" onclick="logic.regar(${p.id})">💧</button>
+                                <button class="btn-act" onclick="logic.colher(${p.id})">✅</button>
+                                <button class="btn-act" onclick="logic.del('plantas',${p.id})" style="color:var(--danger)">✕</button>
                             </div>
-                            ${p.nota ? `<div class="card-note" style="font-style:italic">"${p.nota}"</div>` : ''}
                         </div>`;
                     });
                 }
             }
         });
-        document.getElementById('draw-horta').innerHTML = html || '<p align="center" style="opacity:0.5; margin-top:20px;">Vazio.</p>';
+        document.getElementById('draw-horta').innerHTML = html || '<p style="text-align:center; padding:40px; opacity:0.5">A horta está vazia. Começa a plantar!</p>';
     },
 
     drawWiki: async function(s) {
-        const data = await db.wiki.toArray();
-        const filtered = data.filter(i => i.especie.toLowerCase().includes(s));
-        const cats = [...new Set(filtered.map(i => i.categoria))];
-        let html = "";
-        cats.forEach(c => {
+        const ws = await db.wiki.toArray();
+        const cats = [...new Set(ws.map(w => w.categoria))];
+        document.getElementById('draw-wiki').innerHTML = cats.map(c => {
+            const items = ws.filter(w => w.categoria === c && w.especie.toLowerCase().includes(s));
+            if(!items.length) return "";
             const open = this.exp.wiki.has(c);
-            const items = filtered.filter(i => i.categoria === c);
-            html += `<div class="cat-header" onclick="logic.toggleExp('wiki','${c}')"><b>📚 ${c}</b><span>${open?'▼':'▶'}</span></div>`;
-            if(open) {
-                items.forEach(i => {
-                    html += `
-                    <div class="card">
-                        <div class="card-row">
-                            <div class="card-info">
-                                <b class="card-title">${i.especie}</b>
-                                <div class="card-sub"><span>⏱️ ${i.tempo} dias</span><span>🌡️ ${i.temp}</span></div>
-                            </div>
-                            <div class="card-actions">
-                                <button class="btn-act" onclick="logic.prepareEdit('wiki',${i.id})">✏️</button>
-                                <button class="btn-act" onclick="logic.del('wiki',${i.id})" style="color:red">✕</button>
-                            </div>
-                        </div>
-                        ${i.info ? `<div class="card-note">${i.info}</div>` : ''}
-                    </div>`;
-                });
-            }
-        });
-        document.getElementById('draw-wiki').innerHTML = html || '<p align="center" style="opacity:0.5; margin-top:20px;">Vazio.</p>';
+            return `<div style="padding:12px; background:var(--p-light); border-radius:15px; margin:10px 0; display:flex; justify-content:space-between; cursor:pointer" onclick="logic.toggleExp('wiki','${c}')">
+                <b>📚 ${c}</b><span>${open?'▼':'▶'}</span></div>
+                ${open ? items.map(i => `<div class="card" style="display:flex; justify-content:space-between; align-items:center">
+                    <div><b>${i.especie}</b><br><small>⏱️ ${i.tempo} dias | 🌡️ ${i.temp}°C</small></div>
+                    <button class="btn-act" onclick="logic.del('wiki',${i.id})" style="color:var(--danger)">✕</button>
+                </div>`).join('') : ''}`;
+        }).join('') || '<p style="text-align:center; padding:40px; opacity:0.5">Wiki vazia.</p>';
     },
 
     drawBook: async function(s) {
-        const data = await db.book.toArray();
-        const filtered = data.filter(i => i.titulo.toLowerCase().includes(s));
-        const cats = [...new Set(filtered.map(i => i.categoria))];
-        let html = "";
-        cats.forEach(c => {
-            const open = this.exp.book.has(c);
-            const items = filtered.filter(i => i.categoria === c);
-            html += `<div class="cat-header" onclick="logic.toggleExp('book','${c}')"><b>📂 ${c}</b><span>${open?'▼':'▶'}</span></div>`;
-            if(open) {
-                items.forEach(i => {
-                    html += `
-                    <div class="card">
-                        <div class="card-row">
-                            <div class="card-info"><b class="card-title">${i.titulo}</b></div>
-                            <div class="card-actions">
-                                <button class="btn-act" onclick="logic.prepareEdit('book',${i.id})">✏️</button>
-                                <button class="btn-act" onclick="logic.del('book',${i.id})" style="color:red">✕</button>
-                            </div>
-                        </div>
-                        <p style="font-size:0.9rem; margin-top:10px; opacity:0.8;">${i.conteudo}</p>
-                    </div>`;
-                });
-            }
-        });
-        document.getElementById('draw-book').innerHTML = html || '<p align="center" style="opacity:0.5; margin-top:20px;">Vazio.</p>';
+        const bs = await db.book.toArray();
+        document.getElementById('draw-book').innerHTML = bs.filter(b => b.titulo.toLowerCase().includes(s)).map(b => `
+            <div class="card">
+                <div style="display:flex; justify-content:space-between"><b>${b.titulo}</b><button class="btn-act" onclick="logic.del('book',${b.id})" style="color:var(--danger)">✕</button></div>
+                <p style="font-size:0.95rem; line-height:1.4; margin-top:10px">${b.conteudo}</p>
+            </div>`).join('') || '<p style="text-align:center; padding:40px; opacity:0.5">Sem notas registadas.</p>';
     },
 
     drawConfig: async function() {
-        const zs = await db.zonas.toArray();
-        document.getElementById('draw-zonas').innerHTML = zs.map(z => `
-            <div class="zona-item">
-                <b>${z.nome}</b>
-                <button class="btn-act" onclick="logic.del('zonas',${z.id})" style="color:red">✕</button>
-            </div>`).join('');
+        const [zs, hs] = await Promise.all([db.zonas.toArray(), db.historico.toArray()]);
+        document.getElementById('draw-zonas').innerHTML = zs.map(z => `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(0,0,0,0.05)"><span>${z.nome}</span><button onclick="logic.del('zonas',${z.id})" style="color:var(--danger); border:none; background:none">✕</button></div>`).join('');
+        document.getElementById('draw-stats').innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px">
+            <div class="card" style="margin:0; text-align:center"><b>${hs.length}</b><br><small>Colheitas</small></div>
+            <div class="card" style="margin:0; text-align:center"><b>${zs.length}</b><br><small>Zonas</small></div>
+        </div>`;
+    },
+
+    drawHistorico: async function() {
+        const hs = await db.historico.reverse().toArray();
+        document.getElementById('draw-historico-lista').innerHTML = hs.map(h => `<div style="padding:12px; border-bottom:1px solid rgba(0,0,0,0.05)"><b>${h.variedade}</b><br><small>Colhido em: ${h.dataColheita}</small></div>`).join('') || '<p>Ainda não colheste nada.</p>';
     }
 };
 
+// --- LOGIC CONTROLLER ---
 const logic = {
-    toggleExp: (type, id) => { ui.exp[type].has(id) ? ui.exp[type].delete(id) : ui.exp[type].add(id); ui.render(); },
+    toggleExp: (t, id) => { ui.exp[t].has(id) ? ui.exp[t].delete(id) : ui.exp[t].add(id); ui.render(); },
+    
     savePlanta: async function() {
-        const id = document.getElementById('p-id').value;
-        const data = { variedade: document.getElementById('p-nome').value, zonaId: parseInt(document.getElementById('p-zona').value), data: document.getElementById('p-data').value, nota: document.getElementById('p-nota').value };
-        id ? await db.plantas.update(parseInt(id), data) : await db.plantas.add(data);
-        ui.closeModal('modal-planta'); ui.render();
+        const p = { variedade: document.getElementById('p-nome').value, zonaId: parseInt(document.getElementById('p-zona').value), data: document.getElementById('p-data').value, conteudo: document.getElementById('p-nota').value, ultimaRega: new Date().toISOString() };
+        await db.plantas.add(p); ui.closeModal('modal-planta'); ui.render();
     },
+
     saveWiki: async function() {
-    const d = { 
-        especie: document.getElementById('w-nome').value, 
-        categoria: document.getElementById('w-cat').value, 
-        tempo: parseInt(document.getElementById('w-dias').value), 
-        temp: document.getElementById('w-temp').value, 
-        info: document.getElementById('w-info').value,
-        mesInicio: parseInt(document.getElementById('w-mes-ini').value), // Novo
-        mesFim: parseInt(document.getElementById('w-mes-fim').value)    // Novo
-    };
-    await db.wiki.add(d); 
-    ui.closeModal('modal-wiki'); 
-    ui.render();
+        const w = { especie: document.getElementById('w-nome').value, categoria: document.getElementById('w-cat').value, tempo: parseInt(document.getElementById('w-dias').value), temp: document.getElementById('w-temp').value, mesInicio: parseInt(document.getElementById('w-mes-ini').value), mesFim: parseInt(document.getElementById('w-mes-fim').value) };
+        await db.wiki.add(w); ui.closeModal('modal-wiki'); ui.render();
     },
+
     saveBook: async function() {
-        const id = document.getElementById('b-id').value;
-        const data = { titulo: document.getElementById('b-tit').value, categoria: document.getElementById('b-cat').value, conteudo: document.getElementById('b-txt').value };
-        id ? await db.book.update(parseInt(id), data) : await db.book.add(data);
-        ui.closeModal('modal-book'); ui.render();
-    },
-    prepareEdit: async function(type, id) {
-        if(type === 'planta') { const item = await db.plantas.get(id); await ui.openModal('modal-planta', true); document.getElementById('p-id').value = id; document.getElementById('p-nome').value = item.variedade; document.getElementById('p-zona').value = item.zonaId; document.getElementById('p-data').value = item.data; document.getElementById('p-nota').value = item.nota; }
-        if(type === 'wiki') { const item = await db.wiki.get(id); await ui.openModal('modal-wiki', true); document.getElementById('w-id').value = id; document.getElementById('w-nome').value = item.especie; document.getElementById('w-cat').value = item.categoria; document.getElementById('w-dias').value = item.tempo; document.getElementById('w-temp').value = item.temp; document.getElementById('w-info').value = item.info; }
-        if(type === 'book') { const item = await db.book.get(id); await ui.openModal('modal-book', true); document.getElementById('b-id').value = id; document.getElementById('b-tit').value = item.titulo; document.getElementById('b-cat').value = item.categoria; document.getElementById('b-txt').value = item.conteudo; }
+        const b = { titulo: document.getElementById('b-tit').value, conteudo: document.getElementById('b-txt').value };
+        await db.book.add(b); ui.closeModal('modal-book'); ui.render();
     },
 
-// Adiciona isto dentro do objeto const logic = { ... }
-goToNote: function(titulo) {
-    // 1. Define o termo de pesquisa como o título da nota
-    document.getElementById('globalSearch').value = titulo;
-    // 2. Simula o clique no botão "Livro" da barra de navegação
-    const btnBook = document.querySelectorAll('.nav-btn')[3]; // O 4º botão é o Livro
-    ui.nav('book', btnBook);
-},
+    regar: async function(id) { await db.plantas.update(id, { ultimaRega: new Date().toISOString() }); ui.render(); },
+    
+    colher: async function(id) {
+        if(confirm("Mover para o histórico de colheitas?")) {
+            const p = await db.plantas.get(id);
+            await db.historico.add({ variedade: p.variedade, dataColheita: new Date().toLocaleDateString() });
+            await db.plantas.delete(id); ui.render();
+        }
+    },
 
-    addZona: async function() { const n = document.getElementById('z-input').value; if(n) await db.zonas.add({ nome: n }); document.getElementById('z-input').value = ""; ui.render(); },
-    del: async function(table, id) { if(confirm("Apagar registo?")) { await db[table].delete(id); ui.render(); } },
+    del: async function(t, id) { if(confirm("Apagar registo?")) { await db[t].delete(id); ui.render(); } },
+    addZona: async function() { const v = document.getElementById('z-input').value; if(v) await db.zonas.add({ nome: v }); document.getElementById('z-input').value=""; ui.render(); },
+    saveTemp: async function() { const v = parseInt(document.getElementById('cfg-temp').value); if(v) await db.config.put({ id: 'tempMedia', val: v }); ui.render(); },
     toggleTheme: async function() { document.body.classList.toggle('dark'); await db.config.put({ id: 'theme', val: document.body.classList.contains('dark') }); },
-    export: async function() { const d = {}; for(const t of ['zonas','wiki','plantas','book']) d[t] = await db[t].toArray(); const blob = new Blob([JSON.stringify(d)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_jota.json`; a.click(); },
-    import: function(e) { const fr = new FileReader(); fr.onload = async (ev) => { const d = JSON.parse(ev.target.result); for(const t in d) { await db[t].clear(); await db[t].bulkAdd(d[t]); } location.reload(); }; fr.readAsText(e.target.files[0]); }
+    goToNote: function(t) { document.getElementById('globalSearch').value = t; ui.nav('book', document.querySelectorAll('.nav-btn')[3]); },
+    exportData: async function() { 
+        const d = {}; for(const t of ['plantas','wiki','zonas','book','historico']) d[t] = await db[t].toArray();
+        const blob = new Blob([JSON.stringify(d)], {type:'application/json'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `JotaGarden_Backup.json`; a.click();
+    }
 };
 
 window.onload = async () => {
-    const cfg = await db.config.get('theme');
-    if(cfg?.val) document.body.classList.add('dark');
+    const [t, tm] = await Promise.all([db.config.get('theme'), db.config.get('tempMedia')]);
+    if(t && t.val === false) document.body.classList.remove('dark');
+    if(tm) document.getElementById('cfg-temp').value = tm.val;
     ui.render();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 };
 </script>
 </body>
