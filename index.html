@@ -254,18 +254,69 @@ const ui = {
     },
 
     drawDash: async function() {
-    const [ps, ws] = await Promise.all([db.plantas.toArray(), db.wiki.toArray()]);
+    const [ps, ws, bs] = await Promise.all([
+        db.plantas.toArray(), 
+        db.wiki.toArray(),
+        db.book.toArray()
+    ]);
+    
     const l = lunar.get();
-    document.getElementById('page-dash').innerHTML = `
+    
+    // Escolher uma dica aleatória do Livro
+    const dicaAleatoria = bs.length > 0 
+        ? bs[Math.floor(Math.random() * bs.length)] 
+        : { titulo: "Dica", conteudo: "Regista as tuas dicas no Livro para as veres aqui!" };
+
+    let html = `
         <div class="card card-lunar">
-            <span>${l.i}</span> <div>
-                <b style="font-size: 1.2rem;">${l.f}</b><br>
-                <small style="opacity: 0.9;">${l.d}</small>
+            <span>${l.i}</span>
+            <div><b>${l.f}</b><br><small>${l.d}</small></div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+            <button class="btn-main" onclick="ui.openModal('modal-planta')" style="margin:0; padding:12px; font-size:0.8rem; background:#1b5e20;">➕ Plantar</button>
+            <button class="btn-main" onclick="ui.openModal('modal-book')" style="margin:0; padding:12px; font-size:0.8rem; background:#455a64;">📝 Nota Rápida</button>
+        </div>
+
+        <div class="card" style="border-left: 5px solid #fbc02d; background: #fff9c4; color: #5d4037;">
+            <b style="font-size:0.8rem; text-transform:uppercase; opacity:0.7;">💡 Dica do Dia</b>
+            <div style="margin-top:5px;">
+                <strong>${dicaAleatoria.titulo}:</strong> ${dicaAleatoria.conteudo}
             </div>
         </div>
-        <div class="card card-sauda">
-            <div><b>Olá Jota!</b><br><small>Tens ${ps.length} plantas ativas na horta.</small></div>
-        </div>`;
+
+        <h3 style="margin: 20px 0 10px 5px;">🚀 Próximas Colheitas</h3>
+        <div id="next-harvests">`;
+
+    // Lógica para calcular colheitas próximas
+    const colheitas = ps.map(p => {
+        const infoWiki = ws.find(w => w.especie === p.variedade);
+        if (!infoWiki) return null;
+        
+        const dataPlantio = new Date(p.data);
+        const diasPassados = Math.floor((new Date() - dataPlantio) / 86400000);
+        const diasRestantes = infoWiki.tempo - diasPassados;
+        
+        return { nome: p.variedade, restante: diasRestantes };
+    }).filter(item => item !== null && item.restante <= 15 && item.restante > -5) // Mostra o que falta 15 dias ou passou 5
+      .sort((a, b) => a.restante - b.restante);
+
+    if (colheitas.length > 0) {
+        colheitas.forEach(c => {
+            const status = c.restante <= 0 ? "✅ Pronto!" : `falta ${c.restante} dias`;
+            const cor = c.restante <= 0 ? "#2e7d32" : "#ef6c00";
+            html += `
+                <div class="card" style="padding: 12px 18px; margin-bottom: 8px; flex-direction: row; align-items: center; justify-content: space-between;">
+                    <span><b>${c.nome}</b></span>
+                    <span style="color: ${cor}; font-weight: bold; font-size: 0.85rem;">${status}</span>
+                </div>`;
+        });
+    } else {
+        html += `<p style="text-align:center; opacity:0.5; font-size:0.9rem;">Nada para colher nos próximos 15 dias.</p>`;
+    }
+
+    html += `</div>`;
+    document.getElementById('page-dash').innerHTML = html;
 },
 
     drawHorta: async function(s) {
