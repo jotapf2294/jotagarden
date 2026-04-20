@@ -160,8 +160,16 @@ const ui = {
         this.expanded[tab].has(id) ? this.expanded[tab].delete(id) : this.expanded[tab].add(id);
         this.render();
     },
-    openModal(id) { document.getElementById(id).style.display = 'flex'; },
-    closeModal(id) { document.getElementById(id).style.display = 'none'; },
+    openModal(id) { 
+    const modal = document.getElementById(id);
+    modal.style.display = 'flex'; 
+    setTimeout(() => modal.classList.add('show'), 10); // Adiciona classe para animação
+},
+closeModal(id) { 
+    const modal = document.getElementById(id);
+    modal.classList.remove('show');
+    setTimeout(() => modal.style.display = 'none', 300); // Espera a animação acabar
+},
     async del(tbl, id) { if(confirm("Apagar registo?")) { await db[tbl].delete(id); this.render(); } },
     
     async updateSelectors() {
