@@ -309,56 +309,55 @@ const ui = {
     },
 
     drawHorta: async function(s) {
-    const [ps, zs] = await Promise.all([db.plantas.toArray(), db.zones.toArray()]);
+    const [ps, zs] = await Promise.all([db.plantas.toArray(), db.zonas.toArray()]);
     let html = "";
-    
     zs.forEach(z => {
         const items = ps.filter(p => p.zonaId == z.id && p.variedade.toLowerCase().includes(s));
         if(items.length > 0) {
             const open = this.exp.horta.has(z.id);
-            html += `
-                <div style="padding:12px; background:var(--p-light); border-radius:15px; margin:10px 0; display:flex; justify-content:space-between; cursor:pointer" onclick="logic.toggleExp('horta',${z.id})">
-                    <b>📍 ${z.nome}</b><span>${open?'▼':'▶'}</span>
-                </div>`;
-            
+            html += `<div style="padding:12px; background:var(--p-light); border-radius:15px; margin:10px 0; display:flex; justify-content:space-between; cursor:pointer" onclick="logic.toggleExp('horta',${z.id})">
+                <b>📍 ${z.nome}</b><span>${open?'▼':'▶'}</span></div>`;
             if(open) {
                 items.forEach(p => {
                     const h = p.ultimaRega ? Math.floor((new Date() - new Date(p.ultimaRega))/3600000) : '?';
                     html += `
-                    <div class="card" style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-                        <div style="flex:1">
-                            <b style="font-size:1.1rem">${p.variedade}</b><br>
-                            <small style="color:var(--p); font-weight:bold">💧 Rega: ${h}h atrás</small>
-                            ${p.conteudo ? `<p style="margin:8px 0 0 0; font-size:0.85rem; opacity:0.8; font-style:italic; border-top:1px solid rgba(0,0,0,0.05); padding-top:5px;">"${p.conteudo}"</p>` : ''}
+                    <div class="card" style="display:block;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div><b>${p.variedade}</b><br><small style="color:var(--p)">💧 Rega: ${h}h atrás</small></div>
+                            <div style="display:flex; gap:10px">
+                                <button class="btn-act" onclick="logic.regar(${p.id})">💧</button>
+                                <button class="btn-act" onclick="logic.colher(${p.id})">✅</button>
+                                <button class="btn-act" onclick="logic.del('plantas',${p.id})" style="color:var(--danger)">✕</button>
+                            </div>
                         </div>
-                        <div style="display:flex; gap:10px; align-items:center">
-                            <button class="btn-act" onclick="logic.regar(${p.id})" title="Regar">💧</button>
-                            <button class="btn-act" onclick="logic.colher(${p.id})" title="Colher">✅</button>
-                            <button class="btn-act" onclick="logic.del('plantas',${p.id})" style="color:var(--danger)">✕</button>
-                        </div>
+                        ${p.conteudo ? `<p style="margin:10px 0 0 0; font-size:0.85rem; opacity:0.8; font-style:italic; border-top:1px solid rgba(0,0,0,0.05); padding-top:8px;">📝 ${p.conteudo}</p>` : ''}
                     </div>`;
                 });
             }
         }
     });
-    document.getElementById('draw-horta').innerHTML = html || '<p style="text-align:center; padding:40px; opacity:0.5">A horta está vazia. Começa a plantar!</p>';
+    document.getElementById('draw-horta').innerHTML = html || '<p style="text-align:center; padding:40px; opacity:0.5">Horta vazia.</p>';
 },
 
     drawWiki: async function(s) {
-        const ws = await db.wiki.toArray();
-        const cats = [...new Set(ws.map(w => w.categoria))];
-        document.getElementById('draw-wiki').innerHTML = cats.map(c => {
-            const items = ws.filter(w => w.categoria === c && w.especie.toLowerCase().includes(s));
-            if(!items.length) return "";
-            const open = this.exp.wiki.has(c);
-            return `<div style="padding:12px; background:var(--p-light); border-radius:15px; margin:10px 0; display:flex; justify-content:space-between; cursor:pointer" onclick="logic.toggleExp('wiki','${c}')">
-                <b>📚 ${c}</b><span>${open?'▼':'▶'}</span></div>
-                ${open ? items.map(i => `<div class="card" style="display:flex; justify-content:space-between; align-items:center">
-                    <div><b>${i.especie}</b><br><small>⏱️ ${i.tempo} dias | 🌡️ ${i.temp}°C</small></div>
-                    <button class="btn-act" onclick="logic.del('wiki',${i.id})" style="color:var(--danger)">✕</button>
+    const ws = await db.wiki.toArray();
+    const cats = [...new Set(ws.map(w => w.categoria))];
+    document.getElementById('draw-wiki').innerHTML = cats.map(c => {
+        const items = ws.filter(w => w.categoria === c && w.especie.toLowerCase().includes(s));
+        if(!items.length) return "";
+        const open = this.exp.wiki.has(c);
+        return `<div style="padding:12px; background:var(--p-light); border-radius:15px; margin:10px 0; display:flex; justify-content:space-between; cursor:pointer" onclick="logic.toggleExp('wiki','${c}')">
+            <b>📚 ${c}</b><span>${open?'▼':'▶'}</span></div>
+            ${open ? items.map(i => `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center">
+                        <div><b>${i.especie}</b><br><small>⏱️ ${i.tempo} dias | 🌡️ ${i.temp}°C</small></div>
+                        <button class="btn-act" onclick="logic.del('wiki',${i.id})" style="color:var(--danger)">✕</button>
+                    </div>
+                    ${i.info ? `<div style="margin-top:10px; padding:10px; background:var(--bg); border-radius:10px; font-size:0.85rem; opacity:0.8; line-height:1.4;">📖 <b>Nota Técnica:</b><br>${i.info}</div>` : ''}
                 </div>`).join('') : ''}`;
-        }).join('') || '<p style="text-align:center; padding:40px; opacity:0.5">Wiki vazia.</p>';
-    },
+    }).join('') || '<p style="text-align:center; padding:40px; opacity:0.5">Wiki vazia.</p>';
+},
 
     drawBook: async function(s) {
         const bs = await db.book.toArray();
