@@ -323,19 +323,28 @@ const ui = {
                 items.forEach(p => {
                     const hRega = p.ultimaRega ? Math.floor((new Date() - new Date(p.ultimaRega))/3600000) : '?';
                     
-                    // CÁLCULO DOS DIAS DE VIDA
-                    const dataPlantio = new Date(p.data);
-                    const hoje = new Date();
-                    const diffTempo = Math.abs(hoje - dataPlantio);
-                    const diasVida = Math.floor(diffTempo / (1000 * 60 * 60 * 24));
+                    // --- CÁLCULO ROBUSTO DE DIAS DE VIDA ---
+                    let diasVida = 0;
+                    if (p.data) {
+                        const dataPlantio = new Date(p.data);
+                        const hoje = new Date();
+                        // Resetar as horas para comparar apenas os dias civis
+                        dataPlantio.setHours(0,0,0,0);
+                        hoje.setHours(0,0,0,0);
+                        
+                        const diffTempo = hoje.getTime() - dataPlantio.getTime();
+                        diasVida = Math.floor(diffTempo / (1000 * 60 * 60 * 24));
+                    }
 
                     html += `
                     <div class="card" style="display:block;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <div>
-                                <b>${p.variedade}</b><br>
-                                <small style="color:var(--p)">💧 ${hRega}h atrás</small>
-                                <small style="margin-left:10px; opacity:0.7">📅 ${diasVida} dias de vida</small>
+                                <b style="font-size:1.1rem">${p.variedade}</b><br>
+                                <small style="color:var(--p); font-weight:bold;">💧 Rega: ${hRega}h atrás</small>
+                                <span style="margin-left:8px; padding:2px 8px; background:var(--p-light); border-radius:10px; font-size:0.75rem; font-weight:bold; color:var(--txt);">
+                                    📅 ${diasVida < 0 ? 0 : diasVida} dias
+                                </span>
                             </div>
                             <div style="display:flex; gap:10px">
                                 <button class="btn-act" onclick="logic.regar(${p.id})">💧</button>
