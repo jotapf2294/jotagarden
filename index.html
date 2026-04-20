@@ -126,7 +126,14 @@
             <h3>📊 Estatísticas</h3>
             <div id="draw-stats"></div>
         </div>
-        <button class="btn-main" style="background:#f39c12" onclick="logic.exportData()">💾 Exportar Backup</button>
+        <div class="card">
+    <h3>💾 Gestão de Dados</h3>
+    <div class="grid-2">
+        <button class="btn-main" style="background:#f39c12" onclick="logic.exportData()">💾 Exportar</button>
+        <button class="btn-main btn-sec" onclick="document.getElementById('fileIn').click()">📥 Importar</button>
+    </div>
+    <input type="file" id="fileIn" style="display:none" onchange="logic.importData(event)">
+</div>
     </section>
 </main>
 
@@ -407,7 +414,31 @@ const logic = {
         const d = {}; for(const t of ['plantas','wiki','zonas','book','historico']) d[t] = await db[t].toArray();
         const blob = new Blob([JSON.stringify(d)], {type:'application/json'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `JotaGarden_Backup.json`; a.click();
-    }
+    },
+    importData: function(e) {
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+        try {
+            const data = JSON.parse(event.target.result);
+            // Limpa as tabelas antes de importar para evitar duplicados ou conflitos
+            const tabelas = ['plantas', 'wiki', 'zonas', 'book', 'historico'];
+            
+            for (const t of tabelas) {
+                if (data[t]) {
+                    await db[t].clear();
+                    await db[t].bulkAdd(data[t]);
+                }
+            }
+            
+            alert("✅ JotaGarden: Dados restaurados com sucesso!");
+            location.reload(); // Recarrega para aplicar as mudanças
+        } catch (err) {
+            console.error("Erro na importação:", err);
+            alert("❌ Erro: O ficheiro selecionado é inválido.");
+        }
+    };
+    reader.readAsText(e.target.files[0]);
+}
 };
 
 window.onload = async () => {
