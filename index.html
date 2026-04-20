@@ -295,31 +295,24 @@ const ui = {
         const [ps, zs] = await Promise.all([db.plantas.toArray(), db.zones.toArray()]);
         let html = "";
         zs.forEach(z => {
-            const items = ps.filter(p => p.variedade.toLowerCase().includes(s) && p.zonaId == z.id);
-            if(items.length > 0) {
-                const open = this.exp.horta.has(z.id);
-                html += `<div class="group-header" onclick="ui.toggle('horta', ${z.id})">
-                    <b>📍 ${z.nome}</b><span>${open?'▼':'▶'}</span>
-                </div>`;
-                if(open) {
-                    items.forEach(p => {
-                        const h = p.ultimaRega ? Math.floor((new Date() - new Date(p.ultimaRega))/3600000) : '?';
-                        const d = p.data ? Math.floor((new Date() - new Date(p.data))/(1000*60*60*24)) : 0;
-                        html += `<div class="card">
-                            <div style="display:flex; justify-content:space-between">
-                                <div><b>${p.variedade}</b><br><small>💧 ${h}h | 📅 ${d} dias</small></div>
-                                <div style="display:flex; gap:8px">
-                                    <button class="btn-act" onclick="db.plantas.update(${p.id}, {ultimaRega: new Date().toISOString()}).then(()=>ui.render())">💧</button>
-                                    <button class="btn-act" onclick="ui.del('plantas', ${p.id})" style="color:var(--danger)">✕</button>
-                                </div>
-                            </div>
-                            ${p.conteudo ? `<div class="note-display">📝 ${p.conteudo}</div>` : ''}
-                        </div>`;
-                    });
-                }
+            const items = ps.filter(p => p.zonaId === z.id && (p.variedade.toLowerCase().includes(s) || p.especie.toLowerCase().includes(s)));
+            const open = this.exp.horta.has(z.id);
+            html += `<div class="group-header" onclick="ui.toggle('horta', ${z.id})">
+                <b>📍 ${z.nome}</b><span>${items.length} plantas ${open?'▼':'▶'}</span>
+            </div>`;
+            if(open) {
+                html += items.map(p => `
+                    <div class="card">
+                        <div style="display:flex; justify-content:space-between; align-items:center">
+                            <div><b>${p.variedade}</b><br><small>${p.especie}</small></div>
+                            <button class="btn-act" onclick="ui.del('plantas', ${p.id})" style="color:var(--danger)">✕</button>
+                        </div>
+                        ${p.conteudo ? `<div class="note-display">📝 ${p.conteudo}</div>` : ''}
+                    </div>
+                `).join('');
             }
         });
-        document.getElementById('draw-horta').innerHTML = html || '<p style="text-align:center; opacity:0.5">Sem plantas nesta zona.</p>';
+        document.getElementById('draw-horta').innerHTML = html || '<p style="text-align:center; opacity:0.5">Nenhuma planta encontrada.</p>';
     },
 
     drawBook: async function(s) {
@@ -341,16 +334,24 @@ const ui = {
 
     drawWiki: async function(s) {
         const ws = await db.wiki.toArray();
-        const cats = ["Folhas", "Frutos", "Raízes"];
+        const cats = [...new Set(ws.map(w => w.categoria))];
         document.getElementById('draw-wiki').innerHTML = cats.map(c => {
             const items = ws.filter(w => w.categoria === c && w.especie.toLowerCase().includes(s));
-            if(!items.length) return "";
+            if(items.length === 0) return "";
             const open = this.exp.wiki.has(c);
             let h = `<div class="group-header" onclick="ui.toggle('wiki', '${c}')"><b>📚 ${c}</b><span>${open?'▼':'▶'}</span></div>`;
-            if(open) h += items.map(i => `<div class="card">
-                <div style="display:flex; justify-content:space-between"><b>${i.especie}</b><button class="btn-act" onclick="ui.del('wiki', ${i.id})" style="color:var(--danger)">✕</button></div>
-                <small>${i.tempo} dias | ${i.temp}ºC</small>
-            </div>`).join('');
+            if(open) {
+                h += items.map(i => `
+                    <div class="card">
+                        <div style="display:flex; justify-content:space-between; align-items:center">
+                            <b>${i.especie}</b>
+                            <button class="btn-act" onclick="ui.del('wiki', ${i.id})" style="color:var(--danger)">✕</button>
+                        </div>
+                        <small>Ciclo: ${i.tempo} dias</small>
+                        ${i.info ? `<div class="note-display">📖 ${i.info}</div>` : ''}
+                    </div>
+                `).join('');
+            }
             return h;
         }).join('');
     },
