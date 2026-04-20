@@ -122,7 +122,8 @@
 <div id="modal-wiki" class="modal">
     <div class="modal-content">
         <h3>🌱 Nova Espécie</h3>
-        <input type="text" id="w-especie" class="input-form" placeholder="Nome">
+        <input type="text" id="w-nome" class="input-form" placeholder="Nome da Planta">
+        <input type="text" id="w-especie" class="input-form" placeholder="Nome da Espécie">
         <select id="w-cat" class="input-form">
             <option value="Folhas">🥬 Folhas</option>
             <option value="Frutos">🍅 Frutos</option>
@@ -172,6 +173,7 @@ db.version(2).stores({
 const logic = {
     savePlantio: async function() {
         const d = {
+            nome: document.getElementById('p-nome').value,
             especie: document.getElementById('p-especie').value,
             zonaId: parseInt(document.getElementById('p-zona').value),
             data: document.getElementById('p-data').value,
@@ -190,6 +192,7 @@ const logic = {
 
     saveWiki: async function() {
         const w = {
+            nome: document.getElementById('w-nome').value,
             especie: document.getElementById('w-especie').value,
             categoria: document.getElementById('w-cat').value,
             tempo: parseInt(document.getElementById('w-tempo').value) || 0,
@@ -304,7 +307,7 @@ const ui = {
                 html += items.map(p => `
                     <div class="card">
                         <div style="display:flex; justify-content:space-between; align-items:center">
-                            <div><b>${p.variedade}</b><br><small>${p.especie}</small></div>
+                            <div><b>${p.nome}</b><br><small>${p.especie}</small></div>
                             <button class="btn-act" onclick="ui.del('plantas', ${p.id})" style="color:var(--danger)">✕</button>
                         </div>
                         ${p.conteudo ? `<div class="note-display">📝 ${p.conteudo}</div>` : ''}
