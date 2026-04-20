@@ -3,77 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0a0a0a">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>JotaGarden OS</title>
-    
-    <!-- PWA Manifest (crie um ficheiro manifest.json ao lado) -->
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Dexie.js via CDN (versão mais recente estável em 2026) -->
-    <script src="https://cdn.jsdelivr.net/npm/dexie@4.0.8/dist/dexie.min.js"></script>
-    
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#000000">
 </head>
-<body>
-    <!-- HEADER FIXO -->
-    <header class="glass-header">
-        <div class="header-content">
-            <div class="logo">
-                <span class="neon-text">🌱</span>
-                <h1>JotaGarden OS</h1>
-            </div>
-            
-            <!-- Pesquisa Global -->
-            <div class="search-container">
-                <input 
-                    type="text" 
-                    id="global-search" 
-                    placeholder="🔎 Pesquisar na Horta ou Wiki..." 
-                    autocomplete="off">
-            </div>
-            
-            <div class="header-actions">
-                <button id="btn-moon" class="icon-btn" title="Fase da Lua">
-                    <span id="moon-icon" class="moon-emoji">🌕</span>
-                </button>
-            </div>
+<body class="dark-mode">
+
+    <header class="app-header glass-panel">
+        <h1>🌱 JotaGarden</h1>
+        <div class="search-bar">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" id="global-search" placeholder="Pesquisar Horta ou Wiki...">
         </div>
     </header>
 
-    <!-- CONTEÚDO PRINCIPAL -->
-    <main id="main-content" class="main-content"></main>
+    <main id="app-content">
+        
+        <section id="view-dashboard" class="view active fade-in">
+            <h2>Dashboard</h2>
+            <div class="glass-card moon-card">
+                <h3>Fase da Lua</h3>
+                <div id="moon-phase-display" class="moon-icon">🌑</div>
+                <p id="moon-phase-text">Nova</p>
+            </div>
+            <div class="glass-card stats-card">
+                <h3>Estatísticas da Horta</h3>
+                <ul id="stats-list">
+                    </ul>
+            </div>
+        </section>
 
-    <!-- NAVEGAÇÃO INFERIOR FLUTUANTE (DOCK) -->
-    <nav class="bottom-nav glass">
-        <div class="nav-item active" data-section="home">
-            <div class="nav-icon">🏠</div>
-            <span class="nav-label">Início</span>
-        </div>
-        <div class="nav-item" data-section="horta">
-            <div class="nav-icon">🌿</div>
-            <span class="nav-label">Horta</span>
-        </div>
-        <div class="nav-item" data-section="wiki">
-            <div class="nav-icon">📖</div>
-            <span class="nav-label">Wiki</span>
-        </div>
-        <div class="nav-item" data-section="diario">
-            <div class="nav-icon">📓</div>
-            <span class="nav-label">Diário</span>
-        </div>
-        <div class="nav-item" data-section="config">
-            <div class="nav-icon">⚙️</div>
-            <span class="nav-label">Config</span>
-        </div>
+        <section id="view-garden" class="view">
+            <div class="view-header">
+                <h2>A Minha Horta</h2>
+                <button class="btn-primary" id="btn-add-zone">+ Nova Zona</button>
+            </div>
+            <div id="zones-container">
+                </div>
+        </section>
+
+        <section id="view-wiki" class="view">
+            <div class="view-header">
+                <h2>Wiki de Espécies</h2>
+                <button class="btn-primary" id="btn-add-species">+ Nova Espécie</button>
+            </div>
+            <div id="species-container" class="grid-container">
+                </div>
+        </section>
+
+        <section id="view-diary" class="view">
+            <div class="view-header">
+                <h2>Diário</h2>
+                <button class="btn-primary" id="btn-add-diary">+ Novo Registo</button>
+            </div>
+            <div id="diary-container" class="timeline">
+                </div>
+        </section>
+
+        <section id="view-config" class="view">
+            <h2>Configurações</h2>
+            <div class="glass-card">
+                <h3>Aparência</h3>
+                <button class="btn-secondary" id="btn-toggle-theme"><i class="fa-solid fa-moon"></i> Alternar Dark/Light Mode</button>
+            </div>
+            <div class="glass-card">
+                <h3>Dados (Backup/Restore)</h3>
+                <button class="btn-secondary" id="btn-backup"><i class="fa-solid fa-download"></i> Exportar Dados (JSON)</button>
+                <div class="mt-10">
+                    <input type="file" id="file-restore" accept=".json" style="display: none;">
+                    <button class="btn-danger" id="btn-restore" onclick="document.getElementById('file-restore').click()"><i class="fa-solid fa-upload"></i> Importar Dados (JSON)</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <nav class="bottom-dock glass-panel">
+        <a href="#" class="dock-item active" data-target="view-dashboard">
+            <i class="fa-solid fa-house"></i><span>Início</span>
+        </a>
+        <a href="#" class="dock-item" data-target="view-garden">
+            <i class="fa-solid fa-leaf"></i><span>Horta</span>
+        </a>
+        <a href="#" class="dock-item" data-target="view-wiki">
+            <i class="fa-solid fa-book"></i><span>Wiki</span>
+        </a>
+        <a href="#" class="dock-item" data-target="view-diary">
+            <i class="fa-solid fa-book-journal-whills"></i><span>Diário</span>
+        </a>
+        <a href="#" class="dock-item" data-target="view-config">
+            <i class="fa-solid fa-gear"></i><span>Config</span>
+        </a>
     </nav>
 
-    <!-- MODAL ÚNICO (reutilizado por JS) -->
-    <div id="modal" class="modal">
-        <div class="modal-content glass" id="modal-inner">
-            <!-- Conteúdo dinâmico inserido via JS -->
-        </div>
+    <div id="modal-overlay" class="modal-overlay">
+        <div id="modal-content" class="modal-content glass-card">
+            </div>
     </div>
 
     <script src="app.js"></script>
