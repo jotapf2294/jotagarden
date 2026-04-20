@@ -251,35 +251,50 @@ const ui = {
     },
 
     drawHorta: async function(s) {
-        const [ps, zs, ws] = await Promise.all([db.plantas.toArray(), db.zonas.toArray(), db.wiki.toArray()]);
-        let html = "";
-        zs.forEach(z => {
-            const fil = ps.filter(p => p.zonaId == z.id && p.variedade.toLowerCase().includes(s));
-            if(fil.length > 0) {
-                const open = this.exp.horta.has(z.id);
-                html += `<div class="cat-header" onclick="logic.toggleExp('horta',${z.id})">
-                    <b>📍 ${z.nome} (${fil.length})</b><span>${open?'▼':'▶'}</span></div>`;
-                if(open) {
-                    fil.forEach(p => {
-                        const w = ws.find(x => x.especie === p.variedade);
-                        const dias = Math.floor((new Date() - new Date(p.data)) / 86400000);
-                        html += `
-                        <div class="card">
-                            <div class="card-info">
-                                <b class="card-title">${p.variedade}</b>
-                                <div class="card-sub"><span>⏳ ${dias} dias</span><span>🌡️ ${w?w.temp:'--'}</span></div>
+    const [ps, zs, ws] = await Promise.all([db.plantas.toArray(), db.zonas.toArray(), db.wiki.toArray()]);
+    let html = "";
+    
+    zs.forEach(z => {
+        const fil = ps.filter(p => p.zonaId == z.id && p.variedade.toLowerCase().includes(s));
+        if(fil.length > 0) {
+            const open = this.exp.horta.has(z.id);
+            html += `
+                <div class="cat-header" onclick="logic.toggleExp('horta',${z.id})">
+                    <b>📍 ${z.nome} (${fil.length})</b>
+                    <span>${open ? '▼' : '▶'}</span>
+                </div>`;
+            
+            if(open) {
+                fil.forEach(p => {
+                    const w = ws.find(x => x.especie === p.variedade);
+                    const dias = Math.floor((new Date() - new Date(p.data)) / 86400000);
+                    
+                    html += `
+                    <div class="card">
+                        <div class="card-info">
+                            <b class="card-title">${p.variedade}</b>
+                            <div class="card-sub">
+                                <span>⏳ ${dias} dias</span>
+                                <span>🌡️ ${w ? w.temp : '--'}</span>
                             </div>
-                            <div class="card-actions">
-                                <button class="btn-act" onclick="logic.prepareEdit('planta',${p.id})" style="color:var(--p)">✏️</button>
-                                <button class="btn-act" onclick="logic.del('plantas',${p.id})" style="color:red">✕</button>
-                            </div>
-                        </div>`;
-                    });
-                }
+                            
+                            ${p.nota ? `
+                            <div style="margin-top:12px; padding:10px; background:rgba(46, 125, 50, 0.05); border-radius:12px; border-left:3px solid var(--p); font-size:0.85rem; font-style:italic; color:var(--txt); opacity:0.9;">
+                                "${p.nota}"
+                            </div>` : ''}
+                        </div>
+
+                        <div class="card-actions" style="justify-content: center; height: 100%;">
+                            <button class="btn-act" onclick="event.stopPropagation(); logic.prepareEdit('planta',${p.id})" style="color:var(--p); margin-bottom:10px;">✏️</button>
+                            <button class="btn-act" onclick="event.stopPropagation(); logic.del('plantas',${p.id})" style="color:red">✕</button>
+                        </div>
+                    </div>`;
+                });
             }
-        });
-        document.getElementById('draw-horta').innerHTML = html || '<p align="center">Vazio.</p>';
-    },
+        }
+    });
+    document.getElementById('draw-horta').innerHTML = html || '<p align="center" style="margin-top:20px; opacity:0.5;">Nenhuma planta encontrada nesta zona.</p>';
+},
 
     drawWiki: async function(s) {
         const data = await db.wiki.toArray();
