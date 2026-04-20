@@ -195,19 +195,29 @@ db.version(99).stores({
 
 const logic = {
     savePlantio: async function() {
-        const d = {
-            especie: document.getElementById('p-especie').value,
-            zonaId: parseInt(document.getElementById('p-zona').value),
-            data: document.getElementById('p-data').value,
-            conteudo: document.getElementById('p-nota').value,
-            ultimaRega: new Date().toISOString()
-        };
-        if(!d.zonaId || !d.especie) return alert("Cria Zonas e Wiki primeiro!");
-        await db.plantas.add(d);
-        ui.expanded.horta.add(d.zonaId); // Auto-expande a zona
-        ui.closeModal('modal-plantar');
-        ui.render();
-    },
+    const especieSelec = document.getElementById('p-especie').value;
+    const variedadeInserida = document.getElementById('p-nome').value;
+
+    const d = {
+        especie: especieSelec,
+        variedade: variedadeInserida || especieSelec, // Se vazio, usa a espécie como nome
+        zonaId: parseInt(document.getElementById('p-zona').value),
+        data: document.getElementById('p-data').value,
+        conteudo: document.getElementById('p-nota').value,
+        ultimaRega: new Date().toISOString()
+    };
+
+    if(!d.zonaId || !d.especie) return alert("Erro: Cria primeiro Zonas e Espécies na Wiki!");
+    
+    await db.plantas.add(d);
+    ui.expanded.horta.add(d.zonaId); 
+    ui.closeModal('modal-plantar');
+    ui.render();
+    
+    // Reset de campos
+    document.getElementById('p-nome').value = "";
+    document.getElementById('p-nota').value = "";
+},
 
     saveWiki: async function() {
         const w = {
@@ -297,64 +307,53 @@ const ui = {
     },
 
     drawHorta: async function(s) {
-        const [ps, zs] = await Promise.all([db.plantas.toArray(), db.zones.toArray()]);
-        let html = "";
-        zs.forEach(z => {
-            const items = ps.filter(p => p.zonaId === z.id && (p.especie.toLowerCase().includes(s)));
-            const open = this.expanded.horta.has(z.id);
-            html += `<div class="group-header" onclick="ui.toggle('horta', ${z.id})">
-                <b>📍 ${z.nome}</b> <span>${items.length} plantas ${open?'▼':'▶'}</span>
-            </div>`;
-            if(open) {
-                html += items.map(p => `<div class="card">
-                    <div style="display:flex; justify-content:space-between">
-                        <b>${p.variedade}</b>
-                        <div style="display:flex; gap:10px">
-                            <span onclick="db.plantas.update(${p.id}, {ultimaRega: new Date().toISOString()}).then(()=>ui.render())">💧</span>
-                            <span onclick="ui.del('plantas', ${p.id})" style="color:var(--danger)">✕</span>
+    const [ps, zs] = await Promise.all([db.plantas.toArray(), db.zones.toArray()]);
+    let html = "";
+
+    zs.forEach(z => {
+        const items = ps.filter(p => p.zonaId === z.id && (p.variedade.toLowerCase().includes(s) || p.especie.toLowerCase().includes(s)));
+        const open = this.expanded.horta.has(z.id);
+        
+        html += `<div class="group-header" onclick="ui.toggle('horta', ${z.id})">
+            <b>📍 ${z.nome}</b> <span>${items.length} plantas ${open?'▼':'▶'}</span>
+        </div>`;
+        
+        if(open) {
+            html += items.map(p => {
+                // Cálculo de dias de vida
+                const dataSemeada = new Date(p.data);
+                const hoje = new Date();
+                const diff = Math.abs(hoje - dataSemeada);
+                const diasPassados = Math.ceil(diff / (1000 * 60 * 60 * 24)) - 1;
+
+                return `
+                <div class="card" style="border-left: 5px solid var(--p)">
+                    <div style="display:flex; justify-content:space-between; align-items:center">
+                        <div>
+                            <b style="font-size:1.2rem; display:block">${p.variedade}</b>
+                            <small style="color:var(--p); font-weight:bold">${p.especie}</small>
+                        </div>
+                        <div style="text-align:right">
+                            <span style="background:var(--p-light); padding:5px 10px; border-radius:10px; font-weight:bold; font-size:0.8rem">
+                                🌱 ${diasPassados} dias
+                            </span>
                         </div>
                     </div>
-                    <small>${p.especie}</small>
-                    ${p.conteudo ? `<div class="note-box">${p.conteudo}</div>` : ''}
-                </div>`).join('');
-            }
-        });
-        document.getElementById('draw-horta').innerHTML = html || '<p style="text-align:center; opacity:0.5">Sem dados.</p>';
-    },
-
-    drawWiki: async function(s) {
-    const ws = await db.wiki.toArray();
-    // Definimos as categorias fixas para manter a ordem
-    const cats = ["Folhas", "Frutos", "Raízes", "Aromáticas"];
-    
-    document.getElementById('draw-wiki').innerHTML = cats.map(c => {
-        const items = ws.filter(w => w.categoria === c && w.especie.toLowerCase().includes(s));
-        const open = this.expanded.wiki.has(c);
-        
-        let h = `<div class="group-header" onclick="ui.toggle('wiki', '${c}')">
-                    <b>📚 ${c}</b> 
-                    <span>${items.length} espécies ${open ? '▼' : '▶'}</span>
-                 </div>`;
-        
-        if (open) {
-            h += items.map(i => `
-                <div class="card" style="border-left: 4px solid var(--p)">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
-                        <b style="font-size:1.1rem">${i.especie} 
-                           <span style="color:var(--p); font-size:0.85rem; margin-left:8px; opacity:0.8">
-                             ⏱️ ${i.tempo || '?'} dias
-                           </span>
-                        </b>
-                        <button class="btn-act" onclick="ui.del('wiki', ${i.id})" style="color:var(--danger); background:none; border:none; font-size:1.2rem">×</button>
+                    
+                    ${p.conteudo ? `<div class="note-box" style="margin: 12px 0 8px 0">${p.conteudo}</div>` : '<div style="margin-bottom:10px"></div>'}
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(128,128,128,0.1); padding-top:8px">
+                        <small style="opacity:0.6">📅 ${dataSemeada.toLocaleDateString()}</small>
+                        <div style="display:flex; gap:20px">
+                            <span onclick="db.plantas.update(${p.id}, {ultimaRega: new Date().toISOString()}).then(()=>ui.render())" style="cursor:pointer; font-size:1.2rem">💧</span>
+                            <span onclick="ui.del('plantas', ${p.id})" style="color:var(--danger); cursor:pointer; font-size:1.2rem">✕</span>
+                        </div>
                     </div>
-                    <div class="note-box" style="background: rgba(255,255,255,0.05); padding:10px; border-radius:10px">
-                        ${i.info ? i.info : '<i style="opacity:0.5">Sem notas técnicas...</i>'}
-                    </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
-        return h;
-    }).join('');
+    });
+    document.getElementById('draw-horta').innerHTML = html || '<p style="text-align:center; opacity:0.5">Sem plantas nesta zona.</p>';
 },
 
     drawBook: async function(s) {
