@@ -228,5 +228,30 @@ body.light-mode input, body.light-mode select, body.light-mode textarea {
     to { opacity: 1; transform: translateY(0); }
 }
 
+.diary-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+.diary-title-area h4 {
+    color: var(--accent-color);
+    margin: 0;
+    font-size: 1.1rem;
+}
+.diary-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+}
+.diary-note {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: var(--text-color);
+    white-space: pre-wrap; /* Mantém quebras de linha */
+}
+
 .mt-10 { margin-top: 10px; }
 .flex-between { display: flex; justify-content: space-between; align-items: center;}
