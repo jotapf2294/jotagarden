@@ -63,38 +63,37 @@
     <div class="card" style="background: linear-gradient(135deg, var(--p), #5eb36e); color: white;">
         <div style="display:flex; align-items:center; gap:20px">
             <span style="font-size: 2.8rem;">🌙</span>
-            <div>
-                <b id="moon-phase">A carregar...</b><br>
-                <small id="moon-tip" style="opacity: 0.9">Dica para hoje</small>
-            </div>
+            <div><b id="moon-phase">A carregar...</b><br><small id="moon-tip">Dica lunar</small></div>
         </div>
     </div>
-    <div class="grid-2">
-        <button class="btn-main" onclick="ui.openModal('modal-plantar')">➕ Plantar</button>
-        <button class="btn-main" onclick="ui.openModal('modal-book')">➕ Nota</button>
-    </div>
-    <h3 style="margin-top:25px">📅 Sugestões</h3>
     <div id="draw-sugestoes"></div>
 </section>
 
-<section id="page-horta"><div id="draw-horta"></div></section>
-<section id="page-book"><div id="draw-book"></div></section>
+<section id="page-horta">
+    <button class="btn-main" onclick="ui.openModal('modal-plantar')">➕ Nova Planta</button>
+    <div id="draw-horta"></div>
+</section>
+
+<section id="page-book">
+    <button class="btn-main" onclick="ui.openModal('modal-book')">📒 Novo Registo</button>
+    <div id="draw-book"></div>
+</section>
+
 <section id="page-wiki">
-    <button class="btn-main" onclick="ui.openModal('modal-wiki')" style="margin-bottom:20px">➕ Nova Espécie</button>
+    <button class="btn-main" onclick="ui.openModal('modal-wiki')">📖 Nova Espécie</button>
     <div id="draw-wiki"></div>
 </section>
 
 <section id="page-config">
     <div class="card">
         <h3>⚙️ Definições</h3>
-        <div class="toggle-container">
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px">
             <span>Modo Escuro</span>
             <input type="checkbox" id="dark-toggle" checked onchange="logic.toggleDark()">
         </div>
-        <label><small>Temp. Média Local (ºC)</small></label>
-        <input type="number" id="cfg-temp" class="input-form" onchange="logic.saveConfig('temp', this.value)">
-        <div class="grid-2">
-            <button class="btn-main" onclick="logic.exportData()">💾 Backup</button>
+        <input type="number" id="cfg-temp" class="input-form" placeholder="Temp. Média Local ºC" onchange="logic.saveConfig('temp', this.value)">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+            <button class="btn-main btn-sec" onclick="logic.exportData()">💾 Backup</button>
             <button class="btn-main btn-sec" onclick="document.getElementById('file-in').click()">📥 Importar</button>
         </div>
         <input type="file" id="file-in" style="display:none" onchange="logic.importData(event)">
@@ -102,8 +101,8 @@
     <div class="card">
         <h3>📍 Zonas</h3>
         <div style="display:flex; gap:10px">
-            <input type="text" id="new-zone" class="input-form" placeholder="Ex: Estufa">
-            <button class="btn-main" style="width:80px; margin:8px 0" onclick="logic.addZone()">➕</button>
+            <input type="text" id="new-zone" class="input-form" placeholder="Nome da Zona">
+            <button class="btn-main" style="width:80px; margin:8px 0" onclick="logic.addZone()">OK</button>
         </div>
         <div id="draw-zones"></div>
     </div>
