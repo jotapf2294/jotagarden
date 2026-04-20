@@ -196,7 +196,6 @@ db.version(99).stores({
 const logic = {
     savePlantio: async function() {
         const d = {
-            variedade: document.getElementById('p-nome').value || "S/ Nome",
             especie: document.getElementById('p-especie').value,
             zonaId: parseInt(document.getElementById('p-zona').value),
             data: document.getElementById('p-data').value,
@@ -301,7 +300,7 @@ const ui = {
         const [ps, zs] = await Promise.all([db.plantas.toArray(), db.zones.toArray()]);
         let html = "";
         zs.forEach(z => {
-            const items = ps.filter(p => p.zonaId === z.id && (p.variedade.toLowerCase().includes(s) || p.especie.toLowerCase().includes(s)));
+            const items = ps.filter(p => p.zonaId === z.id && (p.especie.toLowerCase().includes(s)));
             const open = this.expanded.horta.has(z.id);
             html += `<div class="group-header" onclick="ui.toggle('horta', ${z.id})">
                 <b>📍 ${z.nome}</b> <span>${items.length} plantas ${open?'▼':'▶'}</span>
