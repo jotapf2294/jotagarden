@@ -137,15 +137,28 @@
     </section>
 </main>
 
-<div id="modal-planta" class="modal"><div class="modal-content">
-    <h3>🌱 Novo Registo</h3>
-    <select id="p-nome"></select>
-    <select id="p-zona"></select>
-    <input type="date" id="p-data">
-    <textarea id="p-nota" placeholder="Alguma observação?"></textarea>
-    <button class="btn-main" onclick="logic.savePlanta()">Confirmar Plantio</button>
-    <button class="btn-main btn-sec" onclick="ui.closeModal('modal-planta')" style="margin-top:10px">Cancelar</button>
-</div></div>
+<div id="modal-plantar" class="modal">
+    <div class="modal-content">
+        <h3>🌱 Novo Plantio</h3>
+        
+        <input type="text" id="p-nome" placeholder="Nome (ex: Cherry 1)" class="input-form">
+        
+        <select id="p-especie" class="input-form">
+            <option value="">Selecionar Espécie...</option>
+        </select>
+        
+        <select id="p-zona" class="input-form">
+            </select>
+        
+        <input type="date" id="p-data" class="input-form">
+        
+        <textarea id="p-nota" placeholder="Notas e observações..." class="input-form" style="height:80px"></textarea>
+        
+        <div class="grid-2">
+            <button class="btn-main" onclick="logic.savePlantio()">Confirmar Plantio</button>
+            <button class="btn-main btn-sec" onclick="ui.closeModal('modal-plantar')">Cancelar</button>
+        </div>
+    </div>
 
 <div id="modal-wiki" class="modal"><div class="modal-content">
     <h3>📖 Info da Espécie</h3>
@@ -410,10 +423,37 @@ const ui = {
 const logic = {
     toggleExp: (t, id) => { ui.exp[t].has(id) ? ui.exp[t].delete(id) : ui.exp[t].add(id); ui.render(); },
     
-    savePlanta: async function() {
-        const p = { variedade: document.getElementById('p-nome').value, zonaId: parseInt(document.getElementById('p-zona').value), data: document.getElementById('p-data').value, conteudo: document.getElementById('p-nota').value, ultimaRega: new Date().toISOString() };
-        await db.plantas.add(p); ui.closeModal('modal-planta'); ui.render();
-    },
+    savePlantio: async function() {
+    const nome = document.getElementById('p-nome').value;
+    const especie = document.getElementById('p-especie').value;
+    const zonaId = document.getElementById('p-zona').value;
+    const data = document.getElementById('p-data').value;
+    const nota = document.getElementById('p-nota').value;
+
+    if (!especie || !zonaId || !data) {
+        alert("Por favor, preenche a Espécie, Zona e Data!");
+        return;
+    }
+
+    const novoRegisto = {
+        variedade: nome || especie, // Se não deres nome, usa o nome da espécie
+        especie: especie,
+        zonaId: parseInt(zonaId),
+        data: data,
+        conteudo: nota,
+        ultimaRega: new Date().toISOString() // Começa logo com uma rega inicial
+    };
+
+    try {
+        await db.plantas.add(novoRegisto);
+        ui.closeModal('modal-plantar');
+        ui.render(); // Atualiza a Horta e o Dashboard
+        alert("✅ Plantio registado com sucesso!");
+    } catch (err) {
+        console.error("Erro ao salvar:", err);
+        alert("❌ Erro ao guardar o plantio.");
+    }
+},
 
     saveWiki: async function() {
         const w = { especie: document.getElementById('w-nome').value, categoria: document.getElementById('w-cat').value, tempo: parseInt(document.getElementById('w-dias').value), temp: document.getElementById('w-temp').value, mesInicio: parseInt(document.getElementById('w-mes-ini').value), mesFim: parseInt(document.getElementById('w-mes-fim').value) };
@@ -424,6 +464,23 @@ const logic = {
         const b = { titulo: document.getElementById('b-tit').value, conteudo: document.getElementById('b-txt').value };
         await db.book.add(b); ui.closeModal('modal-book'); ui.render();
     },
+
+    openPlantar: async function() {
+    // Preencher as espécies vindas da tua Wiki
+    const especies = await db.wiki.toArray();
+    const selectEspecie = document.getElementById('p-especie');
+    selectEspecie.innerHTML = especies.map(e => `<option value="${e.especie}">${e.especie}</option>`).join('') || '<option>Adiciona espécies na Wiki primeiro!</option>';
+    
+    // Preencher as zonas
+    const zonas = await db.zones.toArray();
+    const selectZona = document.getElementById('p-zona');
+    selectZona.innerHTML = zonas.map(z => `<option value="${z.id}">${z.nome}</option>`).join('');
+
+    // Definir a data de hoje como padrão
+    document.getElementById('p-data').valueAsDate = new Date();
+    
+    ui.openModal('modal-plantar');
+},
 
     regar: async function(id) { await db.plantas.update(id, { ultimaRega: new Date().toISOString() }); ui.render(); },
     
