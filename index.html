@@ -69,9 +69,15 @@
         }
 
         /* Dashboard */
-        .card-lunar { background: linear-gradient(135deg, #1a2a3a, #000) !important; color: white !important; flex-direction: row !important; align-items: center !important; gap: 15px; }
+        .card-lunar { background: linear-gradient(135deg, #1a2a3a, #000) !important; color: white !important; flex-direction: row !important; align-items: center !important; gap: 20px; }
         .card-sauda { background: var(--p) !important; color: white !important; flex-direction: row !important; }
 
+/* Aumentar especificamente o ícone da Lua */
+.card-lunar span { 
+    font-size: 3rem; /* Tamanho do ícone (podes aumentar para 3.5rem se quiseres ainda maior) */
+    line-height: 1;
+    filter: drop-shadow(0 0 10px rgba(255,255,255,0.3)); /* Um brilho suave para destacar */
+}
         /* Configuração Arrumada */
         .config-card { background: var(--card); border-radius: 22px; padding: 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; }
         .zona-input-group { display: flex; gap: 10px; }
