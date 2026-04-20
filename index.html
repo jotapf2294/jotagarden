@@ -254,12 +254,19 @@ const ui = {
     },
 
     drawDash: async function() {
-        const [ps, ws] = await Promise.all([db.plantas.toArray(), db.wiki.toArray()]);
-        const l = lunar.get();
-        document.getElementById('page-dash').innerHTML = `
-            <div class="card card-lunar"><span>${l.i}</span><div><b>${l.f}</b><br><small>${l.d}</small></div></div>
-            <div class="card card-sauda"><div><b>Olá Jota!</b><br><small>Tens ${ps.length} plantas ativas na horta.</small></div></div>`;
-    },
+    const [ps, ws] = await Promise.all([db.plantas.toArray(), db.wiki.toArray()]);
+    const l = lunar.get();
+    document.getElementById('page-dash').innerHTML = `
+        <div class="card card-lunar">
+            <span>${l.i}</span> <div>
+                <b style="font-size: 1.2rem;">${l.f}</b><br>
+                <small style="opacity: 0.9;">${l.d}</small>
+            </div>
+        </div>
+        <div class="card card-sauda">
+            <div><b>Olá Jota!</b><br><small>Tens ${ps.length} plantas ativas na horta.</small></div>
+        </div>`;
+},
 
     drawHorta: async function(s) {
         const [ps, zs, ws] = await Promise.all([db.plantas.toArray(), db.zonas.toArray(), db.wiki.toArray()]);
