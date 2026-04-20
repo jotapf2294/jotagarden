@@ -196,42 +196,43 @@ db.version(99).stores({
 const logic = {
     savePlantio: async function() {
     const especieSelec = document.getElementById('p-especie').value;
-    const variedadeInserida = document.getElementById('p-nome').value;
+    const variedadeInserida = document.getElementById('p-nome').value.trim();
 
     const d = {
         especie: especieSelec,
-        variedade: variedadeInserida || especieSelec, // Se vazio, usa a espécie como nome
+        variedade: variedadeInserida || especieSelec, // Se não houver variedade, usa a espécie
         zonaId: parseInt(document.getElementById('p-zona').value),
         data: document.getElementById('p-data').value,
-        conteudo: document.getElementById('p-nota').value,
+        conteudo: document.getElementById('p-nota').value.trim(),
         ultimaRega: new Date().toISOString()
     };
 
-    if(!d.zonaId || !d.especie) return alert("Erro: Cria primeiro Zonas e Espécies na Wiki!");
+    if(!d.zonaId || !d.especie) return alert("Cria primeiro a Espécie na Wiki e a Zona nas Configs!");
     
     await db.plantas.add(d);
     ui.expanded.horta.add(d.zonaId); 
     ui.closeModal('modal-plantar');
     ui.render();
     
-    // Reset de campos
+    // Limpeza de campos
     document.getElementById('p-nome').value = "";
     document.getElementById('p-nota').value = "";
 },
 
     saveWiki: async function() {
-        const w = {
-            especie: document.getElementById('w-especie').value,
-            categoria: document.getElementById('w-cat').value,
-            tempo: parseInt(document.getElementById('w-tempo').value) || 0,
-            info: document.getElementById('w-info').value
-        };
-        if(!w.especie) return;
-        await db.wiki.add(w);
-        ui.expanded.wiki.add(w.categoria); // Auto-expande categoria
-        ui.closeModal('modal-wiki');
-        ui.render();
-    },
+    const w = {
+        especie: document.getElementById('w-especie').value.trim(),
+        categoria: document.getElementById('w-cat').value,
+        tempo: parseInt(document.getElementById('w-tempo').value) || 0,
+        info: document.getElementById('w-info').value.trim()
+    };
+    if(!w.especie) return alert("Escreve o nome da espécie!");
+    
+    await db.wiki.add(w);
+    ui.expanded.wiki.add(w.categoria); // Abre a categoria automaticamente
+    ui.closeModal('modal-wiki');
+    ui.render();
+},
 
     saveBook: async function() {
         const b = {
@@ -320,11 +321,7 @@ const ui = {
         
         if(open) {
             html += items.map(p => {
-                // Cálculo de dias de vida
-                const dataSemeada = new Date(p.data);
-                const hoje = new Date();
-                const diff = Math.abs(hoje - dataSemeada);
-                const diasPassados = Math.ceil(diff / (1000 * 60 * 60 * 24)) - 1;
+                const diasPassados = Math.ceil(Math.abs(new Date() - new Date(p.data)) / (1000 * 60 * 60 * 24)) - 1;
 
                 return `
                 <div class="card" style="border-left: 5px solid var(--p)">
@@ -334,16 +331,12 @@ const ui = {
                             <small style="color:var(--p); font-weight:bold">${p.especie}</small>
                         </div>
                         <div style="text-align:right">
-                            <span style="background:var(--p-light); padding:5px 10px; border-radius:10px; font-weight:bold; font-size:0.8rem">
-                                🌱 ${diasPassados} dias
-                            </span>
+                            <span style="background:var(--p-light); padding:5px 10px; border-radius:10px; font-weight:bold; font-size:0.8rem">🌱 ${diasPassados} dias</span>
                         </div>
                     </div>
-                    
-                    ${p.conteudo ? `<div class="note-box" style="margin: 12px 0 8px 0">${p.conteudo}</div>` : '<div style="margin-bottom:10px"></div>'}
-                    
+                    ${p.conteudo ? `<div class="note-box" style="margin: 10px 0">${p.conteudo}</div>` : '<div style="margin-bottom:10px"></div>'}
                     <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(128,128,128,0.1); padding-top:8px">
-                        <small style="opacity:0.6">📅 ${dataSemeada.toLocaleDateString()}</small>
+                        <small style="opacity:0.6">📅 ${new Date(p.data).toLocaleDateString()}</small>
                         <div style="display:flex; gap:20px">
                             <span onclick="db.plantas.update(${p.id}, {ultimaRega: new Date().toISOString()}).then(()=>ui.render())" style="cursor:pointer; font-size:1.2rem">💧</span>
                             <span onclick="ui.del('plantas', ${p.id})" style="color:var(--danger); cursor:pointer; font-size:1.2rem">✕</span>
@@ -354,6 +347,32 @@ const ui = {
         }
     });
     document.getElementById('draw-horta').innerHTML = html || '<p style="text-align:center; opacity:0.5">Sem plantas nesta zona.</p>';
+},
+
+    drawWiki: async function(s) {
+    const ws = await db.wiki.toArray();
+    const cats = ["Folhas", "Frutos", "Raízes", "Aromáticas"];
+    
+    document.getElementById('draw-wiki').innerHTML = cats.map(c => {
+        const items = ws.filter(w => w.categoria === c && w.especie.toLowerCase().includes(s));
+        if (items.length === 0 && s === "") return ""; // Oculta categorias vazias se não houver pesquisa
+        
+        const open = this.expanded.wiki.has(c);
+        let h = `<div class="group-header" onclick="ui.toggle('wiki', '${c}')">
+                    <b>📚 ${c}</b> <span>${items.length} tipos ${open?'▼':'▶'}</span>
+                 </div>`;
+        if(open) {
+            h += items.map(i => `
+                <div class="card" style="border-left: 4px solid var(--p)">
+                    <div style="display:flex; justify-content:space-between; align-items:center">
+                        <b>${i.especie} <span style="color:var(--p); font-size:0.8rem; margin-left:8px">⏱️ ${i.tempo} dias</span></b>
+                        <span onclick="ui.del('wiki', ${i.id})" style="color:var(--danger); cursor:pointer">✕</span>
+                    </div>
+                    ${i.info ? `<div class="note-box">${i.info}</div>` : ''}
+                </div>`).join('');
+        }
+        return h;
+    }).join('');
 },
 
     drawBook: async function(s) {
