@@ -165,7 +165,7 @@
                         <span id="moon-text">Carregando Lua...</span>
                     </div>
                     <div style="text-align: right;">
-                        <small>Status de Rega</small>
+                        <small>💦Status de Rega</small>
                         <div id="watering-alert" style="color: var(--accent);">Tudo hidratado!</div>
                     </div>
                 </div>
@@ -180,7 +180,7 @@
 
         <section id="view-garden" class="view">
             <div class="flex-between" style="margin-bottom: 15px;">
-                <h2>A Minha Horta</h2>
+                <h2>Horta</h2>
                 <button class="btn-ghost" onclick="ui.openPlantingModal()">+ Plantar</button>
             </div>
             <div id="garden-container"></div>
@@ -188,7 +188,7 @@
 
         <section id="view-wiki" class="view">
             <div class="flex-between" style="margin-bottom: 15px;">
-                <h2>Biblioteca</h2>
+                <h2>Wiki</h2>
                 <button class="btn-ghost" onclick="ui.openSpeciesModal()">+ Espécie</button>
             </div>
             <div id="wiki-container" class="grid"></div>
@@ -196,7 +196,7 @@
 
         <section id="view-diary" class="view">
             <div class="flex-between" style="margin-bottom: 15px;">
-                <h2>Livro de Notas</h2>
+                <h2>Diário</h2>
                 <button class="btn-ghost" onclick="ui.openDiaryModal()">+ Nota</button>
             </div>
             <div id="diary-container"></div>
@@ -231,7 +231,7 @@
         <a href="#" class="dock-item active" onclick="ui.navigate('view-home', this)"><i class="fa-solid fa-house"></i><span>Início</span></a>
         <a href="#" class="dock-item" onclick="ui.navigate('view-garden', this)"><i class="fa-solid fa-leaf"></i><span>Horta</span></a>
         <a href="#" class="dock-item" onclick="ui.navigate('view-wiki', this)"><i class="fa-solid fa-book"></i><span>Wiki</span></a>
-        <a href="#" class="dock-item" onclick="ui.navigate('view-diary', this)"><i class="fa-solid fa-book-open"></i><span>Livro</span></a>
+        <a href="#" class="dock-item" onclick="ui.navigate('view-diary', this)"><i class="fa-solid fa-book-open"></i><span>Diário</span></a>
         <a href="#" class="dock-item" onclick="ui.navigate('view-config', this)"><i class="fa-solid fa-gear"></i><span>Config</span></a>
     </nav>
 
@@ -393,7 +393,7 @@
                                     return `
                                         <div class="flex-between" style="padding:10px 0; border-top:1px solid rgba(255,255,255,0.05)">
                                             <div>
-                                                <strong>${s?.name || 'Semente'}</strong> <small>${age} dias</small><br>
+                                                <strong>${s?.name || 'Semente'}</strong> <small>${age} 🕓</small><br>
                                                 <small class="text-muted">Última rega: ${p.lastWatered ? logic.daysBetween(p.lastWatered)+'d atrás' : 'Nunca'}</small>
                                             </div>
                                             <div class="diary-actions">
@@ -438,11 +438,11 @@
                 db.zones.toArray().then(zones => {
                     db.species.toArray().then(species => {
                         this.showModal(`
-                            <h3>Plantar Nova Semente</h3>
+                            <h3>Nova Planta</h3>
                             <select id="p-zone">${zones.map(z => `<option value="${z.id}">${z.name}</option>`).join('')}</select>
                             <select id="p-species">${species.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select>
                             <input type="date" id="p-date" value="${new Date().toISOString().split('T')[0]}">
-                            <button class="btn-primary" onclick="ui.savePlant()">Confirmar Plantio</button>
+                            <button class="btn-primary" onclick="ui.savePlant()">Confirmar</button>
                         `);
                     });
                 });
