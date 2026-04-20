@@ -176,7 +176,6 @@ db.version(2).stores({
 const logic = {
     savePlantio: async function() {
         const d = {
-            variedade: document.getElementById('p-nome').value || "Nova Planta",
             especie: document.getElementById('p-especie').value,
             zonaId: parseInt(document.getElementById('p-zona').value),
             data: document.getElementById('p-data').value,
