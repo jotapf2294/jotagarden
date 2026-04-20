@@ -39,7 +39,7 @@
             border-radius: 15px; cursor: pointer; border-left: 5px solid var(--p);
         }
 
-        /* Card System (Otimizado) */
+        /* Card System */
         .card {
             background: var(--card); border-radius: 22px; padding: 18px; margin-bottom: 12px;
             box-shadow: var(--shadow); display: flex; justify-content: space-between; align-items: flex-start;
@@ -47,7 +47,7 @@
         .card-info { flex: 1; padding-right: 12px; }
         .card-title { font-weight: 800; font-size: 1.05rem; display: block; margin-bottom: 6px; }
         .card-sub { font-size: 0.85rem; opacity: 0.7; display: flex; gap: 12px; align-items: center; }
-        
+
         .card-actions { display: flex; flex-direction: column; gap: 15px; width: 35px; align-items: center; }
         .btn-act { border: none; background: none; font-size: 1.3rem; cursor: pointer; transition: 0.2s; padding: 0; }
         .btn-act:active { transform: scale(0.8); }
@@ -73,6 +73,27 @@
         /* Modal */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 20px; }
         .modal-content { background: var(--card); border-radius: 30px; padding: 25px; width: 100%; max-width: 400px; }
+
+        /* --- CORREÇÃO CONFIGURAÇÕES --- */
+        #page-config {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .config-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+        .input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+        }
+        .input-row input { flex: 1; margin: 0; }
+        .input-row button { width: auto; min-width: 80px; margin: 0; }
     </style>
 </head>
 <body>
@@ -96,33 +117,31 @@
         <div id="draw-book"></div>
     </section>
     <section id="page-config" class="page">
-    <div class="card config-group">
-        <h3 style="margin:0 0 10px 0">⚙️ Personalização</h3>
-        <button class="btn-main btn-sec" onclick="logic.toggleTheme()" style="margin:0">
-            Alternar Dark Mode
-        </button>
-    </div>
-
-    <div class="card config-group">
-        <h3 style="margin:0 0 10px 0">📍 Minhas Zonas</h3>
-        <div class="input-row">
-            <input type="text" id="z-input" placeholder="Ex: Estufa, Canteiro A...">
-            <button class="btn-main" onclick="logic.addZona()">OK</button>
+        <div class="card config-group">
+            <h3 style="margin:0 0 10px 0">⚙️ Personalização</h3>
+            <button class="btn-main btn-sec" onclick="logic.toggleTheme()" style="margin:0">
+                Alternar Dark Mode
+            </button>
         </div>
-        <div id="draw-zonas" style="margin-top:10px"></div>
-    </div>
-
-    <div class="card config-group">
-        <h3 style="margin:0 0 10px 0">💾 Dados e Backup</h3>
-        <button class="btn-main" style="background:#f39c12; margin:5px 0" onclick="logic.export()">
-            📥 Exportar Backup
-        </button>
-        <button class="btn-main btn-sec" style="margin:5px 0" onclick="document.getElementById('fileIn').click()">
-            📤 Importar Backup
-        </button>
-        <input type="file" id="fileIn" style="display:none" onchange="logic.import(event)">
-    </div>
-</section>
+        <div class="card config-group">
+            <h3 style="margin:0 0 10px 0">📍 Minhas Zonas</h3>
+            <div class="input-row">
+                <input type="text" id="z-input" placeholder="Ex: Estufa, Canteiro A...">
+                <button class="btn-main" onclick="logic.addZona()">OK</button>
+            </div>
+            <div id="draw-zonas" style="margin-top:10px"></div>
+        </div>
+        <div class="card config-group">
+            <h3 style="margin:0 0 10px 0">💾 Dados e Backup</h3>
+            <button class="btn-main" style="background:#f39c12; margin:5px 0" onclick="logic.export()">
+                📥 Exportar Backup
+            </button>
+            <button class="btn-main btn-sec" style="margin:5px 0" onclick="document.getElementById('fileIn').click()">
+                📤 Importar Backup
+            </button>
+            <input type="file" id="fileIn" style="display:none" onchange="logic.import(event)">
+        </div>
+    </section>
 </main>
 
 <div id="modal-planta" class="modal">
@@ -180,8 +199,6 @@
 
 <script src="db.js"></script>
 <script>
-/* 3. Lógica Sénior (app.js consolidado) */
-
 const lunar = {
     get: () => {
         const lp = 2551443, now = new Date();
@@ -212,15 +229,12 @@ const ui = {
     openModal: async function(id, editData = null) {
         const m = document.getElementById(id);
         m.style.display = 'flex';
-        
-        // Setup dropdowns se for planta
         if(id === 'modal-planta') {
             const [zs, ws] = await Promise.all([db.zonas.toArray(), db.wiki.toArray()]);
             document.getElementById('p-zona').innerHTML = zs.map(z => `<option value="${z.id}">${z.nome}</option>`).join('');
             document.getElementById('p-nome').innerHTML = ws.map(w => `<option value="${w.especie}">${w.especie}</option>`).join('');
             document.getElementById('p-data').valueAsDate = new Date();
         }
-
         if(!editData) {
             m.querySelectorAll('input, textarea').forEach(i => i.value = "");
             m.querySelector('.btn-main').innerText = "Guardar Novo";
@@ -262,50 +276,24 @@ const ui = {
     },
 
     drawHorta: async function(s) {
-    const [ps, zs, ws] = await Promise.all([db.plantas.toArray(), db.zonas.toArray(), db.wiki.toArray()]);
-    let html = "";
-    
-    zs.forEach(z => {
-        const fil = ps.filter(p => p.zonaId == z.id && p.variedade.toLowerCase().includes(s));
-        if(fil.length > 0) {
-            const open = this.exp.horta.has(z.id);
-            html += `
-                <div class="cat-header" onclick="logic.toggleExp('horta',${z.id})">
-                    <b>📍 ${z.nome} (${fil.length})</b>
-                    <span>${open ? '▼' : '▶'}</span>
-                </div>`;
-            
-            if(open) {
-                fil.forEach(p => {
-                    const w = ws.find(x => x.especie === p.variedade);
-                    const dias = Math.floor((new Date() - new Date(p.data)) / 86400000);
-                    
-                    html += `
-                    <div class="card">
-                        <div class="card-info">
-                            <b class="card-title">${p.variedade}</b>
-                            <div class="card-sub">
-                                <span>⏳ ${dias} dias</span>
-                                <span>🌡️ ${w ? w.temp : '--'}</span>
-                            </div>
-                            
-                            ${p.nota ? `
-                            <div style="margin-top:12px; padding:10px; background:rgba(46, 125, 50, 0.05); border-radius:12px; border-left:3px solid var(--p); font-size:0.85rem; font-style:italic; color:var(--txt); opacity:0.9;">
-                                "${p.nota}"
-                            </div>` : ''}
-                        </div>
-
-                        <div class="card-actions" style="justify-content: center; height: 100%;">
-                            <button class="btn-act" onclick="event.stopPropagation(); logic.prepareEdit('planta',${p.id})" style="color:var(--p); margin-bottom:10px;">✏️</button>
-                            <button class="btn-act" onclick="event.stopPropagation(); logic.del('plantas',${p.id})" style="color:red">✕</button>
-                        </div>
-                    </div>`;
-                });
+        const [ps, zs, ws] = await Promise.all([db.plantas.toArray(), db.zonas.toArray(), db.wiki.toArray()]);
+        let html = "";
+        zs.forEach(z => {
+            const fil = ps.filter(p => p.zonaId == z.id && p.variedade.toLowerCase().includes(s));
+            if(fil.length > 0) {
+                const open = this.exp.horta.has(z.id);
+                html += `<div class="cat-header" onclick="logic.toggleExp('horta',${z.id})"><b>📍 ${z.nome} (${fil.length})</b><span>${open ? '▼' : '▶'}</span></div>`;
+                if(open) {
+                    fil.forEach(p => {
+                        const w = ws.find(x => x.especie === p.variedade);
+                        const dias = Math.floor((new Date() - new Date(p.data)) / 86400000);
+                        html += `<div class="card"><div class="card-info"><b class="card-title">${p.variedade}</b><div class="card-sub"><span>⏳ ${dias} dias</span><span>🌡️ ${w ? w.temp : '--'}</span></div>${p.nota ? `<div style="margin-top:12px; padding:10px; background:rgba(46, 125, 50, 0.05); border-radius:12px; border-left:3px solid var(--p); font-size:0.85rem; font-style:italic;">"${p.nota}"</div>` : ''}</div><div class="card-actions"><button class="btn-act" onclick="event.stopPropagation(); logic.prepareEdit('planta',${p.id})" style="color:var(--p)">✏️</button><button class="btn-act" onclick="event.stopPropagation(); logic.del('plantas',${p.id})" style="color:red">✕</button></div></div>`;
+                    });
+                }
             }
-        }
-    });
-    document.getElementById('draw-horta').innerHTML = html || '<p align="center" style="margin-top:20px; opacity:0.5;">Nenhuma planta encontrada nesta zona.</p>';
-},
+        });
+        document.getElementById('draw-horta').innerHTML = html || '<p align="center">Vazio.</p>';
+    },
 
     drawWiki: async function(s) {
         const data = await db.wiki.toArray();
@@ -318,17 +306,7 @@ const ui = {
             html += `<div class="cat-header" onclick="logic.toggleExp('wiki','${c}')"><b>📚 ${c}</b><span>${open?'▼':'▶'}</span></div>`;
             if(open) {
                 items.forEach(i => {
-                    html += `
-                    <div class="card">
-                        <div class="card-info">
-                            <b class="card-title">${i.especie}</b>
-                            <div class="card-sub"><span>⏱️ ${i.tempo} dias</span><span>🌡️ ${i.temp}</span></div>
-                        </div>
-                        <div class="card-actions">
-                            <button class="btn-act" onclick="logic.prepareEdit('wiki',${i.id})" style="color:var(--p)">✏️</button>
-                            <button class="btn-act" onclick="logic.del('wiki',${i.id})" style="color:red">✕</button>
-                        </div>
-                    </div>`;
+                    html += `<div class="card"><div class="card-info"><b class="card-title">${i.especie}</b><div class="card-sub"><span>⏱️ ${i.tempo} dias</span><span>🌡️ ${i.temp}</span></div></div><div class="card-actions"><button class="btn-act" onclick="logic.prepareEdit('wiki',${i.id})" style="color:var(--p)">✏️</button><button class="btn-act" onclick="logic.del('wiki',${i.id})" style="color:red">✕</button></div></div>`;
                 });
             }
         });
@@ -346,17 +324,7 @@ const ui = {
             html += `<div class="cat-header" onclick="logic.toggleExp('book','${c}')"><b>📂 ${c}</b><span>${open?'▼':'▶'}</span></div>`;
             if(open) {
                 items.forEach(i => {
-                    html += `
-                    <div class="card">
-                        <div class="card-info">
-                            <b class="card-title">${i.titulo}</b>
-                            <p style="font-size:0.85rem; margin:5px 0 0; opacity:0.8">${i.conteudo}</p>
-                        </div>
-                        <div class="card-actions">
-                            <button class="btn-act" onclick="logic.prepareEdit('book',${i.id})" style="color:var(--p)">✏️</button>
-                            <button class="btn-act" onclick="logic.del('book',${i.id})" style="color:red">✕</button>
-                        </div>
-                    </div>`;
+                    html += `<div class="card"><div class="card-info"><b class="card-title">${i.titulo}</b><p style="font-size:0.85rem; margin:5px 0 0; opacity:0.8">${i.conteudo}</p></div><div class="card-actions"><button class="btn-act" onclick="logic.prepareEdit('book',${i.id})" style="color:var(--p)">✏️</button><button class="btn-act" onclick="logic.del('book',${i.id})" style="color:red">✕</button></div></div>`;
                 });
             }
         });
@@ -364,13 +332,9 @@ const ui = {
     },
 
     drawConfig: async function() {
-    const zs = await db.zonas.toArray();
-    document.getElementById('draw-zonas').innerHTML = zs.map(z => `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(0,0,0,0.03); border-radius:12px; margin-bottom:8px;">
-            <span style="font-weight:bold;">${z.nome}</span>
-            <button class="btn-act" onclick="logic.del('zonas',${z.id})" style="color:red; font-size:1.1rem;">✕</button>
-        </div>`).join('');
-}
+        const zs = await db.zonas.toArray();
+        document.getElementById('draw-zonas').innerHTML = zs.map(z => `<div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(0,0,0,0.03); border-radius:12px; margin-bottom:8px;"><b>${z.nome}</b><button class="btn-act" onclick="logic.del('zonas',${z.id})" style="color:red">✕</button></div>`).join('');
+    }
 };
 
 const logic = {
@@ -378,107 +342,63 @@ const logic = {
         ui.exp[type].has(id) ? ui.exp[type].delete(id) : ui.exp[type].add(id);
         ui.render();
     },
-
     savePlanta: async function() {
         const id = document.getElementById('p-id').value;
-        const data = { 
-            variedade: document.getElementById('p-nome').value, 
-            zonaId: parseInt(document.getElementById('p-zona').value),
-            data: document.getElementById('p-data').value,
-            nota: document.getElementById('p-nota').value
-        };
+        const data = { variedade: document.getElementById('p-nome').value, zonaId: parseInt(document.getElementById('p-zona').value), data: document.getElementById('p-data').value, nota: document.getElementById('p-nota').value };
         id ? await db.plantas.update(parseInt(id), data) : await db.plantas.add(data);
         ui.closeModal('modal-planta'); ui.render();
     },
-
     saveWiki: async function() {
         const id = document.getElementById('w-id').value;
-        const data = {
-            especie: document.getElementById('w-nome').value,
-            categoria: document.getElementById('w-cat').value,
-            tempo: parseInt(document.getElementById('w-dias').value),
-            temp: document.getElementById('w-temp').value,
-            info: document.getElementById('w-info').value
-        };
+        const data = { especie: document.getElementById('w-nome').value, categoria: document.getElementById('w-cat').value, tempo: parseInt(document.getElementById('w-dias').value), temp: document.getElementById('w-temp').value, info: document.getElementById('w-info').value };
         id ? await db.wiki.update(parseInt(id), data) : await db.wiki.add(data);
         ui.closeModal('modal-wiki'); ui.render();
     },
-
     saveBook: async function() {
         const id = document.getElementById('b-id').value;
-        const data = {
-            titulo: document.getElementById('b-tit').value,
-            categoria: document.getElementById('b-cat').value,
-            conteudo: document.getElementById('b-txt').value
-        };
+        const data = { titulo: document.getElementById('b-tit').value, categoria: document.getElementById('b-cat').value, conteudo: document.getElementById('b-txt').value };
         id ? await db.book.update(parseInt(id), data) : await db.book.add(data);
         ui.closeModal('modal-book'); ui.render();
     },
-
     prepareEdit: async function(type, id) {
         if(type === 'planta') {
-            const item = await db.plantas.get(id);
-            await ui.openModal('modal-planta', true);
-            document.getElementById('p-id').value = id;
-            document.getElementById('p-nome').value = item.variedade;
-            document.getElementById('p-zona').value = item.zonaId;
-            document.getElementById('p-data').value = item.data;
-            document.getElementById('p-nota').value = item.nota;
-            document.getElementById('p-btn').innerText = "Atualizar";
+            const item = await db.plantas.get(id); await ui.openModal('modal-planta', true);
+            document.getElementById('p-id').value = id; document.getElementById('p-nome').value = item.variedade;
+            document.getElementById('p-zona').value = item.zonaId; document.getElementById('p-data').value = item.data;
+            document.getElementById('p-nota').value = item.nota; document.getElementById('p-btn').innerText = "Atualizar";
         }
         if(type === 'wiki') {
-            const item = await db.wiki.get(id);
-            ui.openModal('modal-wiki', true);
-            document.getElementById('w-id').value = id;
-            document.getElementById('w-nome').value = item.especie;
-            document.getElementById('w-cat').value = item.categoria;
-            document.getElementById('w-dias').value = item.tempo;
-            document.getElementById('w-temp').value = item.temp;
-            document.getElementById('w-info').value = item.info;
+            const item = await db.wiki.get(id); ui.openModal('modal-wiki', true);
+            document.getElementById('w-id').value = id; document.getElementById('w-nome').value = item.especie;
+            document.getElementById('w-cat').value = item.categoria; document.getElementById('w-dias').value = item.tempo;
+            document.getElementById('w-temp').value = item.temp; document.getElementById('w-info').value = item.info;
             document.getElementById('w-btn').innerText = "Atualizar";
         }
         if(type === 'book') {
-            const item = await db.book.get(id);
-            ui.openModal('modal-book', true);
-            document.getElementById('b-id').value = id;
-            document.getElementById('b-tit').value = item.titulo;
-            document.getElementById('b-cat').value = item.categoria;
-            document.getElementById('b-txt').value = item.conteudo;
+            const item = await db.book.get(id); ui.openModal('modal-book', true);
+            document.getElementById('b-id').value = id; document.getElementById('b-tit').value = item.titulo;
+            document.getElementById('b-cat').value = item.categoria; document.getElementById('b-txt').value = item.conteudo;
             document.getElementById('b-btn').innerText = "Atualizar";
         }
     },
-
     addZona: async function() {
         const n = document.getElementById('z-input').value;
         if(n) await db.zonas.add({ nome: n });
         document.getElementById('z-input').value = ""; ui.render();
     },
-
-    del: async function(table, id) {
-        if(confirm("Apagar?")) { await db[table].delete(id); ui.render(); }
-    },
-
-    toggleTheme: async function() {
-        document.body.classList.toggle('dark');
-        await db.config.put({ id: 'theme', val: document.body.classList.contains('dark') });
-    },
-
+    del: async function(table, id) { if(confirm("Apagar?")) { await db[table].delete(id); ui.render(); } },
+    toggleTheme: async function() { document.body.classList.toggle('dark'); await db.config.put({ id: 'theme', val: document.body.classList.contains('dark') }); },
     export: async function() {
-        const d = {};
-        for(const t of ['zonas','wiki','plantas','book']) d[t] = await db[t].toArray();
+        const d = {}; for(const t of ['zonas','wiki','plantas','book']) d[t] = await db[t].toArray();
         const blob = new Blob([JSON.stringify(d)], {type:'application/json'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-        a.download = `backup_jota.json`; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_jota.json`; a.click();
     },
-
     import: function(e) {
-        const fr = new FileReader();
-        fr.onload = async (ev) => {
+        const fr = new FileReader(); fr.onload = async (ev) => {
             const d = JSON.parse(ev.target.result);
             for(const t in d) { await db[t].clear(); await db[t].bulkAdd(d[t]); }
             location.reload();
-        };
-        fr.readAsText(e.target.files[0]);
+        }; fr.readAsText(e.target.files[0]);
     }
 };
 
