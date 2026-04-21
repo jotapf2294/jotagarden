@@ -108,7 +108,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr; /* Info técnica em 2 colunas dentro do card */
     gap: 8px;
-    font-size: 1.2rem;
+    font-size: 0.5rem;
     border-bottom: 1px solid var(--glass-border);
     padding-bottom: 10px;
 }
@@ -152,7 +152,7 @@
 <body>
 
     <header>
-        <span style="font-weight: 800; color: var(--accent);">Olá, Jota👋<small style="font-weight: 300; color: #fff;">Bem-vindo a tua app</small></span>
+        <span style="font-weight: 800; color: var(--accent);">Olá, Jota 👋<small style="font-weight: 300; color: #fff;"> </small></span>
         <div id="header-date" style="font-size: 12px; opacity: 0.7;"></div>
     </header>
 
@@ -165,7 +165,7 @@
                         <span id="moon-text">Carregando Lua...</span>
                     </div>
                     <div style="text-align: right;">
-                        <small>Status de Rega</small>
+                        <h4>Status da Horta </h4>
                         <div id="watering-alert" style="color: var(--accent);">Horta Feliz🌱</div>
                     </div>
                 </div>
@@ -368,7 +368,7 @@
                     </div>
                 ` : '<p class="text-muted">Não há tarefas urgentes.</p>';
                 
-                document.getElementById('watering-alert').innerText = needsWater.length > 0 ? 'Necessita atenção!' : 'Horta feliz 🌱';
+                document.getElementById('watering-alert').innerText = needsWater.length > 0 ? 'Necessita atenção!' : 'Horta feliz! 🌱';
             },
 
             // --- HORTA ---
@@ -502,10 +502,10 @@
                     <h3>${id ? 'Editar' : 'Nova'} Espécie</h3>
                     <input type="text" id="s-name" placeholder="Nome" value="${s?.name || ''}">
                     <select id="s-cat">
-                        <option value="Folhas" ${s?.category==='Folhas'?'selected':''}>Folhas</option>
-                        <option value="Frutos" ${s?.category==='Frutos'?'selected':''}>Frutos</option>
-                        <option value="Raízes" ${s?.category==='Raízes'?'selected':''}>Raízes</option>
-                        <option value="Aromáticas" ${s?.category==='Aromáticas'?'selected':''}>Aromáticas</option>
+                        <option value="🌿Folhas" ${s?.category==='Folhas'?'selected':''}>Folhas</option>
+                        <option value="🍅Frutos" ${s?.category==='Frutos'?'selected':''}>Frutos</option>
+                        <option value="🥕Raízes" ${s?.category==='Raízes'?'selected':''}>Raízes</option>
+                        <option value="🪴Aromáticas" ${s?.category==='Aromáticas'?'selected':''}>Aromáticas</option>
                     </select>
                     <div class="grid">
                         <input type="number" id="s-harvest" placeholder="Dias Colheita" value="${s?.harvest || ''}">
