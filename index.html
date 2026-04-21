@@ -66,7 +66,7 @@
         .dock {
             position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 500px; height: 65px;
-            background: #8B008B; backdrop-filter: blur(20px);
+            background: #6B8E23; backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border); border-radius: 30px;
             display: flex; justify-content: space-around; align-items: center; z-index: 1000;
         }
@@ -128,7 +128,7 @@
     padding: 4px 8px;
     border-radius: 6px;
     color: var(--accent);
-    font-size: 0.75rem;
+    font-size: 0.95rem;
 }
 
         /* --- ESPECÍFICO --- */
@@ -152,7 +152,7 @@
 <body>
 
     <header>
-        <span style="font-weight: 800; color: var(--accent);">JotaGarden <small style="font-weight: 300; color: #fff;">OS</small></span>
+        <span style="font-weight: 800; color: var(--accent);">Olá, Jota👋<small style="font-weight: 300; color: #fff;">Bem-vindo a tua app</small></span>
         <div id="header-date" style="font-size: 12px; opacity: 0.7;"></div>
     </header>
 
@@ -165,8 +165,8 @@
                         <span id="moon-text">Carregando Lua...</span>
                     </div>
                     <div style="text-align: right;">
-                        <small>💦Status de Rega</small>
-                        <div id="watering-alert" style="color: var(--accent);">Tudo hidratado!</div>
+                        <small>Status de Rega</small>
+                        <div id="watering-alert" style="color: var(--accent);">Horta Feliz🌱</div>
                     </div>
                 </div>
             </div>
@@ -472,7 +472,7 @@
     container.innerHTML = species.map(s => `
         <div class="glass-card fade-in">
             <div class="flex-between">
-                <h3 style="margin:0; color:var(--accent); font-size: 1.5rem;">${s.name}</h3>
+                <h3 style="margin:0; color:var(--accent); font-size: 1.0rem;">${s.name}</h3>
                 <button class="btn-ghost" style="padding: 5px 10px;" onclick="ui.openSpeciesModal(${s.id})">
                     <i class="fa-solid fa-pen"></i>
                 </button>
