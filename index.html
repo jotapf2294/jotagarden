@@ -1,320 +1,281 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>JotaGarden OS</title>
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
     <style>
-        /* --- VARIÁVEIS E TEMAS --- */
         :root {
-            --bg-color: #000000;
-            --text-color: #ffffff;
-            --text-muted: #888888;
-            --accent: #006400;
-            --accent-glow: rgba(57, 255, 20, 0.3);
-            --glass: rgba(25, 25, 25, 0.7);
-            --glass-border: rgba(57, 255, 20, 0.15);
-            --danger: #ff4444;
-            --card-radius: 16px;
+            /* GitHub Dark Mode Palette */
+            --bg-canvas: #0d1117;
+            --bg-surface: #161b22;
+            --border-default: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-green: #238636;
+            --accent-green-hover: #2ea043;
+            --accent-blue: #58a6ff;
+            --danger: #da3633;
+            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
         }
 
         body.light-mode {
-            --bg-color: #F5F5DC;
-            --text-color: #000000;
-            --text-muted: #666666;
-            --glass: rgba(255, 255, 255, 0.8);
-            --glass-border: rgba(0, 0, 0, 0.1);
+            --bg-canvas: #ffffff;
+            --bg-surface: #f6f8fa;
+            --border-default: #d0d7de;
+            --text-primary: #24292f;
+            --text-secondary: #57606a;
+            --accent-green: #1a7f37;
         }
 
-        /* --- BASE --- */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         body {
-            margin: 0; background: var(--bg-color); color: var(--text-color);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            overflow: hidden; transition: background 0.3s;
+            margin: 0; background-color: var(--bg-canvas); color: var(--text-primary);
+            font-family: var(--font-main); overflow: hidden; transition: 0.2s;
         }
 
-        /* --- LAYOUT --- */
+        /* --- Layout --- */
         header {
-            position: fixed; top: 0; width: 100%; height: 60px;
+            position: fixed; top: 0; width: 100%; height: 65px;
+            background: var(--bg-surface); border-bottom: 1px solid var(--border-default);
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 20px; z-index: 100;
-            background: var(--glass); backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--glass-border);
+            padding: 0 20px; z-index: 1000;
         }
+
+        .search-container {
+            flex: 1; margin: 0 15px; max-width: 400px; position: relative;
+        }
+
+        .search-container input {
+            width: 100%; background: var(--bg-canvas); border: 1px solid var(--border-default);
+            border-radius: 6px; padding: 6px 12px 6px 35px; color: var(--text-primary);
+        }
+
+        .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
 
         main {
-            height: 100vh; padding: 70px 15px 100px 15px;
-            overflow-y: auto; scroll-behavior: smooth;
+            height: 100vh; padding: 80px 15px 90px 15px;
+            overflow-y: auto; display: flex; flex-direction: column; align-items: center;
         }
 
-        .view { display: none; animation: fadeIn 0.3s ease; }
-        .view.active { display: block; }
+        .view-section { width: 100%; max-width: 800px; display: none; animation: fadeIn 0.2s ease-in; }
+        .view-section.active { display: block; }
 
-        /* --- GLASSMORPHISM CARDS --- */
-        .glass-card {
-            background: var(--glass); backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border); border-radius: var(--card-radius);
-            padding: 15px; margin-bottom: 15px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Cards --- */
+        .gh-card {
+            background: var(--bg-surface); border: 1px solid var(--border-default);
+            border-radius: 6px; padding: 16px; margin-bottom: 16px;
         }
 
-        /* --- DOCK INFERIOR --- */
+        .gh-card h3 { margin: 0 0 10px 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+
+        /* --- UI Elements --- */
+        .btn {
+            border: 1px solid var(--border-default); border-radius: 6px; padding: 5px 16px;
+            font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+            background: var(--bg-surface); color: var(--text-primary); transition: 0.1s;
+        }
+        .btn-primary { background: var(--accent-green); color: white; border: none; }
+        .btn-primary:hover { background: var(--accent-green-hover); }
+        .btn-danger { color: var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        .badge {
+            font-size: 12px; padding: 2px 8px; border-radius: 20px;
+            border: 1px solid var(--border-default); color: var(--text-secondary);
+        }
+
+        input, select, textarea {
+            width: 100%; background: var(--bg-canvas); border: 1px solid var(--border-default);
+            border-radius: 6px; padding: 8px; color: var(--text-primary); margin: 8px 0;
+        }
+
+        /* --- Nav Dock --- */
         .dock {
-            position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 500px; height: 65px;
-            background: var(--glass); backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border); border-radius: 30px;
+            position: fixed; bottom: 0; width: 100%; height: 70px;
+            background: var(--bg-surface); border-top: 1px solid var(--border-default);
             display: flex; justify-content: space-around; align-items: center; z-index: 1000;
         }
 
         .dock-item {
             display: flex; flex-direction: column; align-items: center;
-            color: var(--text-muted); text-decoration: none; font-size: 10px; gap: 4px;
-            transition: 0.2s;
+            color: var(--text-secondary); text-decoration: none; font-size: 11px; gap: 4px; flex: 1;
         }
 
-        .dock-item.active { color: var(--accent); transform: translateY(-5px); }
-        .dock-item i { font-size: 20px; }
+        .dock-item.active { color: var(--accent-blue); }
+        .dock-item i { width: 20px; height: 20px; }
 
-        /* --- UI ELEMENTS --- */
-        button {
-            border: none; border-radius: 10px; padding: 10px 15px;
-            font-weight: bold; cursor: pointer; transition: 0.1s;
-        }
-        button:active { transform: scale(0.95); }
-        .btn-primary { background: var(--accent); color: #000; width: 100%; }
-        .btn-ghost { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
-        .btn-danger { background: rgba(255, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
-
-        input, select, textarea {
-            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
-            border-radius: 8px; padding: 12px; color: #fff; margin-bottom: 10px;
-        }
-        body.light-mode input, body.light-mode select, body.light-mode textarea { color: #000; }
-
-        /* Layout Wiki e Diário */
-        #wiki-container, #diary-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .wiki-card-content {
-            margin-top: 10px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            font-size: 0.85rem;
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 10px;
-        }
-
-        .wiki-notes-area {
-            margin-top: 12px;
-            font-size: 0.9rem;
-            line-height: 1.5;
-            color: var(--text-color);
-            opacity: 0.9;
-            white-space: pre-wrap;
-        }
-
-        .months-badge {
-            grid-column: span 2;
-            background: rgba(57, 255, 20, 0.1);
-            padding: 4px 8px;
-            border-radius: 6px;
-            color: var(--accent);
-            font-size: 0.75rem;
-        }
-
-        .badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--accent); color: var(--accent); }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; }
-        .timeline-item { border-left: 2px solid var(--accent); padding-left: 15px; margin-bottom: 15px; }
-
-        /* --- MODAL --- */
-        .modal-overlay {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.8); display:none; align-items:center; justify-content:center; z-index:2000;
+        /* --- Modal --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 2000;
         }
         .modal-content {
-            width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto;
+            width: 95%; max-width: 500px; background: var(--bg-surface);
+            border: 1px solid var(--border-default); border-radius: 12px; padding: 20px;
+            max-height: 90vh; overflow-y: auto;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .mt-10 { margin-top: 10px; }
+        .text-muted { color: var(--text-secondary); font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <header>
-        <span style="font-weight: 800; color: var(--accent);">JotaGarden <small style="font-weight: 300; color: #fff;">OS</small></span>
-        <div id="header-date" style="font-size: 12px; opacity: 0.7;"></div>
+        <div style="font-weight: 600; font-size: 1.2rem;">JotaGarden <span style="font-weight: 300; opacity: 0.6;">OS</span></div>
+        <div class="search-container">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="global-search" placeholder="Filter..." oninput="ui.handleSearch(this.value)">
+        </div>
     </header>
 
-    <main id="main-content">
-        <section id="view-home" class="view active">
-            <div class="glass-card">
-                <div class="flex-between">
+    <main>
+        <section id="view-home" class="view-section active">
+            <div class="gh-card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <h2 id="moon-icon" style="margin:0; font-size: 2rem;">🌑</h2>
-                        <span id="moon-text">Carregando Lua...</span>
+                        <div id="home-date" class="text-muted"></div>
+                        <h2 id="moon-phase-name" style="margin: 5px 0;">New Moon</h2>
                     </div>
-                    <div style="text-align: right;">
-                        <small>💦Status de Rega</small>
-                        <div id="watering-alert" style="color: var(--accent);">Tudo hidratado!</div>
-                    </div>
+                    <div id="moon-icon" style="font-size: 2.5rem;">🌑</div>
                 </div>
             </div>
 
-            <h3>Sugestões do Mês</h3>
-            <div id="seasonal-advice" class="grid"></div>
+            <h3><i data-lucide="bell"></i> Attention Needed</h3>
+            <div id="home-alerts"></div>
 
-            <h3 class="mt-20">Ações Rápidas</h3>
-            <div id="home-tasks"></div>
+            <h3 class="mt-10"><i data-lucide="sparkles"></i> Seasonal Suggestions</h3>
+            <div id="home-suggestions" class="grid-2"></div>
+
+            <h3 class="mt-10"><i data-lucide="book-open"></i> Note Highlights</h3>
+            <div id="home-notes"></div>
         </section>
 
-        <section id="view-garden" class="view">
-            <div class="flex-between" style="margin-bottom: 15px;">
-                <h2>Horta</h2>
-                <button class="btn-ghost" onclick="ui.openPlantingModal()">+ Plantar</button>
+        <section id="view-garden" class="view-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2>Garden Plots</h2>
+                <button class="btn btn-primary" onclick="ui.openPlantModal()"><i data-lucide="plus"></i> Plant</button>
             </div>
-            
-            <input type="text" id="search-garden" placeholder="🔍 Procurar plantas ou zonas..." 
-                   style="margin-bottom:15px; padding:14px;" 
-                   onkeyup="ui.filterGarden(this.value)">
-
-            <div id="garden-container"></div>
+            <div id="garden-list"></div>
         </section>
 
-        <section id="view-wiki" class="view">
-            <div class="flex-between" style="margin-bottom: 15px;">
-                <h2>Wiki</h2>
-                <button class="btn-ghost" onclick="ui.openSpeciesModal()">+ Espécie</button>
+        <section id="view-wiki" class="view-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2>Species Wiki</h2>
+                <button class="btn btn-primary" onclick="ui.openSpeciesModal()"><i data-lucide="plus"></i> Species</button>
             </div>
-            
-            <input type="text" id="search-wiki" placeholder="🔍 Procurar espécies..." 
-                   style="margin-bottom:15px; padding:14px;" 
-                   onkeyup="ui.filterWiki(this.value)">
-
-            <div id="wiki-container" class="grid"></div>
+            <div id="wiki-list"></div>
         </section>
 
-        <section id="view-diary" class="view">
-            <div class="flex-between" style="margin-bottom: 15px;">
-                <h2>Diário</h2>
-                <button class="btn-ghost" onclick="ui.openDiaryModal()">+ Nota</button>
+        <section id="view-book" class="view-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2>The Book</h2>
+                <button class="btn btn-primary" onclick="ui.openNoteModal()"><i data-lucide="plus"></i> Note</button>
             </div>
-            
-            <input type="text" id="search-diary" placeholder="🔍 Procurar no diário..." 
-                   style="margin-bottom:15px; padding:14px;" 
-                   onkeyup="ui.filterDiary(this.value)">
-
-            <div id="diary-container"></div>
+            <div id="book-list"></div>
         </section>
 
-        <section id="view-config" class="view">
-            <h2>Configurações</h2>
-            <div class="glass-card">
-                <h4>Aparência</h4>
-                <button class="btn-primary" onclick="ui.toggleTheme()"><i class="fa-solid fa-circle-half-stroke"></i> Alternar Tema</button>
+        <section id="view-config" class="view-section">
+            <h2>Settings</h2>
+            <div class="gh-card">
+                <h3>Appearance</h3>
+                <button class="btn" style="width: 100%" onclick="ui.toggleTheme()"><i data-lucide="moon"></i> Toggle Dark/Light Mode</button>
             </div>
-
-            <div class="glass-card">
-                <h4>Gestão de Zonas</h4>
-                <div id="config-zones-list" style="margin-bottom: 10px;"></div>
-                <input type="text" id="new-zone-name" placeholder="Nome da Zona (ex: Estufa Sul)">
-                <button class="btn-ghost" onclick="ui.addZone()" style="width:100%">+ Adicionar Zona</button>
-            </div>
-
-            <div class="glass-card">
-                <h4>Dados</h4>
-                <div class="grid">
-                    <button class="btn-ghost" onclick="logic.exportBackup()"><i class="fa-solid fa-download"></i> Backup</button>
-                    <button class="btn-ghost" onclick="document.getElementById('import-file').click()"><i class="fa-solid fa-upload"></i> Importar</button>
+            <div class="gh-card">
+                <h3>Management Zones</h3>
+                <div id="zone-config-list" style="margin-bottom: 10px;"></div>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="new-zone-input" placeholder="Zone name (e.g. Greenhouse)">
+                    <button class="btn btn-primary" onclick="ui.addZone()">Add</button>
                 </div>
-                <input type="file" id="import-file" style="display:none" onchange="logic.importBackup(this)">
+            </div>
+            <div class="gh-card">
+                <h3>Data Backup</h3>
+                <div class="grid-2">
+                    <button class="btn" onclick="logic.exportData()"><i data-lucide="download"></i> Export JSON</button>
+                    <button class="btn" onclick="document.getElementById('import-file').click()"><i data-lucide="upload"></i> Import JSON</button>
+                </div>
+                <input type="file" id="import-file" style="display:none" onchange="logic.importData(this)">
             </div>
         </section>
     </main>
 
     <nav class="dock">
-        <a href="#" class="dock-item active" onclick="ui.navigate('view-home', this)"><i class="fa-solid fa-house"></i><span>Início</span></a>
-        <a href="#" class="dock-item" onclick="ui.navigate('view-garden', this)"><i class="fa-solid fa-leaf"></i><span>Horta</span></a>
-        <a href="#" class="dock-item" onclick="ui.navigate('view-wiki', this)"><i class="fa-solid fa-book"></i><span>Wiki</span></a>
-        <a href="#" class="dock-item" onclick="ui.navigate('view-diary', this)"><i class="fa-solid fa-book-open"></i><span>Diário</span></a>
-        <a href="#" class="dock-item" onclick="ui.navigate('view-config', this)"><i class="fa-solid fa-gear"></i><span>Config</span></a>
+        <a href="#" class="dock-item active" onclick="ui.navigate('view-home', this)"><i data-lucide="home"></i>Home</a>
+        <a href="#" class="dock-item" onclick="ui.navigate('view-garden', this)"><i data-lucide="leaf"></i>Garden</a>
+        <a href="#" class="dock-item" onclick="ui.navigate('view-wiki', this)"><i data-lucide="database"></i>Wiki</a>
+        <a href="#" class="dock-item" onclick="ui.navigate('view-book', this)"><i data-lucide="book"></i>Book</a>
+        <a href="#" class="dock-item" onclick="ui.navigate('view-config', this)"><i data-lucide="settings"></i>Config</a>
     </nav>
 
-    <div id="modal" class="modal-overlay" onclick="if(event.target == this) ui.closeModal()">
-        <div class="modal-content glass-card" id="modal-body" onclick="event.stopPropagation()"></div>
+    <div id="modal" class="modal" onclick="if(event.target === this) ui.closeModal()">
+        <div class="modal-content" id="modal-body"></div>
     </div>
 
     <script>
-        // ==========================================
-        // 1. BASE DE DADOS
-        // ==========================================
+        // --- DATABASE INIT ---
         const db = new Dexie('JotaGardenDB');
-        db.version(2).stores({
+        db.version(1).stores({
             zones: '++id, name',
             species: '++id, name, category, months',
-            plants: '++id, zoneId, speciesId, plantedDate, lastWatered',
-            diary: '++id, title, category, date'
+            plants: '++id, zoneId, speciesId, plantDate, lastWatered',
+            book: '++id, title, category, timestamp'
         });
 
-        // ==========================================
-        // 2. LÓGICA DE NEGÓCIO
-        // ==========================================
+        // --- LOGIC ---
         const logic = {
-            getMoonPhase() {
-                const date = new Date();
+            async getMoonPhase() {
                 const lp = 2551443; 
-                const now = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 20, 35, 0);
+                const now = new Date();
                 const new_moon = new Date(1970, 0, 7, 20, 35, 0);
                 const phase = ((now.getTime() - new_moon.getTime()) % lp) / lp;
                 const b = Math.floor(phase * 8);
                 const phases = [
-                    {n: 'Nova', i: '🌑'}, {n: 'Crescente', i: '🌒'}, {n: 'Quarto Crescente', i: '🌓'}, {n: 'Gibosa Crescente', i: '🌔'},
-                    {n: 'Cheia', i: '🌕'}, {n: 'Gibosa Minguante', i: '🌖'}, {n: 'Quarto Minguante', i: '🌗'}, {n: 'Minguante', i: '🌘'}
+                    {n: 'New Moon', i: '🌑'}, {n: 'Waxing Crescent', i: '🌒'}, {n: 'First Quarter', i: '🌓'}, {n: 'Waxing Gibbous', i: '🌔'},
+                    {n: 'Full Moon', i: '🌕'}, {n: 'Waning Gibbous', i: '🌖'}, {n: 'Last Quarter', i: '🌗'}, {n: 'Waning Crescent', i: '🌘'}
                 ];
                 return phases[b >= 8 ? 0 : b];
             },
 
-            daysBetween(d1, d2 = new Date()) {
-                const timeDiff = d2.getTime() - new Date(d1).getTime();
-                return Math.floor(timeDiff / (1000 * 3600 * 24));
+            daysSince(date) {
+                const diff = new Date().getTime() - new Date(date).getTime();
+                return Math.floor(diff / (1000 * 3600 * 24));
             },
 
-            async exportBackup() {
+            async exportData() {
                 const data = {
                     zones: await db.zones.toArray(),
                     species: await db.species.toArray(),
                     plants: await db.plants.toArray(),
-                    diary: await db.diary.toArray()
+                    book: await db.book.toArray()
                 };
                 const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
-                const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = `jotagarden_backup_${new Date().toISOString().slice(0,10)}.json`;
+                a.href = URL.createObjectURL(blob);
+                a.download = `jotagarden_backup_${new Date().toISOString().split('T')[0]}.json`;
                 a.click();
             },
 
-            async importBackup(input) {
+            async importData(input) {
                 const file = input.files[0];
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     const data = JSON.parse(e.target.result);
-                    await db.transaction('rw', [db.zones, db.species, db.plants, db.diary], async () => {
+                    await db.transaction('rw', [db.zones, db.species, db.plants, db.book], async () => {
                         await db.zones.clear(); await db.species.clear();
-                        await db.plants.clear(); await db.diary.clear();
+                        await db.plants.clear(); await db.book.clear();
                         await db.zones.bulkAdd(data.zones);
                         await db.species.bulkAdd(data.species);
                         await db.plants.bulkAdd(data.plants);
-                        await db.diary.bulkAdd(data.diary);
+                        await db.book.bulkAdd(data.book);
                     });
                     location.reload();
                 };
@@ -322,260 +283,121 @@
             }
         };
 
-        // ==========================================
-        // 3. INTERFACE (UI)
-        // ==========================================
+        // --- UI ---
         const ui = {
-            currentGardenFilter: '',
-            currentWikiFilter: '',
-            currentDiaryFilter: '',
+            currentTab: 'view-home',
 
             init() {
-                document.getElementById('header-date').innerText = new Date().toLocaleDateString('pt-PT', {weekday:'long', day:'numeric', month:'long'});
+                lucide.createIcons();
                 this.renderHome();
-                this.checkTheme();
+                document.getElementById('home-date').innerText = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             },
 
-            navigate(viewId, el) {
-                // Desativar todas as views e itens da dock
-                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-                document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
-
-                // Ativar a view e o item da dock
-                document.getElementById(viewId).classList.add('active');
+            navigate(tabId, el) {
+                document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+                document.querySelectorAll('.dock-item').forEach(i => i.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
                 el.classList.add('active');
-
-                // Limpar filtro da aba que estamos a deixar
-                if (viewId === 'view-garden') {
-                    document.getElementById('search-garden').value = '';
-                    this.currentGardenFilter = '';
-                }
-                if (viewId === 'view-wiki') {
-                    document.getElementById('search-wiki').value = '';
-                    this.currentWikiFilter = '';
-                }
-                if (viewId === 'view-diary') {
-                    document.getElementById('search-diary').value = '';
-                    this.currentDiaryFilter = '';
-                }
-
-                // Renderizar a vista correspondente
-                if (viewId === 'view-home') this.renderHome();
-                if (viewId === 'view-garden') this.renderGarden();
-                if (viewId === 'view-wiki') this.renderWiki();
-                if (viewId === 'view-diary') this.renderDiary();
-                if (viewId === 'view-config') this.renderConfig();
+                this.currentTab = tabId;
+                this.refreshCurrentTab();
             },
 
-            showModal(content) {
-                const m = document.getElementById('modal');
-                document.getElementById('modal-body').innerHTML = content;
-                m.style.display = 'flex';
+            refreshCurrentTab() {
+                if(this.currentTab === 'view-home') this.renderHome();
+                if(this.currentTab === 'view-garden') this.renderGarden();
+                if(this.currentTab === 'view-wiki') this.renderWiki();
+                if(this.currentTab === 'view-book') this.renderBook();
+                if(this.currentTab === 'view-config') this.renderConfig();
             },
 
-            closeModal() { 
-                document.getElementById('modal').style.display = 'none'; 
-            },
-
-            // ==================== HOME ====================
-            async renderHome() {
-                const moon = logic.getMoonPhase();
-                document.getElementById('moon-icon').innerText = moon.i;
-                document.getElementById('moon-text').innerText = `Lua ${moon.n}`;
-
-                const currentMonth = new Date().getMonth() + 1;
-                const species = await db.species.toArray();
-                const adviceCont = document.getElementById('seasonal-advice');
-                adviceCont.innerHTML = species.filter(s => s.months?.split(',').includes(currentMonth.toString()))
-                    .slice(0,4).map(s => `
-                        <div class="glass-card" style="margin:0; font-size:12px; text-align:center;">
-                            <div style="font-weight:bold; color:var(--accent)">${s.name}</div>
-                            <small>${s.category}</small>
-                        </div>
-                    `).join('') || '<p style="grid-column: 1/-1">Sem sugestões para este mês.</p>';
-
-                const plants = await db.plants.toArray();
-                const tasksCont = document.getElementById('home-tasks');
-                const needsWater = plants.filter(p => !p.lastWatered || logic.daysBetween(p.lastWatered) >= 2);
-
-                tasksCont.innerHTML = needsWater.length > 0 ? `
-                    <div class="glass-card" style="border-left: 4px solid var(--accent)">
-                        <div class="flex-between">
-                            <span>Existem <strong>${needsWater.length}</strong> plantas com sede!</span>
-                            <button class="btn-ghost" onclick="ui.navigate('view-garden', document.querySelectorAll('.dock-item')[1])">Ir regar</button>
-                        </div>
-                    </div>
-                ` : '<p class="text-muted">Não há tarefas urgentes.</p>';
-
-                document.getElementById('watering-alert').innerText = needsWater.length > 0 ? 'Necessita atenção!' : 'Tudo hidratado!';
-            },
-
-            // ==================== HORTA ====================
-            async renderGarden() {
-                const container = document.getElementById('garden-container');
-                const zones = await db.zones.toArray();
-                const species = await db.species.toArray();
-                let plants = await db.plants.toArray();
-
-                if (this.currentGardenFilter) {
-                    const term = this.currentGardenFilter.toLowerCase();
-                    plants = plants.filter(p => {
-                        const s = species.find(sp => sp.id == p.speciesId);
-                        const z = zones.find(zn => zn.id == p.zoneId);
-                        return (s && s.name.toLowerCase().includes(term)) ||
-                               (z && z.name.toLowerCase().includes(term));
-                    });
-                }
-
-                let html = zones.map(z => {
-                    const zonePlants = plants.filter(p => p.zoneId == z.id);
-                    if (this.currentGardenFilter && zonePlants.length === 0) return '';
-
-                    return `
-                        <div class="glass-card">
-                            <div class="flex-between">
-                                <h3 style="margin:0; color:var(--accent)">${z.name}</h3>
-                                <button class="btn-ghost" style="padding:4px 8px" onclick="ui.waterZone(${z.id})">
-                                    <i class="fa-solid fa-droplet"></i> Regar Tudo
-                                </button>
-                            </div>
-                            <div style="margin-top:10px">
-                                ${zonePlants.map(p => {
-                                    const s = species.find(sp => sp.id == p.speciesId);
-                                    const age = logic.daysBetween(p.plantedDate);
-                                    return `
-                                        <div class="flex-between" style="padding:10px 0; border-top:1px solid rgba(255,255,255,0.05)">
-                                            <div>
-                                                <strong>\( {s?.name || 'Semente'}</strong> <small> \){age} 🕓</small><br>
-                                                <small class="text-muted">Última rega: ${p.lastWatered ? logic.daysBetween(p.lastWatered)+'d atrás' : 'Nunca'}</small>
-                                            </div>
-                                            <div>
-                                                <button class="btn-ghost" onclick="ui.waterPlant(${p.id})"><i class="fa-solid fa-droplet"></i></button>
-                                                <button class="btn-ghost" onclick="ui.harvestPlant(\( {p.id}, ' \){s?.name || 'Planta'}')"><i class="fa-solid fa-basket-shopping"></i></button>
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('') || '<small class="text-muted">Vazio.</small>'}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                container.innerHTML = html || (this.currentGardenFilter ? 
-                    '<p class="text-muted">Nenhuma planta encontrada.</p>' : '');
-            },
-
-            async waterPlant(id) {
-                await db.plants.update(id, {lastWatered: new Date().getTime()});
-                this.renderGarden();
-            },
-
-            async waterZone(zoneId) {
-                const plants = await db.plants.where('zoneId').equals(zoneId).toArray();
-                for (let p of plants) await db.plants.update(p.id, {lastWatered: new Date().getTime()});
-                this.renderGarden();
-            },
-
-            async harvestPlant(id, name) {
-                if (confirm(`Colher ${name}? O registo irá para o diário.`)) {
-                    const p = await db.plants.get(id);
-                    await db.diary.add({
-                        title: `Colheita: ${name}`,
-                        category: 'Colheita',
-                        text: `Colhido após ${logic.daysBetween(p.plantedDate)} dias de cultivo.`,
-                        date: new Date().toLocaleString()
-                    });
-                    await db.plants.delete(id);
-                    this.renderGarden();
-                }
-            },
-
-            openPlantingModal() {
-                db.zones.toArray().then(zones => {
-                    db.species.toArray().then(species => {
-                        this.showModal(`
-                            <h3>Nova Planta</h3>
-                            <select id="p-zone">\( {zones.map(z => `<option value=" \){z.id}">${z.name}</option>`).join('')}</select>
-                            <select id="p-species">\( {species.map(s => `<option value=" \){s.id}">${s.name}</option>`).join('')}</select>
-                            <input type="date" id="p-date" value="${new Date().toISOString().split('T')[0]}">
-                            <button class="btn-primary" onclick="ui.savePlant()">Confirmar</button>
-                        `);
-                    });
+            handleSearch(val) {
+                const filter = val.toLowerCase();
+                const cards = document.querySelectorAll('.gh-card');
+                cards.forEach(c => {
+                    c.style.display = c.innerText.toLowerCase().includes(filter) ? 'block' : 'none';
                 });
             },
 
-            async savePlant() {
-                const zoneId = parseInt(document.getElementById('p-zone').value);
-                const speciesId = parseInt(document.getElementById('p-species').value);
-                const plantedDate = document.getElementById('p-date').value;
-                await db.plants.add({zoneId, speciesId, plantedDate, lastWatered: null});
-                this.closeModal();
-                this.renderGarden();
+            showModal(html) {
+                const m = document.getElementById('modal');
+                document.getElementById('modal-body').innerHTML = html;
+                m.style.display = 'flex';
+                lucide.createIcons();
             },
 
-            // ==================== WIKI ====================
-            async renderWiki() {
-                const container = document.getElementById('wiki-container');
-                let species = await db.species.toArray();
+            closeModal() { document.getElementById('modal').style.display = 'none'; },
 
-                if (this.currentWikiFilter) {
-                    const term = this.currentWikiFilter.toLowerCase();
-                    species = species.filter(s => 
-                        s.name.toLowerCase().includes(term) ||
-                        (s.category && s.category.toLowerCase().includes(term)) ||
-                        (s.notes && s.notes.toLowerCase().includes(term))
-                    );
-                }
+            // --- Home Render ---
+            async renderHome() {
+                const moon = await logic.getMoonPhase();
+                document.getElementById('moon-icon').innerText = moon.i;
+                document.getElementById('moon-phase-name').innerText = moon.n;
 
-                const getMonthNames = (csv) => {
-                    if (!csv) return "Não definido";
-                    const names = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-                    return csv.split(',').map(m => names[parseInt(m)-1] || m).join(', ');
-                };
+                // Alerts (Watering)
+                const plants = await db.plants.toArray();
+                const needsWater = plants.filter(p => !p.lastWatered || logic.daysSince(p.lastWatered) >= 2);
+                document.getElementById('home-alerts').innerHTML = needsWater.length > 0 ? `
+                    <div class="gh-card" style="border-left: 4px solid var(--accent-green)">
+                        ${needsWater.length} plants might be thirsty. Check your garden!
+                    </div>` : '<p class="text-muted">All plants are hydrated.</p>';
 
-                container.innerHTML = species.map(s => `
-                    <div class="glass-card">
-                        <div class="flex-between">
-                            <h3 style="margin:0; color:var(--accent); font-size: 1.3rem;">${s.name}</h3>
-                            <button class="btn-ghost" style="padding: 5px 10px;" onclick="ui.openSpeciesModal(${s.id})">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                        </div>
-                        <div class="badge" style="margin-top: 5px;">${s.category}</div>
-                        <div class="wiki-card-content">
-                            <span><i class="fa-solid fa-temperature-half"></i> ${s.temp || '--'}°C</span>
-                            <span><i class="fa-solid fa-hourglass-half"></i> ${s.harvest || '--'} dias</span>
-                            <div class="months-badge">
-                                <i class="fa-solid fa-calendar-days"></i> Sementeira: ${getMonthNames(s.months)}
-                            </div>
-                        </div>
-                        <div class="wiki-notes-area">
-                            <strong><i class="fa-solid fa-clipboard-list"></i> Notas de Cultivo:</strong><br>
-                            ${s.notes || '<span class="text-muted">Sem notas registadas para esta espécie.</span>'}
-                        </div>
+                // Seasonal Suggestions
+                const month = new Date().getMonth() + 1;
+                const species = await db.species.toArray();
+                const sug = species.filter(s => s.months?.split(',').includes(month.toString()));
+                document.getElementById('home-suggestions').innerHTML = sug.map(s => `
+                    <div class="gh-card" style="margin-bottom:0; text-align:center;">
+                        <div style="font-weight:600; color:var(--accent-green)">${s.name}</div>
+                        <small class="text-muted">${s.category}</small>
                     </div>
-                `).join('') || '<p class="text-muted" style="text-align:center; padding:20px;">Nenhuma espécie encontrada.</p>';
+                `).join('') || '<p class="text-muted">No specific suggestions for this month.</p>';
+
+                // Note Highlights
+                const notes = await db.book.orderBy('id').reverse().limit(2).toArray();
+                document.getElementById('home-notes').innerHTML = notes.map(n => `
+                    <div class="gh-card">
+                        <strong>${n.title}</strong><br><small class="text-muted">${n.category}</small>
+                    </div>
+                `).join('') || '<p class="text-muted">No notes yet.</p>';
+            },
+
+            // --- Wiki Render ---
+            async renderWiki() {
+                const list = await db.species.toArray();
+                document.getElementById('wiki-list').innerHTML = list.map(s => `
+                    <div class="gh-card">
+                        <div style="display:flex; justify-content:space-between">
+                            <h3>${s.name} <span class="badge">${s.category}</span></h3>
+                            <button class="btn" onclick="ui.openSpeciesModal(${s.id})"><i data-lucide="edit-3"></i></button>
+                        </div>
+                        <div class="grid-2 text-muted" style="font-size:0.8rem; margin:10px 0;">
+                            <div>🌡️ ${s.temp}°C</div>
+                            <div>⏱️ ${s.harvest} days</div>
+                            <div style="grid-column: span 2">📅 Months: ${s.months || 'All'}</div>
+                        </div>
+                        <div style="white-space:pre-wrap; font-size:0.9rem; margin-top:10px; padding-top:10px; border-top:1px solid var(--border-default)">${s.notes || ''}</div>
+                    </div>
+                `).join('');
+                lucide.createIcons();
             },
 
             async openSpeciesModal(id = null) {
                 const s = id ? await db.species.get(id) : null;
                 this.showModal(`
-                    <h3>${id ? 'Editar' : 'Nova'} Espécie</h3>
-                    <input type="text" id="s-name" placeholder="Nome" value="${s?.name || ''}">
+                    <h3>${id ? 'Edit' : 'New'} Species</h3>
+                    <input type="text" id="s-name" placeholder="Name" value="${s?.name || ''}">
                     <select id="s-cat">
-                        <option value="Folhas" ${s?.category==='Folhas'?'selected':''}>Folhas</option>
-                        <option value="Frutos" ${s?.category==='Frutos'?'selected':''}>Frutos</option>
-                        <option value="Raízes" ${s?.category==='Raízes'?'selected':''}>Raízes</option>
-                        <option value="Aromáticas" ${s?.category==='Aromáticas'?'selected':''}>Aromáticas</option>
+                        <option value="Leafy">Leafy</option><option value="Fruit">Fruit</option>
+                        <option value="Root">Root</option><option value="Herbs">Herbs</option>
                     </select>
-                    <div class="grid">
-                        <input type="number" id="s-harvest" placeholder="Dias Colheita" value="${s?.harvest || ''}">
-                        <input type="text" id="s-temp" placeholder="Temp. Ideal" value="${s?.temp || ''}">
+                    <div class="grid-2">
+                        <input type="number" id="s-harvest" placeholder="Harvest (days)" value="${s?.harvest || ''}">
+                        <input type="text" id="s-temp" placeholder="Temp (°C)" value="${s?.temp || ''}">
                     </div>
-                    <input type="text" id="s-months" placeholder="Meses de Semear (ex: 3,4,5)" value="${s?.months || ''}">
-                    <textarea id="s-notes" placeholder="Notas...">${s?.notes || ''}</textarea>
-                    <button class="btn-primary" onclick="ui.saveSpecies(${id})">Guardar</button>
-                    \( {id ? `<button class="btn-danger mt-10" onclick="ui.deleteSpecies( \){id})" style="width:100%">Eliminar</button>` : ''}
+                    <input type="text" id="s-months" placeholder="Months (1,2,3...)" value="${s?.months || ''}">
+                    <textarea id="s-notes" rows="4" placeholder="Cultivation notes...">${s?.notes || ''}</textarea>
+                    <button class="btn btn-primary" style="width:100%" onclick="ui.saveSpecies(${id})">Save Species</button>
+                    ${id ? `<button class="btn btn-danger mt-10" style="width:100%" onclick="ui.deleteItem('species', ${id}, 'renderWiki')">Delete</button>` : ''}
                 `);
             },
 
@@ -589,139 +411,164 @@
                     notes: document.getElementById('s-notes').value
                 };
                 id ? await db.species.update(id, data) : await db.species.add(data);
-                this.closeModal();
-                this.renderWiki();
+                this.closeModal(); this.renderWiki();
             },
 
-            async deleteSpecies(id) {
-                if (confirm('Eliminar espécie?')) {
-                    await db.species.delete(id);
-                    this.closeModal();
-                    this.renderWiki();
-                }
-            },
-
-            // ==================== DIÁRIO ====================
-            async renderDiary() {
-                const container = document.getElementById('diary-container');
-                let entries = await db.diary.orderBy('id').reverse().toArray();
-
-                if (this.currentDiaryFilter) {
-                    const term = this.currentDiaryFilter.toLowerCase();
-                    entries = entries.filter(e =>
-                        (e.title && e.title.toLowerCase().includes(term)) ||
-                        (e.category && e.category.toLowerCase().includes(term)) ||
-                        (e.text && e.text.toLowerCase().includes(term))
-                    );
-                }
-
-                container.innerHTML = entries.map(e => `
-                    <div class="glass-card timeline-item">
-                        <div class="flex-between">
-                            <strong>${e.title}</strong>
-                            <small class="text-muted">${e.date}</small>
+            // --- Garden Render ---
+            async renderGarden() {
+                const plants = await db.plants.toArray();
+                const species = await db.species.toArray();
+                const zones = await db.zones.toArray();
+                
+                document.getElementById('garden-list').innerHTML = zones.map(z => {
+                    const zPlants = plants.filter(p => p.zoneId == z.id);
+                    return `
+                        <div class="gh-card">
+                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-default); padding-bottom:8px; margin-bottom:10px;">
+                                <h3 style="margin:0">${z.name}</h3>
+                                <button class="btn" onclick="ui.waterZone(${z.id})"><i data-lucide="droplets"></i> Water All</button>
+                            </div>
+                            ${zPlants.map(p => {
+                                const sp = species.find(s => s.id == p.speciesId);
+                                return `
+                                    <div style="padding:10px 0; border-bottom: 1px solid var(--border-default); last-child: border-none;">
+                                        <div style="display:flex; justify-content:space-between">
+                                            <strong>${sp?.name || 'Unknown'}</strong>
+                                            <div>
+                                                <button class="btn" onclick="ui.waterPlant(${p.id})"><i data-lucide="droplet"></i></button>
+                                                <button class="btn" onclick="ui.harvestPlant(${p.id}, '${sp?.name}')"><i data-lucide="scissors"></i></button>
+                                            </div>
+                                        </div>
+                                        <div class="text-muted" style="font-size:0.8rem">
+                                            Planted ${logic.daysSince(p.plantDate)} days ago | 
+                                            Last watered: ${p.lastWatered ? logic.daysSince(p.lastWatered) + 'd ago' : 'Never'}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('') || '<p class="text-muted">Empty zone.</p>'}
                         </div>
-                        <div class="badge">${e.category}</div>
-                        <p style="margin:10px 0; font-size:14px;">${e.text}</p>
-                        <div class="flex-between">
-                            <button class="btn-ghost" onclick="ui.openDiaryModal(${e.id})">Editar</button>
-                            <button class="btn-danger" onclick="ui.deleteDiary(${e.id})"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `).join('') || '<p class="text-muted">Nenhuma nota encontrada.</p>';
+                    `;
+                }).join('');
+                lucide.createIcons();
             },
 
-            async openDiaryModal(id = null) {
-                const e = id ? await db.diary.get(id) : null;
+            async openPlantModal() {
+                const zones = await db.zones.toArray();
+                const species = await db.species.toArray();
                 this.showModal(`
-                    <h3>${id ? 'Editar' : 'Nova'} Nota</h3>
-                    <input type="text" id="d-title" placeholder="Título" value="${e?.title || ''}">
-                    <select id="d-cat">
-                        <option value="Geral" ${e?.category==='Geral'?'selected':''}>Geral</option>
-                        <option value="Adubação" ${e?.category==='Adubação'?'selected':''}>Adubação</option>
-                        <option value="Poda" ${e?.category==='Poda'?'selected':''}>Poda</option>
-                        <option value="Colheita" ${e?.category==='Colheita'?'selected':''}>Colheita</option>
-                    </select>
-                    <textarea id="d-text" placeholder="Notas...">${e?.text || ''}</textarea>
-                    <button class="btn-primary" onclick="ui.saveDiary(${id})">Guardar</button>
+                    <h3>New Plant</h3>
+                    <label>Zone</label>
+                    <select id="p-zone">${zones.map(z => `<option value="${z.id}">${z.name}</option>`).join('')}</select>
+                    <label>Species</label>
+                    <select id="p-species">${species.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select>
+                    <input type="date" id="p-date" value="${new Date().toISOString().split('T')[0]}">
+                    <button class="btn btn-primary" style="width:100%" onclick="ui.savePlant()">Plant Now</button>
                 `);
             },
 
-            async saveDiary(id) {
-                const data = {
-                    title: document.getElementById('d-title').value,
-                    category: document.getElementById('d-cat').value,
-                    text: document.getElementById('d-text').value,
-                    date: id ? (await db.diary.get(id)).date : new Date().toLocaleString()
-                };
-                id ? await db.diary.update(id, data) : await db.diary.add(data);
-                this.closeModal();
-                this.renderDiary();
+            async savePlant() {
+                await db.plants.add({
+                    zoneId: parseInt(document.getElementById('p-zone').value),
+                    speciesId: parseInt(document.getElementById('p-species').value),
+                    plantDate: document.getElementById('p-date').value,
+                    lastWatered: null
+                });
+                this.closeModal(); this.renderGarden();
             },
 
-            async deleteDiary(id) {
-                if (confirm('Eliminar nota?')) {
-                    await db.diary.delete(id);
-                    this.renderDiary();
+            async waterPlant(id) { await db.plants.update(id, {lastWatered: new Date().getTime()}); this.renderGarden(); },
+            async waterZone(zoneId) { 
+                const pts = await db.plants.where('zoneId').equals(zoneId).toArray();
+                for(let p of pts) await db.plants.update(p.id, {lastWatered: new Date().getTime()});
+                this.renderGarden();
+            },
+            async harvestPlant(id, name) {
+                if(confirm('Harvest and archive?')) {
+                    const p = await db.plants.get(id);
+                    await db.book.add({ title: `Harvested: ${name}`, category: 'Harvest', text: `Successful harvest after ${logic.daysSince(p.plantDate)} days.`, timestamp: new Date().toLocaleString() });
+                    await db.plants.delete(id);
+                    this.renderGarden();
                 }
             },
 
-            // ==================== FILTROS ====================
-            filterGarden(term) {
-                this.currentGardenFilter = (term || '').toLowerCase().trim();
-                this.renderGarden();
-            },
-
-            filterWiki(term) {
-                this.currentWikiFilter = (term || '').toLowerCase().trim();
-                this.renderWiki();
-            },
-
-            filterDiary(term) {
-                this.currentDiaryFilter = (term || '').toLowerCase().trim();
-                this.renderDiary();
-            },
-
-            // ==================== CONFIG ====================
-            async renderConfig() {
-                const zones = await db.zones.toArray();
-                document.getElementById('config-zones-list').innerHTML = zones.map(z => `
-                    <div class="flex-between glass-card" style="padding:10px; margin-bottom:5px;">
-                        <span>${z.name}</span>
-                        <i class="fa-solid fa-trash" style="color:var(--danger)" onclick="ui.deleteZone(${z.id})"></i>
+            // --- Book Render ---
+            async renderBook() {
+                const entries = await db.book.orderBy('id').reverse().toArray();
+                document.getElementById('book-list').innerHTML = entries.map(e => `
+                    <div class="gh-card">
+                        <div style="display:flex; justify-content:space-between">
+                            <h3>${e.title} <span class="badge">${e.category}</span></h3>
+                            <button class="btn" onclick="ui.openNoteModal(${e.id})"><i data-lucide="edit-3"></i></button>
+                        </div>
+                        <div class="text-muted" style="font-size:0.75rem; margin:5px 0;">${e.timestamp}</div>
+                        <div style="white-space:pre-wrap; margin-top:10px;">${e.text}</div>
                     </div>
                 `).join('');
+                lucide.createIcons();
+            },
+
+            async openNoteModal(id = null) {
+                const e = id ? await db.book.get(id) : null;
+                this.showModal(`
+                    <h3>${id ? 'Edit' : 'New'} Note</h3>
+                    <input type="text" id="n-title" placeholder="Title" value="${e?.title || ''}">
+                    <select id="n-cat">
+                        <option value="General">General</option><option value="Fertilization">Fertilization</option>
+                        <option value="Harvest">Harvest</option><option value="Observation">Observation</option>
+                    </select>
+                    <textarea id="n-text" rows="6" placeholder="Details...">${e?.text || ''}</textarea>
+                    <button class="btn btn-primary" style="width:100%" onclick="ui.saveNote(${id})">Save Note</button>
+                    ${id ? `<button class="btn btn-danger mt-10" style="width:100%" onclick="ui.deleteItem('book', ${id}, 'renderBook')">Delete</button>` : ''}
+                `);
+            },
+
+            async saveNote(id) {
+                const data = {
+                    title: document.getElementById('n-title').value,
+                    category: document.getElementById('n-cat').value,
+                    text: document.getElementById('n-text').value,
+                    timestamp: id ? (await db.book.get(id)).timestamp : new Date().toLocaleString()
+                };
+                id ? await db.book.update(id, data) : await db.book.add(data);
+                this.closeModal(); this.renderBook();
+            },
+
+            // --- Config Render ---
+            async renderConfig() {
+                const zones = await db.zones.toArray();
+                document.getElementById('zone-config-list').innerHTML = zones.map(z => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid var(--border-default)">
+                        <span>${z.name}</span>
+                        <button class="btn btn-danger" onclick="ui.deleteItem('zones', ${z.id}, 'renderConfig')"><i data-lucide="trash"></i></button>
+                    </div>
+                `).join('');
+                lucide.createIcons();
             },
 
             async addZone() {
-                const name = document.getElementById('new-zone-name').value.trim();
-                if (name) {
-                    await db.zones.add({name});
-                    document.getElementById('new-zone-name').value = '';
-                    this.renderConfig();
-                }
+                const input = document.getElementById('new-zone-input');
+                if(input.value) { await db.zones.add({name: input.value}); input.value = ''; this.renderConfig(); }
             },
 
-            async deleteZone(id) {
-                if (confirm('Eliminar zona e todas as suas plantas?')) {
-                    await db.zones.delete(id);
-                    await db.plants.where('zoneId').equals(id).delete();
-                    this.renderConfig();
+            async deleteItem(table, id, callback) {
+                if(confirm('Delete this item?')) {
+                    await db[table].delete(id);
+                    if(table === 'zones') await db.plants.where('zoneId').equals(id).delete();
+                    this.closeModal();
+                    this[callback]();
                 }
             },
 
             toggleTheme() {
                 document.body.classList.toggle('light-mode');
                 localStorage.setItem('jg-theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
-            },
-
-            checkTheme() {
-                if (localStorage.getItem('jg-theme') === 'light') document.body.classList.add('light-mode');
             }
         };
 
-        // Iniciar a aplicação
-        ui.init();
+        window.onload = () => {
+            if(localStorage.getItem('jg-theme') === 'light') document.body.classList.add('light-mode');
+            ui.init();
+        };
     </script>
 </body>
 </html>
