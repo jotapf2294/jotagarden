@@ -1,5 +1,8 @@
 /* Horta PWA service worker */
-const CACHE = 'horta-v1';
+const CACHE = 'horta-v2';
+const SCOPE_URL = new URL('./', self.location).href;
+const HTML_URL  = new URL('./index.html', self.location).href;
+
 const CORE = [
   './',
   './index.html',
@@ -12,8 +15,12 @@ const CORE = [
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
-    try { await cache.addAll(CORE); } catch (e) { /* non-fatal */ }
-    self.skipWaiting();
+    // Cache each individually so a single failure doesn't abort the whole install.
+    await Promise.all(CORE.map(async (u) => {
+      try { await cache.add(new Request(u, { cache: 'reload' })); }
+      catch (err) { console.warn('[SW] precache failed:', u, err && err.message); }
+    }));
+    await self.skipWaiting();
   })());
 });
 
@@ -21,9 +28,20 @@ self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)));
+    if (self.registration.navigationPreload) {
+      try { await self.registration.navigationPreload.disable(); } catch {}
+    }
     await self.clients.claim();
   })());
 });
+
+async function cachedHtml() {
+  const cache = await caches.open(CACHE);
+  return (await cache.match(HTML_URL))
+      || (await cache.match(SCOPE_URL))
+      || (await cache.match('./index.html'))
+      || (await cache.match('./'));
+}
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
@@ -31,33 +49,50 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // Network-first for navigations (fresh index.html), cache fallback offline
-  if (req.mode === 'navigate') {
+  // Navigations: network-first, fall back to cached shell when offline.
+  if (req.mode === 'navigate' || (req.destination === '' && req.headers.get('accept')?.includes('text/html'))) {
     event.respondWith((async () => {
       try {
         const res = await fetch(req);
         const cache = await caches.open(CACHE);
-        cache.put('./index.html', res.clone()).catch(() => {});
+        // Keep multiple keys in sync so offline always finds the shell.
+        cache.put(req, res.clone()).catch(() => {});
+        cache.put(HTML_URL, res.clone()).catch(() => {});
+        cache.put(SCOPE_URL, res.clone()).catch(() => {});
         return res;
       } catch {
-        const cache = await caches.open(CACHE);
-        return (await cache.match('./index.html')) || (await cache.match('./')) || new Response('Offline', { status: 503 });
+        const shell = await cachedHtml();
+        if (shell) return shell;
+        return new Response(
+          '<!doctype html><meta charset=utf-8><title>Offline</title><body style="background:#0d1117;color:#c9d1d9;font-family:system-ui;padding:24px">Offline. Reconecte e recarregue.</body>',
+          { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+        );
       }
     })());
     return;
   }
 
-  // Cache-first for same-origin assets
+  // Same-origin static assets: stale-while-revalidate.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
     const cached = await cache.match(req);
-    if (cached) return cached;
-    try {
-      const res = await fetch(req);
-      if (res && res.status === 200 && res.type === 'basic') cache.put(req, res.clone());
+    const fetchAndCache = fetch(req).then((res) => {
+      if (res && res.status === 200 && (res.type === 'basic' || res.type === 'default')) {
+        cache.put(req, res.clone()).catch(() => {});
+      }
       return res;
-    } catch {
-      return cached || new Response('Offline', { status: 503 });
-    }
+    }).catch(() => null);
+    if (cached) { fetchAndCache; return cached; }
+    const fresh = await fetchAndCache;
+    if (fresh) return fresh;
+    // Last resort for asset requests: if it's an icon/manifest, reuse cache by pathname.
+    const pathMatch = await cache.match(url.pathname.replace(/^\//, './')).catch(() => null);
+    if (pathMatch) return pathMatch;
+    return new Response('Offline', { status: 503 });
   })());
+});
+
+// Allow the page to ask the SW to refresh itself.
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
