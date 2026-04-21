@@ -108,7 +108,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr; /* Info técnica em 2 colunas dentro do card */
     gap: 8px;
-    font-size: 0.85rem;
+    font-size: 1.2rem;
     border-bottom: 1px solid var(--glass-border);
     padding-bottom: 10px;
 }
@@ -132,7 +132,7 @@
 }
 
         /* --- ESPECÍFICO --- */
-        .badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--accent); color: var(--accent); }
+        .badge { font-size: 13px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--accent); color: var(--accent); }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; }
         .timeline-item { border-left: 2px solid var(--accent); padding-left: 15px; margin-bottom: 15px; }
@@ -368,7 +368,7 @@
                     </div>
                 ` : '<p class="text-muted">Não há tarefas urgentes.</p>';
                 
-                document.getElementById('watering-alert').innerText = needsWater.length > 0 ? 'Necessita atenção!' : 'Tudo hidratado!';
+                document.getElementById('watering-alert').innerText = needsWater.length > 0 ? 'Necessita atenção!' : 'Horta feliz 🌱';
             },
 
             // --- HORTA ---
@@ -472,7 +472,7 @@
     container.innerHTML = species.map(s => `
         <div class="glass-card fade-in">
             <div class="flex-between">
-                <h3 style="margin:0; color:var(--accent); font-size: 1.3rem;">${s.name}</h3>
+                <h3 style="margin:0; color:var(--accent); font-size: 1.5rem;">${s.name}</h3>
                 <button class="btn-ghost" style="padding: 5px 10px;" onclick="ui.openSpeciesModal(${s.id})">
                     <i class="fa-solid fa-pen"></i>
                 </button>
