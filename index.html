@@ -80,6 +80,35 @@
         .dock-item.active { color: #000000; transform: translateY(-5px); }
         .dock-item i { font-size: 30px; }
 
+
+/* --- BARRA DE PESQUISA --- */
+.search-bar {
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 14px 16px 14px 45px;   /* espaço para o ícone */
+    font-size: 16px;
+    border-radius: 12px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    color: var(--text-color);
+}
+
+.search-bar input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+
+/* Ícone de lupa dentro do input */
+.search-bar input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
         /* --- UI ELEMENTS --- */
         button {
             border: none; border-radius: 10px; padding: 10px 15px;
@@ -183,6 +212,10 @@
                 <h2>Horta</h2>
                 <button class="btn-ghost" onclick="ui.openPlantingModal()">+ Plantar</button>
             </div>
+            <div class="search-bar">
+        <input type="text" id="search-garden" placeholder="🔍 Procurar plantas ou zonas..." 
+               onkeyup="ui.filterGarden(this.value)">
+    </div>
             <div id="garden-container"></div>
         </section>
 
@@ -191,6 +224,10 @@
                 <h2>Wiki</h2>
                 <button class="btn-ghost" onclick="ui.openSpeciesModal()">+ Espécie</button>
             </div>
+            <div class="search-bar">
+        <input type="text" id="search-wiki" placeholder="🔍 Procurar espécies..." 
+               onkeyup="ui.filterWiki(this.value)">
+    </div>
             <div id="wiki-container" class="grid"></div>
         </section>
 
@@ -199,6 +236,10 @@
                 <h2>Diário</h2>
                 <button class="btn-ghost" onclick="ui.openDiaryModal()">+ Nota</button>
             </div>
+            <div class="search-bar">
+        <input type="text" id="search-diary" placeholder="🔍 Procurar no diário..." 
+               onkeyup="ui.filterDiary(this.value)">
+    </div>
             <div id="diary-container"></div>
         </section>
 
@@ -312,6 +353,34 @@
         // 3. INTERFACE (UI)
         // ==========================================
         const ui = {
+// NOVAS FUNÇÕES DE PESQUISA
+ui.currentGardenFilter = '';   // para guardar o texto de pesquisa da horta
+ui.currentWikiFilter = '';     // para guardar o texto de pesquisa da wiki
+ui.currentDiaryFilter = '';    // para guardar o texto de pesquisa do diário
+
+// --- FILTRAR HORTA ---
+async function filterGarden(term = '') {
+    ui.currentGardenFilter = term.toLowerCase().trim();
+    await ui.renderGarden();   // re-renderiza com filtro
+}
+
+ui.filterGarden = filterGarden;   // para poder chamar de onkeyup
+
+// --- FILTRAR WIKI ---
+async function filterWiki(term = '') {
+    ui.currentWikiFilter = term.toLowerCase().trim();
+    await ui.renderWiki();
+}
+
+ui.filterWiki = filterWiki;
+
+// --- FILTRAR DIÁRIO ---
+async function filterDiary(term = '') {
+    ui.currentDiaryFilter = term.toLowerCase().trim();
+    await ui.renderDiary();
+}
+
+ui.filterDiary = filterDiary;
             init() {
                 document.getElementById('header-date').innerText = new Date().toLocaleDateString('pt-PT', {weekday:'long', day:'numeric', month:'long'});
                 this.renderHome();
@@ -319,16 +388,22 @@
             },
 
             navigate(viewId, el) {
-                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-                document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
-                document.getElementById(viewId).classList.add('active');
-                el.classList.add('active');
-                if(viewId === 'view-home') this.renderHome();
-                if(viewId === 'view-garden') this.renderGarden();
-                if(viewId === 'view-wiki') this.renderWiki();
-                if(viewId === 'view-diary') this.renderDiary();
-                if(viewId === 'view-config') this.renderConfig();
-            },
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+    el.classList.add('active');
+
+    // Limpar campos de pesquisa ao mudar de vista
+    if (viewId === 'view-garden') document.getElementById('search-garden').value = '';
+    if (viewId === 'view-wiki') document.getElementById('search-wiki').value = '';
+    if (viewId === 'view-diary') document.getElementById('search-diary').value = '';
+
+    if(viewId === 'view-home') this.renderHome();
+    if(viewId === 'view-garden') this.renderGarden();
+    if(viewId === 'view-wiki') this.renderWiki();
+    if(viewId === 'view-diary') this.renderDiary();
+    if(viewId === 'view-config') this.renderConfig();
+},
 
             showModal(content) {
                 const m = document.getElementById('modal');
@@ -373,41 +448,60 @@
 
             // --- HORTA ---
             async renderGarden() {
-                const container = document.getElementById('garden-container');
-                const zones = await db.zones.toArray();
-                const species = await db.species.toArray();
-                const plants = await db.plants.toArray();
+    const container = document.getElementById('garden-container');
+    const zones = await db.zones.toArray();
+    const species = await db.species.toArray();
+    let plants = await db.plants.toArray();
 
-                container.innerHTML = zones.map(z => {
-                    const zonePlants = plants.filter(p => p.zoneId == z.id);
-                    return `
-                        <div class="glass-card">
-                            <div class="flex-between">
-                                <h3 style="margin:0; color:var(--accent)">${z.name}</h3>
-                                <button class="btn-ghost" style="padding:4px 8px" onclick="ui.waterZone(${z.id})"><i class="fa-solid fa-droplet"></i> Regar Tudo</button>
+    // Aplicar filtro se existir
+    if (ui.currentGardenFilter) {
+        const term = ui.currentGardenFilter;
+        plants = plants.filter(p => {
+            const s = species.find(sp => sp.id == p.speciesId);
+            const zone = zones.find(z => z.id == p.zoneId);
+            const nameMatch = s && s.name.toLowerCase().includes(term);
+            const zoneMatch = zone && zone.name.toLowerCase().includes(term);
+            return nameMatch || zoneMatch;
+        });
+    }
+
+    // Agrupar plantas por zona (mantendo a lógica original)
+    container.innerHTML = zones.map(z => {
+        const zonePlants = plants.filter(p => p.zoneId == z.id);
+        
+        // Se não houver plantas nesta zona após filtro, pula (opcional)
+        if (zonePlants.length === 0 && ui.currentGardenFilter) return '';
+
+        return `
+            <div class="glass-card">
+                <div class="flex-between">
+                    <h3 style="margin:0; color:var(--accent)">${z.name}</h3>
+                    <button class="btn-ghost" style="padding:4px 8px" onclick="ui.waterZone(${z.id})">
+                        <i class="fa-solid fa-droplet"></i> Regar Tudo
+                    </button>
+                </div>
+                <div style="margin-top:10px">
+                    ${zonePlants.map(p => {
+                        const s = species.find(sp => sp.id == p.speciesId);
+                        const age = logic.daysBetween(p.plantedDate);
+                        return `
+                            <div class="flex-between" style="padding:10px 0; border-top:1px solid rgba(255,255,255,0.05)">
+                                <div>
+                                    <strong>\( {s?.name || 'Semente'}</strong> <small> \){age} 🕓</small><br>
+                                    <small class="text-muted">Última rega: ${p.lastWatered ? logic.daysBetween(p.lastWatered)+'d atrás' : 'Nunca'}</small>
+                                </div>
+                                <div class="diary-actions">
+                                    <button class="btn-ghost" onclick="ui.waterPlant(${p.id})"><i class="fa-solid fa-droplet"></i></button>
+                                    <button class="btn-ghost" onclick="ui.harvestPlant(\( {p.id}, ' \){s?.name || 'Planta'}')"><i class="fa-solid fa-basket-shopping"></i></button>
+                                </div>
                             </div>
-                            <div style="margin-top:10px">
-                                ${zonePlants.map(p => {
-                                    const s = species.find(sp => sp.id == p.speciesId);
-                                    const age = logic.daysBetween(p.plantedDate);
-                                    return `
-                                        <div class="flex-between" style="padding:10px 0; border-top:1px solid rgba(255,255,255,0.05)">
-                                            <div>
-                                                <strong>${s?.name || 'Semente'}</strong> <small>${age} 🕓</small><br>
-                                                <small class="text-muted">Última rega: ${p.lastWatered ? logic.daysBetween(p.lastWatered)+'d atrás' : 'Nunca'}</small>
-                                            </div>
-                                            <div class="diary-actions">
-                                                <button class="btn-ghost" onclick="ui.waterPlant(${p.id})"><i class="fa-solid fa-droplet"></i></button>
-                                                <button class="btn-ghost" onclick="ui.harvestPlant(${p.id}, '${s?.name}')"><i class="fa-solid fa-basket-shopping"></i></button>
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('') || '<small class="text-muted">Vazio.</small>'}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            },
+                        `;
+                    }).join('') || '<small class="text-muted">Nenhuma planta encontrada.</small>'}
+                </div>
+            </div>
+        `;
+    }).join('') || '<p class="text-muted">Nenhuma planta corresponde à pesquisa.</p>';
+},
 
             async waterPlant(id) {
                 await db.plants.update(id, {lastWatered: new Date().getTime()});
@@ -460,19 +554,28 @@
             // --- WIKI ---
             async renderWiki() {
     const container = document.getElementById('wiki-container');
-    const species = await db.species.toArray();
-    
-    // Função auxiliar para traduzir números de meses em nomes curtos
+    let species = await db.species.toArray();
+
+    // Aplicar filtro
+    if (ui.currentWikiFilter) {
+        const term = ui.currentWikiFilter;
+        species = species.filter(s => 
+            s.name.toLowerCase().includes(term) ||
+            (s.category && s.category.toLowerCase().includes(term)) ||
+            (s.notes && s.notes.toLowerCase().includes(term))
+        );
+    }
+
     const getMonthNames = (csv) => {
         if(!csv) return "Não definido";
         const names = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-        return csv.split(',').map(m => names[parseInt(m)-1]).join(', ');
+        return csv.split(',').map(m => names[parseInt(m)-1] || m).join(', ');
     };
 
     container.innerHTML = species.map(s => `
         <div class="glass-card fade-in">
             <div class="flex-between">
-                <h3 style="margin:0; color:var(--accent); font-size: 1.0rem;">${s.name}</h3>
+                <h3 style="margin:0; color:var(--accent); font-size: 1.3rem;">${s.name}</h3>
                 <button class="btn-ghost" style="padding: 5px 10px;" onclick="ui.openSpeciesModal(${s.id})">
                     <i class="fa-solid fa-pen"></i>
                 </button>
@@ -493,7 +596,7 @@
                 ${s.notes || '<span class="text-muted">Sem notas registadas para esta espécie.</span>'}
             </div>
         </div>
-    `).join('');
+    `).join('') || '<p class="text-muted" style="grid-column: 1/-1; text-align:center;">Nenhuma espécie encontrada.</p>';
 },
 
             async openSpeciesModal(id = null) {
@@ -535,23 +638,34 @@
 
             // --- DIÁRIO ---
             async renderDiary() {
-                const container = document.getElementById('diary-container');
-                const entries = await db.diary.orderBy('id').reverse().toArray();
-                container.innerHTML = entries.map(e => `
-                    <div class="glass-card timeline-item">
-                        <div class="flex-between">
-                            <strong>${e.title}</strong>
-                            <small class="text-muted">${e.date}</small>
-                        </div>
-                        <div class="badge">${e.category}</div>
-                        <p style="margin:10px 0; font-size:14px;">${e.text}</p>
-                        <div class="flex-between">
-                            <button class="btn-ghost" onclick="ui.openDiaryModal(${e.id})">Editar</button>
-                            <button class="btn-danger" onclick="ui.deleteDiary(${e.id})"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `).join('');
-            },
+    const container = document.getElementById('diary-container');
+    let entries = await db.diary.orderBy('id').reverse().toArray();
+
+    // Aplicar filtro
+    if (ui.currentDiaryFilter) {
+        const term = ui.currentDiaryFilter;
+        entries = entries.filter(e =>
+            (e.title && e.title.toLowerCase().includes(term)) ||
+            (e.category && e.category.toLowerCase().includes(term)) ||
+            (e.text && e.text.toLowerCase().includes(term))
+        );
+    }
+
+    container.innerHTML = entries.map(e => `
+        <div class="glass-card timeline-item">
+            <div class="flex-between">
+                <strong>${e.title}</strong>
+                <small class="text-muted">${e.date}</small>
+            </div>
+            <div class="badge">${e.category}</div>
+            <p style="margin:10px 0; font-size:14px;">${e.text}</p>
+            <div class="flex-between">
+                <button class="btn-ghost" onclick="ui.openDiaryModal(${e.id})">Editar</button>
+                <button class="btn-danger" onclick="ui.deleteDiary(${e.id})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('') || '<p class="text-muted">Nenhuma nota encontrada.</p>';
+},
 
             async openDiaryModal(id = null) {
                 const e = id ? await db.diary.get(id) : null;
