@@ -4,20 +4,54 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#FF6B9D">
-<title>Babe's Bakery 🧁</title>
-<link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/style.css">
+<meta name="description" content="Gestão profissional de pastelaria">
+<title>Babe's Bakery v2.0 🧁</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQmFiZSdzIEJha2VyeSB2MiIsInNob3J0X25hbWUiOiJCYWJlQmFrZXJ5Iiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNGRkY1RjgiLCJ0aGVtZV9jb2xvciI6IiNGRjZC OUQiLCJvcmllbnRhdGlvbiI6InBvcnRyYWl0IiwiaWNvbnMiOlt7InNyYyI6ImRhdGE6aW1hZ2Uvc3ZnK3htbCw8c3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEwMCAxMDAnPjx0ZXh0IHk9Jy45ZW0nIGZvbnQtc2l6ZT0nOTAnPuKZvTwvdGV4dD48L3N2Zz4iLCJzaXplcyI6IjUxMng1MTIiLCJ0eXBlIjoiaW1hZ2Uvc3ZnK3htbCJ9XX0=">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧁</text></svg>">
+
+<style>
+:root{
+  --rosa:#FF6B9D;--rosa-claro:#FFF5F8;--choco:#5D4037;--creme:#FFF8E1;
+  --verde:#81C784;--vermelho:#E57373;--sombra:0 2px 8px rgba(0,0,0,0.1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:system-ui,sans-serif;background:var(--rosa-claro);color:var(--choco);margin:0;padding:0 0 80px 0;font-size:16px}
+header{background:var(--rosa);color:#fff;padding:12px 16px;position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--sombra)}
+h1{margin:0;font-size:20px}
+#status{font-size:12px;background:rgba(255,255,255,0.3);padding:4px 8px;border-radius:12px}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;box-shadow:0 -2px 8px rgba(0,0,0,0.1);z-index:100}
+.bottom-nav button{flex:1;border:none;background:none;padding:8px 4px;font-size:24px;color:#999;min-height:64px}
+.bottom-nav button span{display:block;font-size:11px;margin-top:2px}
+.bottom-nav button.active{color:var(--rosa)}
+.card{background:#fff;border-radius:16px;padding:16px;margin:12px;box-shadow:var(--sombra)}
+input,select,textarea{width:100%;border:2px solid #F8BBD0;border-radius:12px;padding:14px;font-size:16px;margin:8px 0;background:var(--creme);color:var(--choco);min-height:48px}
+input:focus{border-color:var(--rosa);outline:none}
+.btn{width:100%;min-height:52px;border:none;border-radius:16px;font-size:18px;font-weight:700;margin:8px 0;cursor:pointer}
+.btn-rosa{background:var(--rosa);color:#fff}
+.btn-choco{background:var(--choco);color:#fff}
+.btn-small{min-height:44px;font-size:14px;width:auto;padding:0 16px;margin:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.badge{background:var(--vermelho);color:#fff;padding:2px 8px;border-radius:12px;font-size:12px}
+.badge-verde{background:var(--verde)}
+.tab{display:none;padding-bottom:20px}.tab.active{display:block}
+.timer-card{background:var(--choco);color:#fff;text-align:center;padding:20px;border-radius:16px;margin:8px 0}
+.timer-time{font-size:36px;font-weight:700;color:var(--rosa)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:12px 8px;border-bottom:1px solid #F8BBD0;text-align:left}
+tr.alerta{background:#FFEBEE}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--choco);color:#fff;padding:12px 24px;border-radius:24px;z-index:999}
+@media print{body *{visibility:hidden}.print-area,.print-area *{visibility:visible}.print-area{position:absolute;left:0;top:0;width:58mm;font-size:12px}}
+</style>
 </head>
+
 <body>
 <header>
-  <h1>🧁 Babe's Bakery</h1>
+  <h1>🧁 Babe's Bakery v2</h1>
   <div id="status">Offline</div>
 </header>
 
-<main id="app">
-  <!-- Tabs injetadas via JS -->
-</main>
+<main id="app"></main>
 
 <nav class="bottom-nav">
   <button data-tab="receitas" class="active">📖<span>Receitas</span></button>
@@ -27,15 +61,374 @@
   <button data-tab="encomendas">📅<span>Agenda</span></button>
 </nav>
 
-<script src="js/db.js"></script>
-<script src="js/app.js"></script>
-<script src="js/receitas.js"></script>
-<script src="js/calc.js"></script>
-<script src="js/timers.js"></script>
-<script src="js/stock.js"></script>
-<script src="js/encomendas.js"></script>
+<div id="print-frame" style="display:none"></div>
+
 <script>
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js')}
-</script>
-</body>
-</html>
+// ========== DB LAYER ==========
+const DB = {
+  db: null,
+  async init() {
+    return new Promise((res, rej) => {
+      const req = indexedDB.open('BabeBakeryV2', 2);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('receitas')) db.createObjectStore('receitas', {keyPath: 'id'});
+        if (!db.objectStoreNames.contains('stock')) db.createObjectStore('stock', {keyPath: 'id'});
+        if (!db.objectStoreNames.contains('encomendas')) db.createObjectStore('encomendas', {keyPath: 'id'});
+        if (!db.objectStoreNames.contains('config')) db.createObjectStore('config', {keyPath: 'key'});
+      };
+      req.onsuccess = e => { this.db = e.target.result; res(); };
+      req.onerror = rej;
+    });
+  },
+  async getAll(store) {
+    const tx = this.db.transaction(store, 'readonly');
+    return new Promise(res => tx.objectStore(store).getAll().onsuccess = e => res(e.target.result));
+  },
+  async save(store, data) {
+    const tx = this.db.transaction(store, 'readwrite');
+    if (!data.id) data.id = Date.now();
+    tx.objectStore(store).put(data);
+    return data.id;
+  },
+  async delete(store, id) {
+    const tx = this.db.transaction(store, 'readwrite');
+    tx.objectStore(store).delete(id);
+  }
+};
+
+// ========== APP CORE ==========
+const App = {
+  tab: 'receitas',
+  wakeLock: null,
+
+  async init() {
+    await DB.init();
+    this.bindNav();
+    this.renderTab();
+    this.checkOnline();
+    this.requestWakeLock();
+    setInterval(() => this.checkAlertas(), 60000);
+    if ('serviceWorker' in navigator) this.registerSW();
+  },
+
+  bindNav() {
+    document.querySelectorAll('.bottom-nav button').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.bottom-nav button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.tab = btn.dataset.tab;
+        this.renderTab();
+      };
+    });
+  },
+
+  renderTab() {
+    const html = {
+      receitas: Receitas.render(),
+      calc: Calc.render(),
+      timers: Timers.render(),
+      stock: Stock.render(),
+      encomendas: Encomendas.render()
+    };
+    document.getElementById('app').innerHTML = html[this.tab];
+    window[this.tab.charAt(0).toUpperCase() + this.tab.slice(1)]?.bind();
+  },
+
+  checkOnline() {
+    const update = () => document.getElementById('status').textContent = navigator.onLine? 'Online' : 'Offline';
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    update();
+  },
+
+  async requestWakeLock() {
+    if ('wakeLock' in navigator) {
+      try { this.wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
+    }
+  },
+
+  async checkAlertas() {
+    const encs = await DB.getAll('encomendas');
+    const amanha = new Date(Date.now() + 86400000);
+    encs.forEach(e => {
+      if (new Date(e.data) < amanha && e.estado === 'Recebida' && Notification.permission === 'granted') {
+        new Notification(`🧁 Amanhã ${e.hora}: ${e.cliente}`, {body: e.bolo, icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧁</text></svg>'});
+      }
+    });
+  },
+
+  toast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2000);
+  },
+
+  async share(data) {
+    if (navigator.share) {
+      try { await navigator.share(data); } catch(e) {}
+    } else {
+      navigator.clipboard?.writeText(data.text);
+      this.toast('Copiado!');
+    }
+  },
+
+  async exportBackup() {
+    const data = {
+      receitas: await DB.getAll('receitas'),
+      stock: await DB.getAll('stock'),
+      encomendas: await DB.getAll('encomendas'),
+      exportDate: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data,null,2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `babe-backup-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  printHTML(html) {
+    const frame = document.getElementById('print-frame');
+    frame.innerHTML = `<iframe id="pf" style="width:0;height:0;border:0"></iframe>`;
+    const pf = document.getElementById('pf');
+    pf.contentDocument.write(html);
+    pf.contentDocument.close();
+    setTimeout(() => { pf.contentWindow.focus(); pf.contentWindow.print(); }, 300);
+  },
+
+  registerSW() {
+    const sw = `
+      const CACHE = 'babe-v2-${Date.now()}';
+      self.addEventListener('install', e => {
+        e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./'])));
+        self.skipWaiting();
+      });
+      self.addEventListener('fetch', e => {
+        e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+      });
+    `;
+    const blob = new Blob([sw], {type: 'application/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(blob));
+  }
+};
+
+// ========== RECEITAS MODULE ==========
+const Receitas = {
+  atual: null,
+  render() {
+    return `
+    <div class="tab active">
+      <div class="card">
+        <h3>📖 Nova Receita</h3>
+        <input id="r-nome" placeholder="Nome: Bolo Chocolate">
+        <input id="r-foto" type="file" accept="image/*" capture="camera">
+        <div class="grid2">
+          <select id="r-cat">
+            <option>Bolos</option><option>Tartes</option><option>Biscoitos</option>
+            <option>Cremes</option><option>Massas</option><option>Sobremesas</option>
+          </select>
+          <input id="r-rend" type="number" placeholder="Rendimento: 12 fatias">
+        </div>
+        <div class="grid2">
+          <input id="r-tempo" type="number" placeholder="⏱️ Tempo min">
+          <input id="r-validade" type="number" placeholder="Validade dias: 5">
+        </div>
+        <input id="r-alergenios" placeholder="Alergénios: glúten, ovo, lactose">
+        <textarea id="r-ing" rows="5" placeholder="Ingredientes:&#10;500g farinha T65 | 2.50€/kg&#10;6 ovos | 0.20€/un"></textarea>
+        <textarea id="r-passos" rows="5" placeholder="Passos:&#10;1. Bater ovos 5min&#10;2. Forno 180º 30min [timer:30]"></textarea>
+        <button class="btn btn-rosa" id="btn-guardar-receita">💾 Guardar Receita</button>
+      </div>
+      <div class="card">
+        <button class="btn btn-choco" id="btn-backup">💾 Backup JSON</button>
+      </div>
+      <div id="lista-receitas"></div>
+    </div>`;
+  },
+  bind() {
+    document.getElementById('btn-guardar-receita').onclick = () => this.save();
+    document.getElementById('btn-backup').onclick = () => App.exportBackup();
+    this.loadLista();
+  },
+  async save() {
+    const nome = document.getElementById('r-nome').value;
+    if (!nome) return App.toast('Nome obrigatório');
+    const receita = {
+      id: this.atual?.id,
+      nome,
+      cat: document.getElementById('r-cat').value,
+      rend: +document.getElementById('r-rend').value || 1,
+      tempo: +document.getElementById('r-tempo').value || 0,
+      validade: +document.getElementById('r-validade').value || 3,
+      alergenios: document.getElementById('r-alergenios').value,
+      ing: this.parseIng(document.getElementById('r-ing').value),
+      passos: document.getElementById('r-passos').value,
+      foto: await this.getFoto()
+    };
+    receita.custoTotal = receita.ing.reduce((s,i) => s + i.custo, 0);
+    receita.pesoTotal = receita.ing.reduce((s,i) => s + (i.unidade==='g'?i.qtd:i.unidade==='kg'?i.qtd*1000:0), 0);
+    await DB.save('receitas', receita);
+    App.toast('Receita guardada 🧁');
+    this.atual = null;
+    this.loadLista();
+    document.querySelectorAll('#r-nome,#r-rend,#r-tempo,#r-validade,#r-alergenios,#r-ing,#r-passos').forEach(e => e.value = '');
+  },
+  parseIng(txt) {
+    return txt.split('\n').filter(l => l.trim()).map(l => {
+      const [nome, resto] = l.split('|');
+      const qtd = parseFloat(nome) || 0;
+      const unidade = nome.replace(qtd, '').trim().split(' ')[0] || 'g';
+      const produto = nome.replace(qtd + unidade, '').trim();
+      const precoKg = resto? parseFloat(resto) : 0;
+      const custo = unidade === 'g'? qtd/1000*precoKg : unidade === 'kg'? qtd*precoKg : qtd*precoKg;
+      return {qtd, unidade, produto, precoKg, custo};
+    });
+  },
+  async getFoto() {
+    const file = document.getElementById('r-foto').files[0];
+    if (!file) return this.atual?.foto || '';
+    return new Promise(res => {
+      const r = new FileReader();
+      r.onload = e => res(e.target.result);
+      r.readAsDataURL(file);
+    });
+  },
+  async loadLista() {
+    const all = await DB.getAll('receitas');
+    const lista = document.getElementById('lista-receitas');
+    lista.innerHTML = all.map(r => `
+      <div class="card" data-id="${r.id}">
+        ${r.foto? `<img src="${r.foto}" style="width:100%;border-radius:12px;margin-bottom:8px">` : ''}
+        <h3>${r.nome} <span class="badge">${r.cat}</span></h3>
+        <p>⏱️ ${r.tempo}min | 🍰 ${r.rend} un | 💰 ${r.custoTotal.toFixed(2)}€ | ${(r.custoTotal/r.rend).toFixed(2)}€/un</p>
+        <p>⚖️ ${r.pesoTotal}g | 📅 Val: ${r.validade} dias</p>
+        <div class="grid4">
+          <button class="btn btn-small" data-action="escalar" data-id="${r.id}" data-fator="0.5">x0.5</button>
+          <button class="btn btn-small" data-action="escalar" data-id="${r.id}" data-fator="2">x2</button>
+          <button class="btn btn-small" data-action="escalar" data-id="${r.id}" data-fator="3">x3</button>
+          <button class="btn btn-small" data-action="escalar" data-id="${r.id}" data-fator="5">x5</button>
+        </div>
+        <div class="grid2">
+          <button class="btn btn-small btn-choco" data-action="ficha" data-id="${r.id}">📋 Ficha</button>
+          <button class="btn btn-small btn-choco" data-action="rotulo" data-id="${r.id}">🏷️ Rótulo</button>
+        </div>
+        <div class="grid2">
+          <button class="btn btn-small" data-action="share" data-id="${r.id}">📤 Partilhar</button>
+          <button class="btn btn-small" data-action="del" data-id="${r.id}">🗑️ Apagar</button>
+        </div>
+      </div>
+    `).join('') || '<div class="card">Sem receitas ainda</div>';
+    lista.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.onclick = (e) => {
+        const id = +e.target.dataset.id;
+        const action = e.target.dataset.action;
+        const fator = +e.target.dataset.fator;
+        if (action === 'escalar') this.escalar(id, fator);
+        if (action === 'ficha') this.fichaTecnica(id);
+        if (action === 'rotulo') this.rotulo(id);
+        if (action === 'share') this.share(id);
+        if (action === 'del') this.del(id);
+      };
+    });
+  },
+  async escalar(id, fator) {
+    const r = (await DB.getAll('receitas')).find(x => x.id === id);
+    const nova = r.ing.map(i => `${(i.qtd*fator).toFixed(1)}${i.unidade} ${i.produto}`).join('\n');
+    alert(`Receita x${fator}:\n\n${nova}\n\nCusto: ${(r.custoTotal*fator).toFixed(2)}€\nPeso: ${(r.pesoTotal*fator).toFixed(0)}g`);
+  },
+  async fichaTecnica(id) {
+    const r = (await DB.getAll('receitas')).find(x => x.id === id);
+    const ingLista = r.ing.sort((a,b)=>b.qtd-a.qtd).map(i=>`${i.produto} (${(i.qtd/r.pesoTotal*100).toFixed(1)}%)`).join(', ');
+    const html = `
+      <html><head><title>Ficha Técnica - ${r.nome}</title><style>
+        body{font-family:Arial;padding:20px;color:#333;font-size:14px}
+        h1{color:#FF6B9D;border-bottom:3px solid #FF6B9D;margin:10px 0}
+        table{width:100%;border-collapse:collapse;margin:10px 0}
+        td,th{border:1px solid #ddd;padding:8px;text-align:left}th{background:#FFF5F8}
+      .logo{font-size:24px;font-weight:bold}
+      </style></head><body>
+      <div class="logo">🧁 Babe's Bakery v2</div>
+      <h1>FICHA TÉCNICA</h1><h2>${r.nome}</h2>
+      <table>
+        <tr><th>Categoria</th><td>${r.cat}</td><th>Rendimento</th><td>${r.rend} unidades</td></tr>
+        <tr><th>Tempo Prep</th><td>${r.tempo} min</td><th>Validade</th><td>${r.validade} dias</td></tr>
+        <tr><th>Peso Total</th><td>${r.pesoTotal}g</td><th>Peso/Un</th><td>${(r.pesoTotal/r.rend).toFixed(0)}g</td></tr>
+        <tr><th>Custo Total</th><td>${r.custoTotal.toFixed(2)}€</td><th>Custo/Un</th><td>${(r.custoTotal/r.rend).toFixed(2)}€</td></tr>
+      </table>
+      <h3>Ingredientes por ordem decrescente:</h3><p>${ingLista}</p>
+      <h3>Alergénios:</h3><p><b>${r.alergenios || 'Não declarado'}</b></p>
+      <h3>Modo de Preparação:</h3><pre style="white-space:pre-wrap;font-family:Arial">${r.passos}</pre>
+      <h3>Conservação:</h3><p>Manter refrigerado 0-5ºC. Consumir até ${r.validade} dias após fabrico.</p>
+      <hr><p style="font-size:12px">Emitido em ${new Date().toLocaleDateString('pt-PT')} | Ana Filipa Babe Meireles</p>
+      </body></html>`;
+    App.printHTML(html);
+  },
+  async rotulo(id) {
+    const r = (await DB.getAll('receitas')).find(x => x.id === id);
+    const ingLista = r.ing.sort((a,b)=>b.qtd-a.qtd).map(i=>i.produto).join(', ');
+    const dataProd = new Date().toLocaleDateString('pt-PT');
+    const dataVal = new Date(Date.now() + r.validade*86400000).toLocaleDateString('pt-PT');
+    const qrData = `https://babesbakery.pt/r/${r.id}`;
+    const html = `
+      <html><head><style>
+        body{width:58mm;font-family:Arial;font-size:10px;padding:2mm;margin:0}
+        center{margin:1px 0}hr{border:none;border-top:1px dashed #000;margin:2px 0}
+       .qr{width:50px;height:50px;margin:2px auto}
+      </style></head><body>
+        <center><b>BABE'S BAKERY</b></center>
+        <center style="font-size:14px;margin:2px 0"><b>${r.nome}</b></center><hr>
+        <b>Ingredientes:</b> ${ingLista}.<br>
+        <b>Alergénios:</b> ${r.alergenios || 'Não contém'}.<br>
+        <b>Peso líq:</b> ${(r.pesoTotal/r.rend).toFixed(0)}g<br>
+        <b>Fab:</b> ${dataProd} <b>Val:</b> ${dataVal}<br>
+        <b>Lote:</b> ${Date.now().toString().slice(-6)}<br>
+        <center><img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}"></center>
+        <hr><center style="font-size:8px">Conservar 0-5ºC<br>Ana Filipa B. Meireles<br>9xx xxx xxx</center>
+      </body></html>`;
+    App.printHTML(html);
+  },
+  async share(id) {
+    const r = (await DB.getAll('receitas')).find(x => x.id === id);
+    App.share({
+      title: `Receita: ${r.nome}`,
+      text: `🧁 ${r.nome}\n💰 Custo: ${r.custoTotal.toFixed(2)}€\n⚖️ Peso: ${r.pesoTotal}g\n📋 Ingredientes: ${r.ing.map(i=>i.produto).join(', ')}`,
+      url: `https://babesbakery.pt/r/${r.id}`
+    });
+  },
+  async del(id) {
+    if (confirm('Apagar receita?')) {
+      await DB.delete('receitas', id);
+      this.loadLista();
+      App.toast('Apagada');
+    }
+  }
+};
+
+// ========== CALC MODULE ==========
+const Calc = {
+  render() {
+    return `
+    <div class="tab active">
+      <div class="card">
+        <h3>🧮 Regra de 3</h3>
+        <div class="grid2"><input id="c1-a" type="number" placeholder="Se 500g"><input id="c1-b" type="number" placeholder="= 20 un"></div>
+        <input id="c1-c" type="number" placeholder="Quanto para 35 un?">
+        <button class="btn btn-rosa" id="btn-regra3">Calcular</button>
+        <h2 id="c1-out" style="color:var(--rosa);text-align:center"></h2>
+      </div>
+      <div class="card">
+        <h3>💯 % Padeiro</h3>
+        <input id="p-farinha" type="number" placeholder="Farinha 1000g = 100%">
+        <input id="p-agua" type="number" placeholder="Água 650g">
+        <input id="p-sal" type="number" placeholder="Sal 20g">
+        <input id="p-fermento" type="number" placeholder="Fermento 10g">
+        <button class="btn btn-rosa" id="btn-padeiro">Calcular %</button>
+        <div id="p-out"></div>
+      </div>
+      <div class="card">
+        <h3>🔄 Conversor</h3>
+        <div class="grid2">
+          <input id="conv-val" type="number" placehol
