@@ -25,6 +25,7 @@ const Receitas = {
         <button class="btn btn-rosa" id="btn-guardar-receita">💾 Guardar Receita</button>
       </div>
       <div id="lista-receitas"></div>
+      <div id="print-frame" style="display:none"></div>
     </div>`;
   },
 
@@ -85,29 +86,43 @@ const Receitas = {
 
   async loadLista() {
     const all = await DB.getAll('receitas');
-    const html = all.map(r => `
-      <div class="card">
+    const lista = document.getElementById('lista-receitas');
+    lista.innerHTML = all.map(r => `
+      <div class="card" data-id="${r.id}">
         ${r.foto? `<img src="${r.foto}" style="width:100%;border-radius:12px;margin-bottom:8px">` : ''}
         <h3>${r.nome} <span class="badge">${r.cat}</span></h3>
         <p>⏱️ ${r.tempo}min | 🍰 ${r.rend} un | 💰 ${r.custoTotal.toFixed(2)}€ | ${(r.custoTotal/r.rend).toFixed(2)}€/un</p>
         <p>⚖️ Peso: ${r.pesoTotal}g | 📅 Val: ${r.validade} dias</p>
         <div class="grid4">
-          <button class="btn btn-small" onclick="Receitas.escalar(${r.id},0.5)">x0.5</button>
-          <button class="btn btn-small" onclick="Receitas.escalar(${r.id},2)">x2</button>
-          <button class="btn btn-small" onclick="Receitas.escalar(${r.id},3)">x3</button>
-          <button class="btn btn-small" onclick="Receitas.escalar(${r.id},5)">x5</button>
+          <button class="btn btn-small" data-action="escalar" data-id="${r.id}" data-fator="0.5">x0.5</button>
+          <button class="btn btn-small" data-action="escalar" data-id="${r.id}" data-fator="2">x2</button>
+          <button class="btn btn-small" data-action="escalar" data-id="${r.id}" data-fator="3">x3</button>
+          <button class="btn btn-small" data-action="escalar" data-id="${r.id}" data-fator="5">x5</button>
         </div>
         <div class="grid2">
-          <button class="btn btn-small btn-choco" onclick="Receitas.fichaTecnica(${r.id})">📋 Ficha</button>
-          <button class="btn btn-small btn-choco" onclick="Receitas.rotulo(${r.id})">🏷️ Rótulo</button>
+          <button class="btn btn-small btn-choco" data-action="ficha" data-id="${r.id}">📋 Ficha</button>
+          <button class="btn btn-small btn-choco" data-action="rotulo" data-id="${r.id}">🏷️ Rótulo</button>
         </div>
         <div class="grid2">
-          <button class="btn btn-small" onclick="Receitas.ver(${r.id})">👁️ Ver</button>
-          <button class="btn btn-small" onclick="Receitas.del(${r.id})">🗑️ Apagar</button>
+          <button class="btn btn-small" data-action="ver" data-id="${r.id}">👁️ Ver</button>
+          <button class="btn btn-small" data-action="del" data-id="${r.id}">🗑️ Apagar</button>
         </div>
       </div>
-    `).join('');
-    document.getElementById('lista-receitas').innerHTML = html || '<div class="card">Sem receitas ainda</div>';
+    `).join('') || '<div class="card">Sem receitas ainda</div>';
+
+    // Bind eventos depois de criar HTML
+    lista.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.onclick = (e) => {
+        const id = +e.target.dataset.id;
+        const action = e.target.dataset.action;
+        const fator = +e.target.dataset.fator;
+        if (action === 'escalar') this.escalar(id, fator);
+        if (action === 'ficha') this.fichaTecnica(id);
+        if (action === 'rotulo') this.rotulo(id);
+        if (action === 'ver') this.ver(id);
+        if (action === 'del') this.del(id);
+      };
+    });
   },
 
   async escalar(id, fator) {
@@ -120,17 +135,15 @@ const Receitas = {
     const r = (await DB.getAll('receitas')).find(x => x.id === id);
     const ingLista = r.ing.sort((a,b)=>b.qtd-a.qtd).map(i=>`${i.produto} (${(i.qtd/r.pesoTotal*100).toFixed(1)}%)`).join(', ');
 
-    const w = window.open('', '', 'width=800,height=600');
-    w.document.write(`
+    const html = `
       <html><head><title>Ficha Técnica - ${r.nome}</title>
       <style>
-        body{font-family:Arial;padding:20px;color:#333}
-        h1{color:#FF6B9D;border-bottom:3px solid #FF6B9D}
+        body{font-family:Arial;padding:20px;color:#333;font-size:14px}
+        h1{color:#FF6B9D;border-bottom:3px solid #FF6B9D;margin:10px 0}
         table{width:100%;border-collapse:collapse;margin:10px 0}
         td,th{border:1px solid #ddd;padding:8px;text-align:left}
         th{background:#FFF5F8}
-      .logo{font-size:24px}
-        @media print{button{display:none}}
+       .logo{font-size:24px;font-weight:bold}
       </style></head><body>
       <div class="logo">🧁 Babe's Bakery</div>
       <h1>FICHA TÉCNICA</h1>
@@ -146,14 +159,15 @@ const Receitas = {
       <h3>Alergénios:</h3>
       <p><b>${r.alergenios || 'Não declarado'}</b></p>
       <h3>Modo de Preparação:</h3>
-      <pre>${r.passos}</pre>
+      <pre style="white-space:pre-wrap;font-family:Arial">${r.passos}</pre>
       <h3>Conservação:</h3>
       <p>Manter refrigerado entre 0-5ºC. Consumir até ${r.validade} dias após fabrico.</p>
       <hr>
       <p style="font-size:12px">Emitido por Babe's Bakery em ${new Date().toLocaleDateString('pt-PT')} | Ana Filipa Babe Meireles</p>
-      <button onclick="window.print()">🖨️ Imprimir Ficha</button>
       </body></html>
-    `);
+    `;
+
+    this.printHTML(html);
   },
 
   async rotulo(id) {
@@ -162,24 +176,40 @@ const Receitas = {
     const dataProd = new Date().toLocaleDateString('pt-PT');
     const dataVal = new Date(Date.now() + r.validade*86400000).toLocaleDateString('pt-PT');
 
-    const w = window.open('', '', 'width=300');
-    w.document.write(`
-      <div class="print-area" style="width:58mm;font-family:Arial;font-size:10px;padding:2mm">
+    const html = `
+      <html><head><style>
+        body{width:58mm;font-family:Arial;font-size:10px;padding:2mm;margin:0}
+        center{margin:1px 0}
+        hr{border:none;border-top:1px dashed #000;margin:2px 0}
+      </style></head><body>
         <center><b>BABE'S BAKERY</b></center>
         <center style="font-size:14px;margin:2px 0"><b>${r.nome}</b></center>
-        <hr style="border:1px dashed #000;margin:2px 0">
+        <hr>
         <b>Ingredientes:</b> ${ingLista}.<br>
         <b>Alergénios:</b> ${r.alergenios || 'Não contém'}.<br>
         <b>Peso líq:</b> ${(r.pesoTotal/r.rend).toFixed(0)}g<br>
         <b>Fab:</b> ${dataProd} <b>Val:</b> ${dataVal}<br>
         <b>Lote:</b> ${Date.now().toString().slice(-6)}<br>
-        <hr style="border:1px dashed #000;margin:2px 0">
+        <hr>
         <center style="font-size:8px">Conservar 0-5ºC<br>
         Ana Filipa B. Meireles<br>
         Contacto: 9xx xxx xxx</center>
-      </div>
-      <script>window.print()</script>
-    `);
+      </body></html>
+    `;
+
+    this.printHTML(html);
+  },
+
+  printHTML(html) {
+    const frame = document.getElementById('print-frame');
+    frame.innerHTML = `<iframe id="pf" style="width:0;height:0;border:0"></iframe>`;
+    const pf = document.getElementById('pf');
+    pf.contentDocument.write(html);
+    pf.contentDocument.close();
+    setTimeout(() => {
+      pf.contentWindow.focus();
+      pf.contentWindow.print();
+    }, 500);
   },
 
   async ver(id) {
