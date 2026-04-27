@@ -232,11 +232,12 @@ const Receitas = {
           <button class="btn btn-small" data-action="escalar" data-id="${r.id}" data-fator="5">x5</button>
         </div>
         <div class="grid2">
-          <button class="btn btn-small btn-choco" data-action="ficha" data-id="${r.id}">📋 Ficha</button>
-          <button class="btn btn-small btn-choco" data-action="rotulo" data-id="${r.id}">🏷️ Rótulo</button>
-        </div>
-        <div class="grid2">
-          <button class="btn btn-small" data-action="copiar" data-id="${r.id}">📋 Copiar</button>
+  <button class="btn btn-small btn-choco" data-action="ficha" data-id="${r.id}">📋 FT Cliente</button>
+  <button class="btn btn-small btn-choco" data-action="rotulo" data-id="${r.id}">🏷️ Rótulo</button>
+</div>
+<div class="grid2">
+  <button class="btn btn-small btn-choco" data-action="fichaProd" data-id="${r.id}">👩‍🍳 Produção</button>
+  <button class="btn btn-small" data-action="copiar" data-id="${r.id}">📋 Copiar</button>
           <button class="btn btn-small" data-action="del" data-id="${r.id}">🗑️ Apagar</button>
         </div>
       </div>
@@ -252,6 +253,7 @@ const Receitas = {
         if (action === 'rotulo') this.rotulo(id);
         if (action === 'copiar') this.copiar(id);
         if (action === 'del') this.del(id);
+        if (action === 'fichaProd') this.fichaProducao(id);
       };
     });
   },
@@ -430,6 +432,159 @@ const Receitas = {
     <b>Fab:</b> ${dataProd} <b>Val:</b> ${dataVal}<br>
     <b>Lote:</b> ${Date.now().toString().slice(-6)}<br><hr>
     <center style="font-size:8px">Conservar 0-5ºC<br>Ana Filipa B. Meireles<br>9xx xxx xxx</center>
+    </body></html>`;
+  this.printHTML(html);
+},
+
+  async fichaProducao(id) {
+  const r = (await DB.getAll('receitas')).find(x => x.id === id);
+
+  // Calcula tempo total dos passos com timer
+  const timers = [...r.passos.matchAll(/\[timer:(\d+)\]/g)];
+  const tempoTimers = timers.reduce((s, t) => s + parseInt(t[1]), 0);
+
+  // Monta tabela de ingredientes com %
+  const ingTabela = r.ing.map(i => {
+    const perc = (i.qtd / r.pesoTotal * 100).toFixed(2);
+    const qtdKg = (i.unidade === 'g'? i.qtd/1000 : i.qtd).toFixed(3);
+    return `<tr>
+      <td>${i.produto}</td>
+      <td style="text-align:right">${i.qtd}${i.unidade}</td>
+      <td style="text-align:right">${perc}%</td>
+      <td style="text-align:right">${qtdKg} kg</td>
+      <td style="text-align:right">${i.custo.toFixed(2)}€</td>
+    </tr>`;
+  }).join('');
+
+  // Monta passos com checklist
+  const passosHtml = r.passos.split('\n').filter(p => p.trim()).map((p, i) => {
+    const timer = p.match(/\[timer:(\d+)\]/);
+    const texto = p.replace(/\[timer:\d+\]/, '').trim();
+    return `<tr>
+      <td style="width:40px;text-align:center"><input type="checkbox"></td>
+      <td style="width:30px;text-align:center;font-weight:700">${i+1}</td>
+      <td>${texto}</td>
+      <td style="width:80px;text-align:center">${timer? timer[1] + ' min' : '-'}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `
+    <!DOCTYPE html><html><head><meta charset="UTF-8"><title>FP - ${r.nome}</title>
+    <style>
+      @page { size: A4; margin: 10mm; }
+      * { box-sizing: border-box; }
+      body{font-family:'Arial',sans-serif;color:#1a1a1a;font-size:10pt;line-height:1.3;margin:0}
+    .header{background:#5D4037;color:#fff;padding:10px;display:flex;justify-content:space-between;align-items:center}
+    .header h1{margin:0;font-size:16pt}
+    .header.meta{font-size:9pt;text-align:right}
+    .grid{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin:10px 0}
+    .box{border:2px solid #5D4037;border-radius:6px;padding:10px}
+    .box-title{background:#5D4037;color:#fff;margin:-10px -10px 8px -10px;padding:6px 10px;font-weight:700;font-size:9pt;text-transform:uppercase}
+      table{width:100%;border-collapse:collapse;font-size:9pt}
+      th{background:#FFF5F8;border:1px solid #5D4037;padding:5px;text-align:left;font-weight:700}
+      td{border:1px solid #ccc;padding:5px}
+    .check-table td{padding:8px}
+    .check-table input{width:20px;height:20px}
+    .alerta{background:#FFF3CD;border:2px solid #FF6B9D;padding:8px;margin:8px 0;font-size:9pt}
+    .foto{width:100%;max-height:150px;object-fit:cover;border-radius:6px;margin:5px 0}
+    .footer{font-size:8pt;color:#666;border-top:1px solid #ccc;padding-top:5px;margin-top:15px;text-align:center}
+      @media print{button{display:none}}
+    </style>
+    </head><body>
+
+    <div class="header">
+      <h1>👩‍🍳 FICHA DE PRODUÇÃO</h1>
+      <div class="meta">
+        <div><b>${r.nome}</b></div>
+        <div>Ref: FP-${r.id.toString().slice(-6)} | Rev: 01</div>
+        <div>Data: ${new Date().toLocaleDateString('pt-PT')}</div>
+      </div>
+    </div>
+
+    ${r.foto? `<img src="${r.foto}" class="foto">` : ''}
+
+    <div class="grid">
+      <div class="box">
+        <div class="box-title">DADOS DE PRODUÇÃO</div>
+        <table>
+          <tr><th style="width:40%">Categoria</th><td>${r.cat}</td></tr>
+          <tr><th>Rendimento Base</th><td>${r.rend} unidades</td></tr>
+          <tr><th>Peso Total Massa</th><td>${r.pesoTotal}g</td></tr>
+          <tr><th>Peso por Unidade</th><td>${(r.pesoTotal/r.rend).toFixed(0)}g</td></tr>
+          <tr><th>Tempo Total Prep</th><td>${r.tempo} min</td></tr>
+          <tr><th>Tempo Forno/Ativo</th><td>${tempoTimers} min</td></tr>
+          <tr><th>Custo Total MP</th><td>${r.custoTotal.toFixed(2)}€</td></tr>
+          <tr><th>Custo/Unidade</th><td>${(r.custoTotal/r.rend).toFixed(2)}€</td></tr>
+        </table>
+      </div>
+
+      <div class="box">
+        <div class="box-title">CONTROLO QUALIDADE</div>
+        <table style="font-size:8pt">
+          <tr><th>Parâmetro</th><th>OK</th><th>NOK</th></tr>
+          <tr><td>Peso unidade</td><td>☐</td><td>☐</td></tr>
+          <tr><td>Cor/Dourado</td><td>☐</td><td>☐</td></tr>
+          <tr><td>Textura</td><td>☐</td><td>☐</td></tr>
+          <tr><td>Sabor</td><td>☐</td><td>☐</td></tr>
+          <tr><td>Temperatura centro</td><td>☐</td><td>☐</td></tr>
+        </table>
+        <div style="margin-top:8px;font-size:8pt">
+          <b>Lote:</b> ${Date.now().toString().slice(-6)}<br>
+          <b>Operador:</b> ________________<br>
+          <b>Hora Início:</b> _____ <b>Fim:</b> _____
+        </div>
+      </div>
+    </div>
+
+    <div class="alerta">
+      ⚠️ <b>ALERGÉNIOS:</b> ${r.alergenios || 'Verificar'} |
+      <b>VALIDADE:</b> ${r.validade} dias a 0-5°C |
+      <b>HIGIENE:</b> Lavar mãos + usar touca/luvas
+    </div>
+
+    <div class="box">
+      <div class="box-title">LISTA DE INGREDIENTES - PESAGEM</div>
+      <table>
+        <thead>
+          <tr><th>Ingrediente</th><th style="width:80px">Qtd Receita</th><th style="width:60px">%</th><th style="width:80px">Qtd kg</th><th style="width:70px">Custo</th></tr>
+        </thead>
+        <tbody>${ingTabela}</tbody>
+        <tfoot>
+          <tr style="background:#FFF5F8;font-weight:700">
+            <td>TOTAL</td>
+            <td style="text-align:right">${r.pesoTotal}g</td>
+            <td style="text-align:right">100%</td>
+            <td style="text-align:right">${(r.pesoTotal/1000).toFixed(3)} kg</td>
+            <td style="text-align:right">${r.custoTotal.toFixed(2)}€</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="box">
+      <div class="box-title">MODO DE PREPARAÇÃO - CHECKLIST</div>
+      <table class="check-table">
+        <thead>
+          <tr><th style="width:40px">☐</th><th style="width:30px">#</th><th>Passo</th><th style="width:80px">Tempo</th></tr>
+        </thead>
+        <tbody>${passosHtml}</tbody>
+      </table>
+    </div>
+
+    <div class="box">
+      <div class="box-title">NOTAS DE PRODUÇÃO</div>
+      <div style="min-height:60px;border-bottom:1px solid #ccc;margin:5px 0"></div>
+      <div style="min-height:60px;border-bottom:1px solid #ccc;margin:5px 0"></div>
+      <div style="font-size:8pt;margin-top:10px">
+        <b>Não conformidades:</b> _________________________________________________<br>
+        <b>Ação corretiva:</b> ___________________________________________________
+      </div>
+    </div>
+
+    <div class="footer">
+      Babe's Bakery - Documento interno de produção | Conforme HACCP | Pág. 1/1
+    </div>
+
     </body></html>`;
   this.printHTML(html);
 },
