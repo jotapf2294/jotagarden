@@ -1,5 +1,5 @@
 const App = {
-  tab: 'receitas',
+  tab: 'hoje',
   wakeLock: null,
   notifPermission: false,
 
@@ -14,24 +14,27 @@ const App = {
     setInterval(() => Timers.tick(), 1000);
   },
 
+  mudarTab(nome) {
+    this.tab = nome;
+    document.querySelectorAll('.bottom-nav button').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.bottom-nav button[data-tab="${nome}"]`).classList.add('active');
+    this.renderTab();
+  },
+
   bindNav() {
     document.querySelectorAll('.bottom-nav button').forEach(btn => {
       btn.onclick = () => {
-        document.querySelectorAll('.bottom-nav button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.tab = btn.dataset.tab;
-        this.renderTab();
+        this.mudarTab(btn.dataset.tab);
       };
     });
   },
 
   renderTab() {
     const html = {
+      hoje: Hoje.render(),
       receitas: Receitas.render(),
-      calc: Calc.render(),
-      timers: Timers.render(),
-      stock: Stock.render(),
-      encomendas: Encomendas.render()
+      agenda: Agenda.render(),
+      gestao: Gestao.render()
     };
     document.getElementById('app').innerHTML = html[this.tab];
     window[this.tab.charAt(0).toUpperCase() + this.tab.slice(1)]?.bind();
@@ -110,7 +113,7 @@ const App = {
       stock: await DB.getAll('stock'),
       encomendas: await DB.getAll('encomendas'),
       exportDate: new Date().toISOString(),
-      version: '2.1'
+      version: '3.0'
     };
     const blob = new Blob([JSON.stringify(data,null,2)], {type: 'application/json'});
 
