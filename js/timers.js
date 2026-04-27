@@ -1,76 +1,90 @@
 const Timers = {
-  lista: JSON.parse(localStorage.getItem('timers')||'[]'),
+  lista: [],
 
   render() {
     return `
     <div class="tab active">
       <div class="card">
         <h3>⏰ Novo Timer</h3>
+        <input id="t-nome" placeholder="Nome: Forno Bolo Chocolate">
         <div class="grid2">
-          <input id="t-nome" placeholder="Nome: Forno">
-          <input id="t-min" type="number" placeholder="Minutos">
+          <input id="t-min" type="number" placeholder="Minutos: 30">
+          <input id="t-seg" type="number" placeholder="Segundos: 0">
         </div>
-        <button class="btn btn-rosa" id="btn-iniciar-timer">▶️ Iniciar</button>
+        <button class="btn btn-rosa" onclick="Timers.add()">▶️ Iniciar Timer</button>
       </div>
       <div id="lista-timers"></div>
     </div>`;
   },
 
   bind() {
-    document.getElementById('btn-iniciar-timer').onclick = () => this.add();
-    this.renderLista();
+    this.loadLista();
   },
 
-  add(nome, min) {
-    const tNome = nome || document.getElementById('t-nome').value || 'Timer';
-    const tMin = min || +document.getElementById('t-min').value;
-    if (!tMin) return App.toast('Mete os minutos');
-
-    const t = { id: Date.now(), nome: tNome, end: Date.now() + tMin * 60000 };
-    this.lista.push(t);
-    this.save();
-    if (!nome) {
-      document.getElementById('t-nome').value = '';
-      document.getElementById('t-min').value = '';
+  add(nome, minutos) {
+    if (nome && minutos) {
+      document.getElementById('t-nome').value = nome;
+      document.getElementById('t-min').value = minutos;
     }
-    this.renderLista();
-  },
-
-  renderLista() {
-    const html = this.lista.map(t => {
-      const s = Math.max(0, Math.floor((t.end - Date.now()) / 1000));
-      const m = Math.floor(s/60), ss = s%60;
-      return `
-        <div class="timer-card">
-          <h3>${t.nome}</h3>
-          <div class="timer-time">${m}:${ss.toString().padStart(2,'0')}</div>
-          <button class="btn btn-small" onclick="Timers.stop(${t.id})">⏹️ Parar</button>
-        </div>`;
-    }).join('');
-    document.getElementById('lista-timers').innerHTML = html || '<div class="card">Sem timers ativos</div>';
-  },
-
-  stop(id) {
-    this.lista = this.lista.filter(t => t.id!== id);
-    this.save();
-    this.renderLista();
-  },
-
-  save() {
-    localStorage.setItem('timers', JSON.stringify(this.lista));
+    const n = document.getElementById('t-nome').value || 'Timer';
+    const m = +document.getElementById('t-min').value || 0;
+    const s = +document.getElementById('t-seg').value || 0;
+    const total = m * 60 + s;
+    if (total === 0) return App.toast('Tempo inválido');
+    
+    this.lista.push({
+      id: Date.now(),
+      nome: n,
+      total: total,
+      restante: total,
+      ativo: true
+    });
+    document.getElementById('t-nome').value = '';
+    document.getElementById('t-min').value = '';
+    document.getElementById('t-seg').value = '';
+    this.loadLista();
+    App.toast('Timer iniciado ⏰');
   },
 
   tick() {
-    this.renderLista();
-    this.lista.forEach(t => {
-      if (t.end < Date.now()) {
-        navigator.vibrate && navigator.vibrate([200,100,200]);
-        if (Notification.permission === 'granted') new Notification(`⏰ ${t.nome} terminou!`);
-        this.stop(t.id);
+    let mudou = false;
+    this.lista = this.lista.filter(t => {
+      if (!t.ativo) return true;
+      t.restante--;
+      if (t.restante <= 0) {
+        App.notify('⏰ Timer!', `${t.nome} terminou!`, `timer-${t.id}`);
+        App.toast(`⏰ ${t.nome} terminou!`);
+        return false;
       }
+      return true;
     });
+    if (App.tab === 'timers') this.loadLista();
+  },
+
+  loadLista() {
+    const div = document.getElementById('lista-timers');
+    if (!div) return;
+    div.innerHTML = this.lista.map(t => {
+      const min = Math.floor(t.restante / 60);
+      const seg = t.restante % 60;
+      const perc = ((t.total - t.restante) / t.total * 100).toFixed(0);
+      return `
+        <div class="timer-card">
+          <h3>${t.nome}</h3>
+          <div class="timer-time">${String(min).padStart(2,'0')}:${String(seg).padStart(2,'0')}</div>
+          <div style="background:rgba(255,255,255,0.2);height:6px;border-radius:3px;margin:10px 0">
+            <div style="background:var(--rosa);height:100%;width:${perc}%;border-radius:3px;transition:width 1s"></div>
+          </div>
+          <button class="btn btn-small" onclick="Timers.del(${t.id})">❌ Parar</button>
+        </div>
+      `;
+    }).join('') || '<div class="card">Sem timers ativos</div>';
+  },
+
+  del(id) {
+    this.lista = this.lista.filter(t => t.id !== id);
+    this.loadLista();
   }
 };
 
 window.Timers = Timers;
-setInterval(() => Timers.tick(), 1000);
