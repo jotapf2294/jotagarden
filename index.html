@@ -4,20 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#FF6B9D">
-<title>Babe's Bakery 🧁</title>
+<meta name="description" content="Gestão profissional Babe's Bakery">
+<title>Babe's Bakery v2.1 🧁</title>
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/style.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧁</text></svg>">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <header>
-  <h1>🧁 Babe's Bakery</h1>
-  <div id="status">Offline</div>
+  <h1>🧁 Babe's Bakery v2.1</h1>
+  <div id="status">
+    <span id="status-online"><span class="dot dot-green"></span>Online</span>
+    <span id="status-notif">🔔</span>
+    <span id="status-wake">☀️</span>
+  </div>
 </header>
 
-<main id="app">
-  <!-- Tabs injetadas via JS -->
-</main>
+<main id="app"></main>
 
 <nav class="bottom-nav">
   <button data-tab="receitas" class="active">📖<span>Receitas</span></button>
@@ -27,15 +30,14 @@
   <button data-tab="encomendas">📅<span>Agenda</span></button>
 </nav>
 
+<div id="print-frame" style="position:absolute;left:-9999px;"></div>
+
 <script src="js/db.js"></script>
-<script src="js/app.js"></script>
 <script src="js/receitas.js"></script>
 <script src="js/calc.js"></script>
 <script src="js/timers.js"></script>
 <script src="js/stock.js"></script>
 <script src="js/encomendas.js"></script>
-<script>
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js')}
-</script>
+<script src="js/app.js"></script>
 </body>
 </html>
