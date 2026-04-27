@@ -4,100 +4,98 @@ const Encomendas = {
     <div class="tab active">
       <div class="card">
         <h3>📅 Nova Encomenda</h3>
-        <input id="e-cliente" placeholder="Cliente: Ana Silva">
-        <input id="e-tel" type="tel" placeholder="Telefone: 912345678">
-        <input id="e-bolo" placeholder="Bolo: Chocolate 2kg">
+        <input id="e-cliente" placeholder="Cliente: Maria Silva">
+        <input id="e-tel" type="tel" placeholder="WhatsApp: 9xx xxx xxx">
+        <input id="e-data" type="date">
+        <input id="e-hora" type="time">
+        <select id="e-receita">
+          <option value="">Selecionar receita...</option>
+        </select>
         <div class="grid2">
-          <input id="e-data" type="date">
-          <input id="e-hora" type="time">
+          <input id="e-qtd" type="number" placeholder="Quantidade: 2">
+          <input id="e-valor" type="number" step="0.01" placeholder="Valor total: 25€">
         </div>
-        <div class="grid2">
-          <input id="e-valor" type="number" placeholder="Valor €">
-          <input id="e-sinal" type="number" placeholder="Sinal €">
-        </div>
-        <textarea id="e-notas" rows="2" placeholder="Notas: sem lactose"></textarea>
-        <button class="btn btn-rosa" onclick="Encomendas.save()">💾 Guardar</button>
-      </div>
-      <div class="card">
-        <h3>📋 Próximos 7 dias</h3>
-        <div id="lista-7dias"></div>
+        <textarea id="e-obs" rows="2" placeholder="Obs: Sem lactose, entregar às 15h"></textarea>
+        <button class="btn btn-rosa" onclick="Encomendas.add()">💾 Guardar Encomenda</button>
       </div>
       <div id="lista-encomendas"></div>
     </div>`;
   },
 
-  bind() { this.loadLista(); },
+  async bind() {
+    await this.loadReceitas();
+    this.loadLista();
+  },
 
-  async save() {
-    const e = {
-      cliente: e_cliente.value,
-      tel: e_tel.value,
-      bolo: e_bolo.value,
-      data: e_data.value,
-      hora: e_hora.value,
-      valor: +e_valor.value,
-      sinal: +e_sinal.value,
-      notas: e_notas.value,
-      estado: 'Recebida'
+  async loadReceitas() {
+    const recs = await DB.getAll('receitas');
+    const sel = document.getElementById('e-receita');
+    sel.innerHTML = '<option value="">Selecionar receita...</option>' + 
+      recs.map(r => `<option value="${r.id}">${r.nome}</option>`).join('');
+  },
+
+  async add() {
+    const cliente = document.getElementById('e-cliente').value;
+    if (!cliente) return App.toast('Cliente obrigatório');
+    const enc = {
+      cliente,
+      tel: document.getElementById('e-tel').value,
+      data: document.getElementById('e-data').value,
+      hora: document.getElementById('e-hora').value,
+      receitaId: +document.getElementById('e-receita').value || null,
+      qtd: +document.getElementById('e-qtd').value || 1,
+      valor: +document.getElementById('e-valor').value || 0,
+      obs: document.getElementById('e-obs').value,
+      status: 'pendente'
     };
-    if (!e.cliente ||!e.data) return App.toast('Cliente e data obrigatórios');
-    await DB.save('encomendas', e);
+    await DB.save('encomendas', enc);
     App.toast('Encomenda guardada 📅');
     this.loadLista();
-    document.querySelectorAll('#encomendas input, #encomendas textarea').forEach(el => el.value = '');
+    document.querySelectorAll('#e-cliente,#e-tel,#e-data,#e-hora,#e-qtd,#e-valor,#e-obs').forEach(e => e.value = '');
   },
 
   async loadLista() {
     const all = await DB.getAll('encomendas');
-    const hoje = new Date().toISOString().split('T')[0];
-    const prox7 = all.filter(e => e.data >= hoje).sort((a,b) => (a.data+a.hora).localeCompare(b.data+b.hora));
-
-    document.getElementById('lista-7dias').innerHTML = prox7.slice(0,7).map(e => `
-      <div class="card" style="margin:8px 0">
-        <b>${e.cliente}</b> - ${e.bolo}<br>
-        📅 ${e.data} ${e.hora} | 💰 ${e.valor}€ | Sinal: ${e.sinal}€<br>
-        <span class="badge badge-verde">${e.estado}</span>
-        <button class="btn-small" onclick="Encomendas.print(${e.id})">🖨️ Talão</button>
-        <select onchange="Encomendas.estado(${e.id},this.value)">
-          <option ${e.estado==='Recebida'?'selected':''}>Recebida</option>
-          <option ${e.estado==='Em Prep'?'selected':''}>Em Prep</option>
-          <option ${e.estado==='Pronta'?'selected':''}>Pronta</option>
-          <option ${e.estado==='Entregue'?'selected':''}>Entregue</option>
-          <option ${e.estado==='Paga'?'selected':''}>Paga</option>
-        </select>
-      </div>
-    `).join('') || 'Sem encomendas próximas';
+    const recs = await DB.getAll('receitas');
+    all.sort((a,b) => new Date(a.data) - new Date(b.data));
+    
+    const lista = document.getElementById('lista-encomendas');
+    lista.innerHTML = all.map(e => {
+      const rec = recs.find(r => r.id === e.receitaId);
+      const dataStr = e.data ? new Date(e.data).toLocaleDateString('pt-PT') : 'Sem data';
+      const cor = e.status === 'entregue' ? 'var(--verde)' : e.status === 'cancelado' ? 'var(--vermelho)' : 'var(--rosa)';
+      return `
+        <div class="card" style="border-left:4px solid ${cor}">
+          <h3>${e.cliente} <span class="badge" style="background:${cor}">${e.status}</span></h3>
+          <p>📅 ${dataStr} ${e.hora || ''}</p>
+          <p>📱 ${e.tel || 'Sem telefone'}</p>
+          <p>🧁 ${rec?.nome || 'Sem receita'} x${e.qtd} | 💰 ${e.valor.toFixed(2)}€</p>
+          ${e.obs ? `<p style="font-size:14px;color:#666">📝 ${e.obs}</p>` : ''}
+          <div class="grid2">
+            <button class="btn btn-small btn-choco" onclick="Encomendas.status(${e.id}, 'entregue')">✅ Entregue</button>
+            <button class="btn btn-small" onclick="Encomendas.del(${e.id})">🗑️ Apagar</button>
+          </div>
+        </div>
+      `;
+    }).join('') || '<div class="card">Sem encomendas</div>';
   },
 
-  async estado(id, novo) {
+  async status(id, novo) {
     const all = await DB.getAll('encomendas');
-    const e = all.find(x => x.id === id);
-    e.estado = novo;
-    await DB.save('encomendas', e);
-    App.toast('Estado atualizado');
+    const enc = all.find(x => x.id === id);
+    enc.status = novo;
+    await DB.save('encomendas', enc);
+    this.loadLista();
+    App.toast('Status atualizado');
   },
 
-  async print(id) {
-    const e = (await DB.getAll('encomendas')).find(x => x.id === id);
-    const w = window.open('', '', 'width=300');
-    w.document.write(`
-      <div class="print-area" style="width:58mm;font-family:monospace;font-size:12px">
-        <center><b>BABE'S BAKERY</b><br>*** TALÃO ***</center>
-        <hr>
-        Cliente: ${e.cliente}<br>
-        Tel: ${e.tel}<br>
-        <hr>
-        ${e.bolo}<br>
-        Entrega: ${e.data} ${e.hora}<br>
-        ${e.notas? 'Obs: '+e.notas+'<br>' : ''}
-        <hr>
-        Total: ${e.valor.toFixed(2)}€<br>
-        Sinal: ${e.sinal.toFixed(2)}€<br>
-        <b>Falta: ${(e.valor-e.sinal).toFixed(2)}€</b><br>
-        <hr>
-        <center>Obrigada! 🧁</center>
-      </div>
-    `);
-    w.print();
+  async del(id) {
+    if (confirm('Apagar encomenda?')) {
+      await DB.delete('encomendas', id);
+      this.loadLista();
+      App.toast('Apagada');
+    }
   }
 };
+
+window.Encomendas = Encomendas;
