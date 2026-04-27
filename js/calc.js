@@ -3,92 +3,78 @@ const Calc = {
     return `
     <div class="tab active">
       <div class="card">
-        <h3>🧮 Regra de 3</h3>
-        <div class="grid2">
-          <input id="c1-a" type="number" placeholder="Se 500g">
-          <input id="c1-b" type="number" placeholder="= 20 un">
+        <h3>🧮 Calculadora Rápida</h3>
+        <input id="c-custo" type="number" step="0.01" placeholder="Custo total matéria-prima: 5.40€" oninput="Calc.calcRapida()">
+        <input id="c-rend" type="number" placeholder="Rendimento: 12 unidades" oninput="Calc.calcRapida()">
+        <input id="c-margem" type="number" placeholder="Margem %: 300" value="300" oninput="Calc.calcRapida()">
+        <div id="c-resultado" style="background:#FFF5F8;padding:16px;border-radius:12px;margin-top:10px">
+          <b>Custo/Un:</b> 0.00€<br>
+          <b>PVP Sugerido:</b> 0.00€<br>
+          <b>Lucro/Un:</b> 0.00€
         </div>
-        <input id="c1-c" type="number" placeholder="Quanto para 35 un?">
-        <button class="btn btn-rosa" id="btn-regra3">Calcular</button>
-        <h2 id="c1-out" style="color:var(--rosa);text-align:center"></h2>
       </div>
 
       <div class="card">
-        <h3>💯 % Padeiro</h3>
-        <input id="p-farinha" type="number" placeholder="Farinha 1000g = 100%">
-        <input id="p-agua" type="number" placeholder="Água 650g">
-        <input id="p-sal" type="number" placeholder="Sal 20g">
-        <input id="p-fermento" type="number" placeholder="Fermento 10g">
-        <button class="btn btn-rosa" id="btn-padeiro">Calcular %</button>
-        <div id="p-out"></div>
-      </div>
-
-      <div class="card">
-        <h3>🔄 Conversor</h3>
-        <div class="grid2">
-          <input id="conv-val" type="number" placeholder="Valor">
-          <select id="conv-tipo">
-            <option value="g-colher">g → colher sopa</option>
-            <option value="ml-chavena">ml → chávena</option>
-            <option value="c-f">ºC → ºF</option>
-            <option value="oz-g">oz → g</option>
-          </select>
+        <h3>💧 Hidratação Massa</h3>
+        <input id="h-farinha" type="number" placeholder="Farinha: 1000g" oninput="Calc.calcHidrat()">
+        <input id="h-agua" type="number" placeholder="Água/Leite: 650g" oninput="Calc.calcHidrat()">
+        <div id="h-resultado" style="background:#FFF5F8;padding:16px;border-radius:12px;margin-top:10px">
+          <b>Hidratação:</b> 0%<br>
+          <b>Tipo:</b> -
         </div>
-        <button class="btn btn-rosa" id="btn-converter">Converter</button>
-        <h2 id="conv-out" style="color:var(--rosa);text-align:center"></h2>
       </div>
 
       <div class="card">
-        <h3>💰 Preço Venda</h3>
-        <input id="v-custo" type="number" placeholder="Custo total €">
-        <input id="v-margem" type="number" placeholder="Margem % ex: 300">
-        <button class="btn btn-rosa" id="btn-preco">Calcular PVP</button>
-        <h2 id="v-out" style="color:var(--rosa);text-align:center"></h2>
+        <h3>📏 Escalar Receita</h3>
+        <input id="e-atual" type="number" placeholder="Rendimento atual: 12" oninput="Calc.calcEscala()">
+        <input id="e-novo" type="number" placeholder="Novo rendimento: 24" oninput="Calc.calcEscala()">
+        <div id="e-resultado" style="background:#FFF5F8;padding:16px;border-radius:12px;margin-top:10px">
+          <b>Fator:</b> x0<br>
+          <b>Exemplo 100g →</b> 0g
+        </div>
       </div>
     </div>`;
   },
 
-  bind() {
-    document.getElementById('btn-regra3').onclick = () => this.regra3();
-    document.getElementById('btn-padeiro').onclick = () => this.padeiro();
-    document.getElementById('btn-converter').onclick = () => this.converter();
-    document.getElementById('btn-preco').onclick = () => this.preco();
-  },
+  bind() {},
 
-  regra3() {
-    const a = +document.getElementById('c1-a').value;
-    const b = +document.getElementById('c1-b').value;
-    const c = +document.getElementById('c1-c').value;
-    if (a && b && c) document.getElementById('c1-out').textContent = `= ${(c * a / b).toFixed(1)}g`;
-  },
-
-  padeiro() {
-    const f = +document.getElementById('p-farinha').value || 1000;
-    const agua = +document.getElementById('p-agua').value;
-    const sal = +document.getElementById('p-sal').value;
-    const ferm = +document.getElementById('p-fermento').value;
-    document.getElementById('p-out').innerHTML = `
-      <p>💧 Hidratação: ${(agua/f*100).toFixed(1)}%</p>
-      <p>🧂 Sal: ${(sal/f*100).toFixed(1)}%</p>
-      <p>🍞 Fermento: ${(ferm/f*100).toFixed(1)}%</p>
+  calcRapida() {
+    const custo = +document.getElementById('c-custo').value || 0;
+    const rend = +document.getElementById('c-rend').value || 1;
+    const margem = +document.getElementById('c-margem').value || 0;
+    const custoUn = custo / rend;
+    const pvp = custoUn * (1 + margem/100);
+    const lucro = pvp - custoUn;
+    document.getElementById('c-resultado').innerHTML = `
+      <b>Custo/Un:</b> ${custoUn.toFixed(2)}€<br>
+      <b>PVP Sugerido:</b> ${pvp.toFixed(2)}€<br>
+      <b>Lucro/Un:</b> ${lucro.toFixed(2)}€
     `;
   },
 
-  converter() {
-    const v = +document.getElementById('conv-val').value;
-    const t = document.getElementById('conv-tipo').value;
-    let r = 0;
-    if (t==='g-colher') r = (v/15).toFixed(1) + ' colheres';
-    if (t==='ml-chavena') r = (v/240).toFixed(2) + ' chávenas';
-    if (t==='c-f') r = (v*9/5+32).toFixed(1) + 'ºF';
-    if (t==='oz-g') r = (v*28.35).toFixed(1) + 'g';
-    document.getElementById('conv-out').textContent = r;
+  calcHidrat() {
+    const farinha = +document.getElementById('h-farinha').value || 0;
+    const agua = +document.getElementById('h-agua').value || 0;
+    const hid = farinha > 0 ? (agua/farinha*100).toFixed(0) : 0;
+    let tipo = '-';
+    if (hid < 55) tipo = 'Massa seca - Biscoitos';
+    else if (hid < 65) tipo = 'Massa firme - Pão';
+    else if (hid < 75) tipo = 'Massa macia - Bolo';
+    else tipo = 'Massa mole - Ciabatta';
+    document.getElementById('h-resultado').innerHTML = `
+      <b>Hidratação:</b> ${hid}%<br>
+      <b>Tipo:</b> ${tipo}
+    `;
   },
 
-  preco() {
-    const c = +document.getElementById('v-custo').value;
-    const m = +document.getElementById('v-margem').value;
-    if (c && m) document.getElementById('v-out').textContent = `PVP: ${(c * (1 + m/100)).toFixed(2)}€`;
+  calcEscala() {
+    const atual = +document.getElementById('e-atual').value || 1;
+    const novo = +document.getElementById('e-novo').value || 0;
+    const fator = (novo / atual).toFixed(2);
+    document.getElementById('e-resultado').innerHTML = `
+      <b>Fator:</b> x${fator}<br>
+      <b>Exemplo 100g →</b> ${(100*fator).toFixed(0)}g
+    `;
   }
 };
 
