@@ -1,0 +1,49 @@
+:root{
+  --rosa:#FF6B9D;
+  --rosa-claro:#FFF5F8;
+  --choco:#5D4037;
+  --creme:#FFF8E1;
+  --verde:#81C784;
+  --vermelho:#E57373;
+  --sombra:0 2px 8px rgba(0,0,0,0.1);
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:system-ui,sans-serif;background:var(--rosa-claro);color:var(--choco);margin:0;padding:0 0 80px 0;font-size:16px}
+
+header{background:var(--rosa);color:#fff;padding:12px 16px;position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--sombra)}
+h1{margin:0;font-size:20px}
+#status{font-size:12px;background:rgba(255,255,255,0.3);padding:4px 8px;border-radius:12px}
+
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;box-shadow:0 -2px 8px rgba(0,0,0,0.1);z-index:100}
+.bottom-nav button{flex:1;border:none;background:none;padding:8px 4px;font-size:24px;color:#999;min-height:64px}
+.bottom-nav button span{display:block;font-size:11px;margin-top:2px}
+.bottom-nav button.active{color:var(--rosa)}
+
+.card{background:#fff;border-radius:16px;padding:16px;margin:12px;box-shadow:var(--sombra)}
+input,select,textarea{width:100%;border:2px solid #F8BBD0;border-radius:12px;padding:14px;font-size:16px;margin:8px 0;background:var(--creme);color:var(--choco);min-height:48px}
+input:focus{border-color:var(--rosa);outline:none}
+
+.btn{width:100%;min-height:52px;border:none;border-radius:16px;font-size:18px;font-weight:700;margin:8px 0;cursor:pointer}
+.btn-rosa{background:var(--rosa);color:#fff}
+.btn-choco{background:var(--choco);color:#fff}
+.btn-small{min-height:44px;font-size:14px;width:auto;padding:0 16px;margin:4px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.badge{background:var(--vermelho);color:#fff;padding:2px 8px;border-radius:12px;font-size:12px}
+.badge-verde{background:var(--verde)}
+
+.tab{display:none;padding-bottom:20px}.tab.active{display:block}
+.timer-card{background:var(--choco);color:#fff;text-align:center;padding:20px;border-radius:16px;margin:8px 0}
+.timer-time{font-size:36px;font-weight:700;color:var(--rosa)}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:12px 8px;border-bottom:1px solid #F8BBD0;text-align:left}
+tr.alerta{background:#FFEBEE}
+
+@media print{
+  body *{visibility:hidden}
+  .print-area, .print-area *{visibility:visible}
+  .print-area{position:absolute;left:0;top:0;width:58mm;font-size:12px}
+}
