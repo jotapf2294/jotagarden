@@ -1,19 +1,13 @@
 {
-  "name": "Babe's Bakery",
-  "short_name": "BabeBakery",
-  "start_url": "index.html",
+  "name": "Doce Gestão - Pastelaria",
+  "short_name": "DoceGestão",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#FFF5F8",
-  "theme_color": "#FF6B9D",
-  "orientation": "portrait",
+  "background_color": "#fdfbf7",
+  "theme_color": "#ffb6c1",
   "icons": [
     {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-512.png", 
+      "src": "https://cdn-icons-png.flaticon.com/512/3173/3173420.png",
       "sizes": "512x512",
       "type": "image/png"
     }
