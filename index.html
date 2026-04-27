@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Babe's Bakery</title>
+    <style>
+        /* TEMA E VARIÁVEIS */
+        :root {
+            --primary: #FF85A1; /* Rosa Glacé */
+            --secondary: #FCE4EC; /* Creme */
+            --text: #4E342E; /* Chocolate */
+            --bg: #FAFAFA;
+            --success: #81C784;
+            --danger: #E57373;
+            --warning: #FFD54F;
+        }
+
+        /* RESET & MOBILE FIRST */
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; }
+        
+        /* HEADER & NAVEGAÇÃO */
+        header { background: var(--primary); padding: 15px; text-align: center; color: white; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { margin: 0; font-size: 1.5rem; }
+        nav { display: flex; overflow-x: auto; background: white; padding: 10px; border-bottom: 2px solid var(--secondary); }
+        nav button { flex: 1; min-width: 60px; font-size: 1.2rem; background: transparent; color: var(--text); box-shadow: none; }
+        nav button.active { border-bottom: 3px solid var(--primary); color: var(--primary); }
+
+        /* UI COMPONENTS (Dedos com farinha = botões grandes) */
+        button { min-height: 48px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; padding: 0 15px; font-size: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: inline-flex; align-items: center; justify-content: center; gap: 5px;}
+        input, select, textarea { width: 100%; min-height: 48px; margin: 8px 0; border: 2px solid var(--secondary); border-radius: 8px; padding: 10px; font-size: 1rem; }
+        input:focus { border-color: var(--primary); outline: none; }
+        
+        .card { background: white; border-radius: 12px; margin: 15px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        
+        /* STATUS & ALERTAS */
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; color: white;}
+        .bg-success { background: var(--success); }
+        .bg-danger { background: var(--danger); }
+        .bg-warning { background: var(--warning); color: #333;}
+        
+        /* PRINT (Talão Térmico 58mm) */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 58mm; padding: 0; margin: 0; font-size: 12px; font-family: monospace; color: black; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🧁 Babe's Bakery</h1>
+    </header>
+    <nav id="menu">
+        <button onclick="router('calc')" id="nav-calc">⚖️ Calc</button>
+        <button onclick="router('receitas')" id="nav-receitas">📖 Rec</button>
+        <button onclick="router('encomendas')" id="nav-encomendas">📅 Enc</button>
+        <button onclick="router('stock')" id="nav-stock">📦 Stock</button>
+    </nav>
+
+    <main id="app">
+        </main>
+
+    <div id="print-area"></div>
+
+    <script>
+        // --- 1. BASE DE DADOS (Offline LocalStorage) ---
+        const db = {
+            get: (table) => JSON.parse(localStorage.getItem('babe_' + table)) || [],
+            set: (table, data) => localStorage.setItem('babe_' + table, JSON.stringify(data)),
+            add: (table, item) => { const d = db.get(table); item.id = Date.now(); d.push(item); db.set(table, d); }
+        };
+
+        // Dados Iniciais (Demo)
+        if(db.get('stock').length === 0) {
+            db.set('stock', [{id: 1, nome: "Farinha T55", qtd: 5, uni: "kg", min: 2, validade: "2027-12-31"}]);
+        }
+
+        // --- 2. MOTOR DE ROTAS ---
+        const app = document.getElementById('app');
+        
+        function router(view) {
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById('nav-' + view).classList.add('active');
+            app.innerHTML = '';
+            
+            if(view === 'calc') renderCalc();
+            if(view === 'receitas') renderReceitas();
+            if(view === 'encomendas') renderEncomendas();
+            if(view === 'stock') renderStock();
+            window.scrollTo(0,0);
+        }
+
+        // --- 3. MÓDULOS ---
+
+        // MÓDULO 1: CALCULADORA PASTELEIRO
+        function renderCalc() {
+            app.innerHTML = `
+                <div class="card">
+                    <h3>🔢 Regra de 3 Simples</h3>
+                    <div class="grid-2">
+                        <input type="number" id="r3-a" placeholder="Se X (ex: 500g)">
+                        <input type="number" id="r3-b" placeholder="= Y (ex: 20un)">
+                        <input type="number" id="r3-c" placeholder="E Z (ex: 35un)">
+                        <button onclick="calcR3()">Calcular</button>
+                    </div>
+                    <h4 style="text-align:center; color: var(--primary);" id="r3-res">Resultado: -</h4>
+                </div>
+                <div class="card">
+                    <h3>🍞 % de Padeiro (Hidratação)</h3>
+                    <input type="number" id="pad-far" placeholder="Peso Farinha (g) = 100%">
+                    <input type="number" id="pad-hid" placeholder="% Hidratação desejada">
+                    <button onclick="calcPadeiro()">Calcular Água/Líquido</button>
+                    <h4 style="text-align:center; color: var(--primary);" id="pad-res">Água: - g</h4>
+                </div>
+                <div class="card">
+                    <h3>💰 Custo & Margem de Venda</h3>
+                    <input type="number" id="cv-custo" placeholder="Custo Ingredientes (€)">
+                    <input type="number" id="cv-margem" placeholder="Margem Lucro (%)" value="150">
+                    <button onclick="calcVenda()">Calcular Preço Venda</button>
+                    <h4 style="text-align:center; color: var(--primary);" id="cv-res">Preço Venda: - €</h4>
+                </div>
+            `;
+        }
+        function calcR3() {
+            let a = parseFloat(document.getElementById('r3-a').value);
+            let b = parseFloat(document.getElementById('r3-b').value);
+            let c = parseFloat(document.getElementById('r3-c').value);
+            if(a && b && c) document.getElementById('r3-res').innerText = `Resultado: ${((a * c) / b).toFixed(2)}`;
+        }
+        function calcPadeiro() {
+            let f = parseFloat(document.getElementById('pad-far').value);
+            let h = parseFloat(document.getElementById('pad-hid').value);
+            if(f && h) document.getElementById('pad-res').innerText = `Água: ${((f * h) / 100).toFixed(0)} g`;
+        }
+        function calcVenda() {
+            let c = parseFloat(document.getElementById('cv-custo').value);
+            let m = parseFloat(document.getElementById('cv-margem').value);
+            if(c) document.getElementById('cv-res').innerText = `Preço Venda: ${(c + (c * (m/100))).toFixed(2)} €`;
+        }
+
+        // MÓDULO 2: STOCK & VALIDADES
+        function renderStock() {
+            let stock = db.get('stock');
+            let hoje = new Date();
+            
+            let html = `
+                <div class="card">
+                    <h3>➕ Novo Ingrediente</h3>
+                    <div class="grid-2">
+                        <input type="text" id="s-nome" placeholder="Nome">
+                        <input type="number" id="s-qtd" placeholder="Qtd Atual">
+                        <input type="text" id="s-uni" placeholder="Unid. (kg, L, un)">
+                        <input type="number" id="s-min" placeholder="Stock Min">
+                    </div>
+                    <label>Validade:</label>
+                    <input type="date" id="s-val">
+                    <button onclick="addStock()" style="width:100%">Guardar</button>
+                </div>
+                <h3>Inventário Atual</h3>
+            `;
+
+            stock.forEach(item => {
+                let val = new Date(item.validade);
+                let diasVal = Math.ceil((val - hoje) / (1000 * 60 * 60 * 24));
+                let stockBaixo = item.qtd <= item.min ? '<span class="badge bg-danger">STOCK BAIXO</span>' : '';
+                let valCritica = diasVal < 15 ? `<span class="badge bg-warning">Vence em ${diasVal} dias</span>` : `<span class="badge bg-success">Val: ${item.validade}</span>`;
+                
+                html += `
+                    <div class="card">
+                        <div class="flex-between">
+                            <strong>${item.nome}</strong>
+                            <button onclick="delStock(${item.id})" style="background:var(--danger); min-width:40px; min-height:40px;">🗑️</button>
+                        </div>
+                        <p>Qtd: <b>${item.qtd} ${item.uni}</b> (Mín: ${item.min})</p>
+                        <div>${stockBaixo} ${valCritica}</div>
+                    </div>
+                `;
+            });
+            app.innerHTML = html;
+        }
+        function addStock() {
+            let item = {
+                nome: document.getElementById('s-nome').value,
+                qtd: parseFloat(document.getElementById('s-qtd').value),
+                uni: document.getElementById('s-uni').value,
+                min: parseFloat(document.getElementById('s-min').value),
+                validade: document.getElementById('s-val').value
+            };
+            if(item.nome && item.qtd) { db.add('stock', item); renderStock(); }
+        }
+        function delStock(id) {
+            db.set('stock', db.get('stock').filter(i => i.id !== id)); renderStock();
+        }
+
+        // MÓDULO 3: ENCOMENDAS & IMPRESSÃO
+        function renderEncomendas() {
+            let encs = db.get('encomendas');
+            
+            let html = `
+                <div class="card">
+                    <h3>➕ Nova Encomenda</h3>
+                    <input type="text" id="e-cli" placeholder="Nome Cliente">
+                    <input type="text" id="e-bolo" placeholder="Descrição do Bolo">
+                    <div class="grid-2">
+                        <input type="datetime-local" id="e-data">
+                        <input type="number" id="e-valor" placeholder="Total €">
+                    </div>
+                    <button onclick="addEncomenda()" style="width:100%">Registar</button>
+                </div>
+            `;
+
+            encs.sort((a,b) => new Date(a.data) - new Date(b.data)).forEach(e => {
+                html += `
+                    <div class="card">
+                        <div class="flex-between">
+                            <strong>👤 ${e.cli}</strong>
+                            <span class="badge bg-warning">${e.valor}€</span>
+                        </div>
+                        <p>🎂 ${e.bolo}<br>📅 ${new Date(e.data).toLocaleString()}</p>
+                        <div class="grid-2">
+                            <button onclick="imprimirTalao(${e.id})" style="background:#81C784;">🖨️ Talão</button>
+                            <button onclick="delEnc(${e.id})" style="background:var(--danger);">Apagar</button>
+                        </div>
+                    </div>
+                `;
+            });
+            app.innerHTML = html;
+        }
+        function addEncomenda() {
+            let e = {
+                cli: document.getElementById('e-cli').value,
+                bolo: document.getElementById('e-bolo').value,
+                data: document.getElementById('e-data').value,
+                valor: document.getElementById('e-valor').value
+            };
+            if(e.cli) { db.add('encomendas', e); renderEncomendas(); }
+        }
+        function delEnc(id) { db.set('encomendas', db.get('encomendas').filter(i => i.id !== id)); renderEncomendas(); }
+        
+        function imprimirTalao(id) {
+            let e = db.get('encomendas').find(x => x.id === id);
+            let printArea = document.getElementById('print-area');
+            printArea.innerHTML = `
+                <div style="text-align:center; margin-bottom:10px;">
+                    <h3>BABE'S BAKERY</h3>
+                    <p>----------------</p>
+                </div>
+                <p><b>Data:</b> ${new Date(e.data).toLocaleString()}</p>
+                <p><b>Cliente:</b> ${e.cli}</p>
+                <p><b>Pedido:</b> ${e.bolo}</p>
+                <p>----------------</p>
+                <h3 style="text-align:right">TOTAL: ${e.valor} €</h3>
+                <p style="text-align:center; margin-top:20px;">Obrigado pela sua encomenda!</p>
+            `;
+            window.print();
+        }
+
+        // MÓDULO 4: RECEITAS & ESCALA (MVP)
+        let recTemp = { nome: '', ing: [] };
+        
+        function renderReceitas() {
+            let receitas = db.get('receitas');
+            let html = `
+                <div class="card" style="background: var(--secondary)">
+                    <h3>➕ Criar Receita Rápida</h3>
+                    <input type="text" id="r-nome" placeholder="Nome da Receita (ex: Bolo Choco)">
+                    <div class="grid-2">
+                        <input type="text" id="r-i-nome" placeholder="Ingrediente">
+                        <input type="number" id="r-i-qtd" placeholder="Qtd">
+                    </div>
+                    <button onclick="addIngTemp()" style="background:#B39DDB; width:100%">+ Adicionar Ingrediente</button>
+                    <ul id="lista-ing-temp"></ul>
+                    <button onclick="guardarReceita()" style="width:100%; margin-top:10px;">💾 Guardar Receita</button>
+                </div>
+                <h3>Livro de Receitas</h3>
+            `;
+
+            receitas.forEach(r => {
+                html += `
+                    <div class="card">
+                        <h3>${r.nome}</h3>
+                        <div class="grid-2" style="margin-bottom:10px;">
+                            <button onclick="escalar(${r.id}, 0.5)">x0.5</button>
+                            <button onclick="escalar(${r.id}, 2)">x2</button>
+                        </div>
+                        <ul style="padding-left: 20px;">
+                            ${r.ing.map(i => `<li><b>${i.qtd}</b> - ${i.nome}</li>`).join('')}
+                        </ul>
+                        <button onclick="startTimer(this)" style="background:#81C784; width:100%;">⏱️ Timer 30m (Forno)</button>
+                        <button onclick="delRec(${r.id})" style="background:var(--danger); width:100%; margin-top:5px;">🗑️ Apagar Receita</button>
+                    </div>
+                `;
+            });
+            app.innerHTML = html;
+        }
+
+        function addIngTemp() {
+            let nome = document.getElementById('r-i-nome').value;
+            let qtd = parseFloat(document.getElementById('r-i-qtd').value);
+            if(nome && qtd) {
+                recTemp.ing.push({nome, qtd, qtdBase: qtd});
+                document.getElementById('lista-ing-temp').innerHTML += `<li>${qtd} - ${nome}</li>`;
+                document.getElementById('r-i-nome').value = '';
+                document.getElementById('r-i-qtd').value = '';
+            }
+        }
+
+        function guardarReceita() {
+            recTemp.nome = document.getElementById('r-nome').value;
+            if(recTemp.nome && recTemp.ing.length > 0) {
+                db.add('receitas', recTemp);
+                recTemp = { nome: '', ing: [] }; // reset
+                renderReceitas();
+            }
+        }
+
+        function delRec(id) { db.set('receitas', db.get('receitas').filter(i => i.id !== id)); renderReceitas(); }
+
+        function escalar(id, fator) {
+            let receitas = db.get('receitas');
+            let r = receitas.find(x => x.id === id);
+            r.ing.forEach(i => i.qtd = i.qtdBase * fator);
+            db.set('receitas', receitas); // guarda estado da escala
+            renderReceitas();
+        }
+
+        function startTimer(btn) {
+            let time = 30 * 60; // 30 minutos
+            btn.disabled = true;
+            let int = setInterval(() => {
+                let m = Math.floor(time/60);
+                let s = time % 60;
+                btn.innerText = `⏳ Forno: ${m}m ${s}s`;
+                time--;
+                if(time < 0) {
+                    clearInterval(int);
+                    btn.disabled = false;
+                    btn.innerText = "⏱️ Tempo Terminado!";
+                    btn.style.background = "var(--danger)";
+                    alert("🚨 O Timer do Forno terminou!");
+                }
+            }, 1000);
+        }
+
+        // --- 4. CONFIGURAÇÃO PWA & OFFLINE (Gerado Dinamicamente) ---
+        const manifest = {
+            "name": "Babe's Bakery Pro",
+            "short_name": "BabeBakery",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#FAFAFA",
+            "theme_color": "#FF85A1",
+            "icons": [{"src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧁</text></svg>", "sizes": "192x192", "type": "image/svg+xml"}]
+        };
+
+        const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${manifestUrl}">`);
+
+        const swCode = `
+            const CACHE = 'babe-v1';
+            self.addEventListener('install', e => { self.skipWaiting(); });
+            self.addEventListener('fetch', e => {
+                e.respondWith(
+                    fetch(e.request).catch(() => new Response("Offline Mode", {status: 200}))
+                );
+            });
+        `;
+        const swBlob = new Blob([swCode], {type: 'application/javascript'});
+        const swUrl = URL.createObjectURL(swBlob);
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(swUrl).then(() => console.log('PWA Pronta e Offline!'));
+        }
+
+        // Iniciar App
+        router('calc');
+
+    </script>
+</body>
+  </html>
+  
