@@ -10,23 +10,29 @@ const Timers = {
           <input id="t-nome" placeholder="Nome: Forno">
           <input id="t-min" type="number" placeholder="Minutos">
         </div>
-        <button class="btn btn-rosa" onclick="Timers.add()">▶️ Iniciar</button>
+        <button class="btn btn-rosa" id="btn-iniciar-timer">▶️ Iniciar</button>
       </div>
       <div id="lista-timers"></div>
     </div>`;
   },
 
-  bind() { this.renderLista(); },
+  bind() {
+    document.getElementById('btn-iniciar-timer').onclick = () => this.add();
+    this.renderLista();
+  },
 
   add(nome, min) {
-    const t = {
-      id: Date.now(),
-      nome: nome || t_nome.value || 'Timer',
-      end: Date.now() + (min || +t_min.value) * 60000
-    };
+    const tNome = nome || document.getElementById('t-nome').value || 'Timer';
+    const tMin = min || +document.getElementById('t-min').value;
+    if (!tMin) return App.toast('Mete os minutos');
+
+    const t = { id: Date.now(), nome: tNome, end: Date.now() + tMin * 60000 };
     this.lista.push(t);
     this.save();
-    if (t_nome) t_nome.value = t_min.value = '';
+    if (!nome) {
+      document.getElementById('t-nome').value = '';
+      document.getElementById('t-min').value = '';
+    }
     this.renderLista();
   },
 
@@ -58,7 +64,7 @@ const Timers = {
     this.renderLista();
     this.lista.forEach(t => {
       if (t.end < Date.now()) {
-        new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...').play();
+        navigator.vibrate && navigator.vibrate([200,100,200]);
         if (Notification.permission === 'granted') new Notification(`⏰ ${t.nome} terminou!`);
         this.stop(t.id);
       }
@@ -66,4 +72,5 @@ const Timers = {
   }
 };
 
+window.Timers = Timers;
 setInterval(() => Timers.tick(), 1000);
