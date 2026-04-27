@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#FF6B9D">
-<meta name="description" content="Gestão profissional Babe's Bakery">
-<title>Babe's Bakery v2.1 🧁</title>
+<meta name="description" content="Babe's Bakery - Gestão Completa">
+<title>Babe's Bakery v3.0 🧁</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧁</text></svg>">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <header>
-  <h1>🧁 Babe's Bakery v2.1</h1>
+  <h1>🧁 Babe's Bakery v3.0</h1>
   <div id="status">
     <span id="status-online"><span class="dot dot-green"></span>Online</span>
     <span id="status-notif">🔔</span>
@@ -23,21 +23,19 @@
 <main id="app"></main>
 
 <nav class="bottom-nav">
-  <button data-tab="receitas" class="active">📖<span>Receitas</span></button>
-  <button data-tab="calc">🧮<span>Calc</span></button>
-  <button data-tab="timers">⏰<span>Timers</span></button>
-  <button data-tab="stock">📦<span>Stock</span></button>
-  <button data-tab="encomendas">📅<span>Agenda</span></button>
+  <button data-tab="hoje" class="active">🏠<span>Hoje</span></button>
+  <button data-tab="receitas">📖<span>Receitas</span></button>
+  <button data-tab="agenda">📅<span>Agenda</span></button>
+  <button data-tab="gestao">📊<span>Gestão</span></button>
 </nav>
 
 <div id="print-frame" style="position:absolute;left:-9999px;"></div>
 
 <script src="js/db.js"></script>
+<script src="js/hoje.js"></script>
 <script src="js/receitas.js"></script>
-<script src="js/calc.js"></script>
-<script src="js/timers.js"></script>
-<script src="js/stock.js"></script>
-<script src="js/encomendas.js"></script>
+<script src="js/agenda.js"></script>
+<script src="js/gestao.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
