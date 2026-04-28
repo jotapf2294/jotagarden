@@ -1,164 +1,190 @@
+// dashboard.js
 import { getAllData } from '../db.js';
-import { formatCurrency, formatDate } from './receitas/utils.js';
+import { formatCurrency, formatDate, toNumber } from './receitas/utils.js';
+
+// FIX: parseDateTime sem bug timezone
+const parseDateTime = (date, time) => new Date(`${date}T${time}:00`);
+const hojeISO = () => new Date().toISOString().split('T')[0];
 
 export const renderDashboard = async () => {
   const c = document.getElementById('tab-dashboard');
+  if (!c) return;
 
   c.innerHTML = `
-    <div class="grid-4" id="stats-grid">
-      <div class="card stat">
-        <div class="stat-label">💰 Faturação Hoje</div>
-        <div class="stat-value" id="stat-faturacao">0€</div>
+    <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">
+      <div class="dash-card">
+        <div class="dash-label">💰 Faturação Hoje</div>
+        <div class="dash-value" id="stat-faturacao">0€</div>
       </div>
-      <div class="card stat">
-        <div class="stat-label">📦 Encomendas</div>
-        <div class="stat-value" id="stat-encomendas">0</div>
+      <div class="dash-card">
+        <div class="dash-label">📦 Encomendas</div>
+        <div class="dash-value" id="stat-encomendas">0</div>
       </div>
-      <div class="card stat">
-        <div class="stat-label">📖 Receitas</div>
-        <div class="stat-value" id="stat-receitas">0</div>
+      <div class="dash-card">
+        <div class="dash-label">📖 Receitas</div>
+        <div class="dash-value" id="stat-receitas">0</div>
       </div>
-      <div class="card stat">
-        <div class="stat-label">⏱️ Timers Ativos</div>
-        <div class="stat-value" id="stat-timers">0</div>
+      <div class="dash-card">
+        <div class="dash-label">⏱️ Timers Ativos</div>
+        <div class="dash-value" id="stat-timers">0</div>
       </div>
     </div>
 
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-header">
+    <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:16px">
+      <div class="dash-panel">
+        <div class="dash-head">
           <h3>📈 Vendas Últimos 7 Dias</h3>
-          <span class="badge" id="badge-total-7d">0€</span>
+          <span class="dash-badge" id="badge-total-7d">0€</span>
         </div>
         <div id="chart-vendas" style="height:200px;display:flex;align-items:flex-end;gap:8px;padding:16px 0"></div>
       </div>
 
-      <div class="card">
-        <div class="card-header">
+      <div class="dash-panel">
+        <div class="dash-head">
           <h3>🔥 Top 5 Receitas</h3>
-          <span class="badge badge-success">Mais vendidas</span>
+          <span class="dash-badge dash-badge-success">Mais vendidas</span>
         </div>
         <div id="top-receitas" style="display:flex;flex-direction:column;gap:8px"></div>
       </div>
     </div>
 
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-header">
+    <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:16px">
+      <div class="dash-panel">
+        <div class="dash-head">
           <h3>📅 Próximas Entregas</h3>
-          <button class="btn btn-sm" onclick="document.querySelector('[data-target=agenda]').click()">
-            Ver todas →
-          </button>
+          <button class="btn btn-sm btn-ghost" data-go="agenda">Ver todas →</button>
         </div>
         <div id="prox-entregas"></div>
       </div>
 
-      <div class="card">
-        <div class="card-header">
+      <div class="dash-panel">
+        <div class="dash-head">
           <h3>⚡ Ações Rápidas</h3>
         </div>
         <div style="display:grid;gap:8px">
-          <button class="btn btn-primary btn-block" onclick="novaEncomendaRapida()">
+          <button class="btn btn-primary btn-block" id="btn-nova-enc">
             <span>➕</span> Nova Encomenda
           </button>
-          <button class="btn btn-block" onclick="document.querySelector('[data-target=receitas]').click()">
+          <button class="btn btn-block" data-go="receitas">
             <span>📖</span> Nova Ficha Técnica
           </button>
-          <button class="btn btn-block" onclick="iniciarTimerRapido()">
+          <button class="btn btn-block" id="btn-timer">
             <span>⏱️</span> Iniciar Timer
           </button>
-          <button class="btn btn-block" onclick="exportarBackup()">
+          <button class="btn btn-block" id="btn-backup">
             <span>💾</span> Backup Completo
           </button>
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header">
+    <div class="dash-panel" style="margin-top:16px">
+      <div class="dash-head">
         <h3>🔔 Alertas HACCP</h3>
-        <span class="badge badge-danger" id="badge-alertas" style="display:none">0</span>
+        <span class="dash-badge dash-badge-danger" id="badge-alertas" style="display:none">0</span>
       </div>
       <div id="alertas-haccp"></div>
     </div>
+
+    <style>
+     .dash-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+      }
+     .dash-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+      }
+     .dash-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+      }
+     .dash-panel {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+      }
+     .dash-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+     .dash-head h3 {
+        margin: 0;
+        font-size: 1.125rem;
+      }
+     .dash-badge {
+        background: var(--bg-hover);
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+     .dash-badge-success { background: var(--success); color: #fff; }
+     .dash-badge-danger { background: var(--danger); color: #fff; }
+    </style>
   `;
 
-  // FIX: Try/catch em cada função pra não rebentar tudo
-  try {
-    await loadStats();
-  } catch (e) {
-    console.error('Erro loadStats:', e);
-  }
+  // FIX: Event delegation pra navegação, sem data-target que não existe
+  c.onclick = (e) => {
+    const go = e.target.closest('[data-go]');
+    if (go) {
+      document.querySelector(`[data-tab="${go.dataset.go}"]`)?.click();
+    }
+  };
 
-  try {
-    await loadChart();
-  } catch (e) {
-    console.error('Erro loadChart:', e);
-  }
+  c.querySelector('#btn-nova-enc').onclick = novaEncomendaRapida;
+  c.querySelector('#btn-timer').onclick = iniciarTimerRapido;
+  c.querySelector('#btn-backup').onclick = exportarBackup;
 
-  try {
-    await loadTopReceitas();
-  } catch (e) {
-    console.error('Erro loadTopReceitas:', e);
-  }
-
-  try {
-    await loadProximasEntregas();
-  } catch (e) {
-    console.error('Erro loadProximasEntregas:', e);
-  }
-
-  try {
-    await loadAlertas();
-  } catch (e) {
-    console.error('Erro loadAlertas:', e);
+  // Carrega dados com try/catch individual
+  const tasks = [loadStats, loadChart, loadTopReceitas, loadProximasEntregas, loadAlertas];
+  for (const task of tasks) {
+    try {
+      await task();
+    } catch (e) {
+      console.error('Erro no dashboard:', e);
+    }
   }
 
   startTimersListener();
 };
 
 async function loadStats() {
-  let agenda = [];
-  let receitas = [];
+  const [agenda, receitas] = await Promise.all([
+    getAllData('agenda').catch(() => []),
+    getAllData('receitas').catch(() => [])
+  ]);
 
-  try {
-    [agenda, receitas] = await Promise.all([
-      getAllData('agenda'),
-      getAllData('receitas')
-    ]);
-  } catch (e) {
-    console.warn('DB ainda vazio:', e);
-  }
-
-  const hoje = new Date().toISOString().split('T')[0];
+  const hoje = hojeISO();
   const hojeAgenda = agenda.filter(e => e.data === hoje);
 
+  // FIX: usa toNumber pra evitar NaN
   const faturacaoHoje = hojeAgenda.reduce((sum, e) => {
     const rec = receitas.find(r => r.nome === e.pedido);
-    return sum + (rec?.venda || 0);
+    return sum + toNumber(rec?.venda);
   }, 0);
 
   const timers = JSON.parse(localStorage.getItem('dg_timers') || '[]');
   const timersAtivos = timers.filter(t => t.fim > Date.now()).length;
 
-  document.getElementById('stat-faturacao').textContent = formatCurrency(faturacaoHoje);
-  document.getElementById('stat-encomendas').textContent = hojeAgenda.length;
-  document.getElementById('stat-receitas').textContent = receitas.length;
-  document.getElementById('stat-timers').textContent = timersAtivos;
+  setText('stat-faturacao', formatCurrency(faturacaoHoje));
+  setText('stat-encomendas', hojeAgenda.length);
+  setText('stat-receitas', receitas.length);
+  setText('stat-timers', timersAtivos);
 }
 
 async function loadChart() {
-  let agenda = [];
-  let receitas = [];
-
-  try {
-    [agenda, receitas] = await Promise.all([
-      getAllData('agenda'),
-      getAllData('receitas')
-    ]);
-  } catch (e) {
-    console.warn('DB ainda vazio:', e);
-  }
+  const [agenda, receitas] = await Promise.all([
+    getAllData('agenda').catch(() => []),
+    getAllData('receitas').catch(() => [])
+  ]);
 
   const dias = [];
   const hoje = new Date();
@@ -169,10 +195,10 @@ async function loadChart() {
     const dataStr = d.toISOString().split('T')[0];
 
     const vendasDia = agenda
-    .filter(e => e.data === dataStr)
-    .reduce((sum, e) => {
+     .filter(e => e.data === dataStr)
+     .reduce((sum, e) => {
         const rec = receitas.find(r => r.nome === e.pedido);
-        return sum + (rec?.venda || 0);
+        return sum + toNumber(rec?.venda);
       }, 0);
 
     dias.push({
@@ -184,7 +210,7 @@ async function loadChart() {
   const maxValor = Math.max(...dias.map(d => d.valor), 1);
   const total = dias.reduce((a, b) => a + b.valor, 0);
 
-  document.getElementById('badge-total-7d').textContent = formatCurrency(total);
+  setText('badge-total-7d', formatCurrency(total));
 
   const chart = document.getElementById('chart-vendas');
   if (!chart) return;
@@ -214,29 +240,22 @@ async function loadChart() {
 }
 
 async function loadTopReceitas() {
-  let agenda = [];
-  let receitas = [];
-
-  try {
-    [agenda, receitas] = await Promise.all([
-      getAllData('agenda'),
-      getAllData('receitas')
-    ]);
-  } catch (e) {
-    console.warn('DB ainda vazio:', e);
-  }
+  const [agenda, receitas] = await Promise.all([
+    getAllData('agenda').catch(() => []),
+    getAllData('receitas').catch(() => [])
+  ]);
 
   const contagem = {};
   agenda.forEach(e => {
-    contagem[e.pedido] = (contagem[e.pedido] || 0) + 1;
+    if (e.pedido) contagem[e.pedido] = (contagem[e.pedido] || 0) + 1;
   });
 
   const top = Object.entries(contagem)
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 5)
-  .map(([nome, qtd]) => {
+   .sort((a, b) => b[1] - a[1])
+   .slice(0, 5)
+   .map(([nome, qtd]) => {
       const rec = receitas.find(r => r.nome === nome);
-      return { nome, qtd, venda: rec?.venda || 0 };
+      return { nome, qtd, venda: toNumber(rec?.venda) };
     });
 
   const container = document.getElementById('top-receitas');
@@ -260,7 +279,7 @@ async function loadTopReceitas() {
         font-size:.75rem;font-weight:600;
       ">${i + 1}</div>
       <div style="flex:1">
-        <div style="font-weight:500;font-size:.875rem">${t.nome}</div>
+        <div style="font-weight:500;font-size:.875rem">${sanitizeHTML(t.nome)}</div>
         <div style="font-size:.75rem;color:var(--text-secondary)">${t.qtd}x vendido</div>
       </div>
       <div style="font-weight:600;font-size:.875rem">${formatCurrency(t.venda * t.qtd)}</div>
@@ -269,25 +288,20 @@ async function loadTopReceitas() {
 }
 
 async function loadProximasEntregas() {
-  let agenda = [];
-
-  try {
-    agenda = await getAllData('agenda');
-  } catch (e) {
-    console.warn('DB ainda vazio:', e);
-  }
+  const agenda = await getAllData('agenda').catch(() => []);
 
   const hoje = new Date();
   const proximos7 = new Date(hoje);
   proximos7.setDate(hoje.getDate() + 7);
 
+  // FIX: parseDateTime evita bug timezone
   const proximas = agenda
-  .filter(e => {
-      const dataE = new Date(e.data);
+   .filter(e => {
+      const dataE = parseDateTime(e.data, e.hora || '00:00');
       return dataE >= hoje && dataE <= proximos7;
     })
-  .sort((a, b) => new Date(a.data + 'T' + a.hora) - new Date(b.data + 'T' + b.hora))
-  .slice(0, 5);
+   .sort((a, b) => parseDateTime(a.data, a.hora) - parseDateTime(b.data, b.hora))
+   .slice(0, 5);
 
   const container = document.getElementById('prox-entregas');
   if (!container) return;
@@ -298,8 +312,8 @@ async function loadProximasEntregas() {
   }
 
   container.innerHTML = proximas.map(e => {
-    const data = new Date(e.data + 'T' + e.hora);
-    const isHoje = e.data === hoje.toISOString().split('T')[0];
+    const data = parseDateTime(e.data, e.hora);
+    const isHoje = e.data === hojeISO();
 
     return `
       <div style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--radius-sm);margin-bottom:8px;background:var(--bg-hover)">
@@ -310,51 +324,40 @@ async function loadProximasEntregas() {
           </div>
         </div>
         <div style="flex:1">
-          <div style="font-weight:500;font-size:.875rem">${e.cliente}</div>
-          <div style="font-size:.8125rem;color:var(--text-secondary)">${e.pedido}</div>
+          <div style="font-weight:500;font-size:.875rem">${sanitizeHTML(e.cliente || '—')}</div>
+          <div style="font-size:.8125rem;color:var(--text-secondary)">${sanitizeHTML(e.pedido || '—')}</div>
           <div style="font-size:.75rem;color:var(--text-secondary);margin-top:2px">
-            🕐 ${e.hora}
+            🕐 ${e.hora || '—'}
+            ${isHoje? '<span class="dash-badge dash-badge-danger" style="margin-left:8px">Hoje</span>' : ''}
           </div>
-        ${isHoje? '<span class="badge badge-danger">Hoje</span>' : ''}
+        </div>
       </div>
     `;
   }).join('');
 }
 
 async function loadAlertas() {
-  let receitas = [];
-
-  try {
-    receitas = await getAllData('receitas');
-  } catch (e) {
-    console.warn('DB ainda vazio:', e);
-  }
-
+  const receitas = await getAllData('receitas').catch(() => []);
   const alertas = [];
 
   receitas.forEach(r => {
-    if (r.validade && r.validade <= 2) {
+    const val = toNumber(r.validade);
+    if (val > 0 && val <= 2) {
       alertas.push({
         tipo: 'warning',
         icon: '⚠️',
-        msg: `${r.nome}: Validade curta (${r.validade} dias)`
+        msg: `${r.nome}: Validade curta (${val} dias)`
       });
     }
-  });
-
-  receitas.forEach(r => {
     if (!r.pccs || r.pccs.length === 0) {
       alertas.push({
         tipo: 'danger',
         icon: '🚨',
-        msg: `${r.nome}: Sem PCCs definidos (HACCP incompleto)`
+        msg: `${r.nome}: Sem PCCs definidos`
       });
     }
-  });
-
-  receitas.forEach(r => {
-    const margem = r.margem || 200;
-    if (margem < 100) {
+    const margem = toNumber(r.margem);
+    if (margem > 0 && margem < 100) {
       alertas.push({
         tipo: 'warning',
         icon: '💸',
@@ -388,33 +391,45 @@ async function loadAlertas() {
       border-left:3px solid ${a.tipo === 'danger'? 'var(--danger)' : 'var(--warning)'};
     ">
       <div style="font-size:1.25rem">${a.icon}</div>
-      <div style="flex:1;font-size:.875rem">${a.msg}</div>
+      <div style="flex:1;font-size:.875rem">${sanitizeHTML(a.msg)}</div>
     </div>
   `).join('');
 }
 
 function startTimersListener() {
-  setInterval(() => {
+  const updateTimers = () => {
     const timers = JSON.parse(localStorage.getItem('dg_timers') || '[]');
     const ativos = timers.filter(t => t.fim > Date.now()).length;
-    const el = document.getElementById('stat-timers');
-    if (el) el.textContent = ativos;
-  }, 1000);
+    setText('stat-timers', ativos);
+  };
+  updateTimers();
+  setInterval(updateTimers, 1000);
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function sanitizeHTML(str) {
+  const temp = document.createElement('div');
+  temp.textContent = str || '';
+  return temp.innerHTML;
 }
 
 // === AÇÕES RÁPIDAS ===
-window.novaEncomendaRapida = () => {
+async function novaEncomendaRapida() {
   const dialog = document.createElement('dialog');
   dialog.innerHTML = `
-    <form method="dialog">
-      <h3>➕ Nova Encomenda</h3>
+    <form method="dialog" style="padding:20px;min-width:320px">
+      <h3 style="margin:0 0 16px">➕ Nova Encomenda</h3>
       <label>Cliente *<input name="cliente" required placeholder="Nome do cliente"></label>
       <label>Pedido *<input name="pedido" required placeholder="Bolo de aniversário"></label>
-      <label>Data *<input type="date" name="data" required value="${new Date().toISOString().split('T')[0]}"></label>
+      <label>Data *<input type="date" name="data" required value="${hojeISO()}"></label>
       <label>Hora *<input type="time" name="hora" required value="10:00"></label>
       <label>Observações<textarea name="obs" rows="2" placeholder="Sem lactose, etc"></textarea></label>
-      <menu>
-        <button type="button" class="btn btn-cancel">Cancelar</button>
+      <menu style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding:0">
+        <button type="button" class="btn btn-ghost btn-cancel">Cancelar</button>
         <button value="default" class="btn btn-primary">Guardar</button>
       </menu>
     </form>`;
@@ -426,7 +441,7 @@ window.novaEncomendaRapida = () => {
       const data = Object.fromEntries(new FormData(dialog.querySelector('form')));
       const { addData } = await import('../db.js');
       await addData('agenda', {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(), // FIX: sem colisão
        ...data,
         pago: false,
         createdAt: new Date().toISOString()
@@ -436,17 +451,17 @@ window.novaEncomendaRapida = () => {
     }
     dialog.remove();
   });
-};
+}
 
-window.iniciarTimerRapido = () => {
+function iniciarTimerRapido() {
   const dialog = document.createElement('dialog');
   dialog.innerHTML = `
-    <form method="dialog">
-      <h3>⏱️ Novo Timer</h3>
+    <form method="dialog" style="padding:20px;min-width:300px">
+      <h3 style="margin:0 0 16px">⏱️ Novo Timer</h3>
       <label>Descrição *<input name="label" required placeholder="Cozedura bolo"></label>
       <label>Minutos *<input type="number" name="minutos" required min="1" value="30"></label>
-      <menu>
-        <button type="button" class="btn btn-cancel">Cancelar</button>
+      <menu style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding:0">
+        <button type="button" class="btn btn-ghost btn-cancel">Cancelar</button>
         <button value="default" class="btn btn-primary">Iniciar</button>
       </menu>
     </form>`;
@@ -458,9 +473,9 @@ window.iniciarTimerRapido = () => {
       const data = Object.fromEntries(new FormData(dialog.querySelector('form')));
       const timers = JSON.parse(localStorage.getItem('dg_timers') || '[]');
       timers.push({
-        id: Date.now(),
+        id: crypto.randomUUID(),
         label: data.label,
-        fim: Date.now() + parseInt(data.minutos) * 60000
+        fim: Date.now() + toNumber(data.minutos) * 60000
       });
       localStorage.setItem('dg_timers', JSON.stringify(timers));
       window.toast(`⏱️ Timer "${data.label}" iniciado!`);
@@ -468,24 +483,17 @@ window.iniciarTimerRapido = () => {
     }
     dialog.remove();
   });
-};
+}
 
-window.exportarBackup = async () => {
+async function exportarBackup() {
   const { getAllData } = await import('../db.js');
-  let receitas = [];
-  let agenda = [];
-
-  try {
-    [receitas, agenda] = await Promise.all([
-      getAllData('receitas'),
-      getAllData('agenda')
-    ]);
-  } catch (e) {
-    console.warn('DB ainda vazio:', e);
-  }
+  const [receitas, agenda] = await Promise.all([
+    getAllData('receitas').catch(() => []),
+    getAllData('agenda').catch(() => [])
+  ]);
 
   const backup = {
-    version: '3.0',
+    version: '3.5',
     date: new Date().toISOString(),
     receitas,
     agenda,
@@ -496,8 +504,8 @@ window.exportarBackup = async () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `docegestao-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.download = `docegestao-backup-${hojeISO()}.json`;
   a.click();
   URL.revokeObjectURL(url);
   window.toast('💾 Backup exportado!');
-};
+}
