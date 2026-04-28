@@ -1,6 +1,5 @@
 import { addData, getAllData } from '../db.js';
 
-// Lista de Alérgenos (Norma Europeia 1169/2011)
 const ALERGENOS_LIST = ['Glúten', 'Ovos', 'Leite', 'Frutos de Casca Rija', 'Soja', 'Amendoins', 'Sésamo'];
 const CATEGORIAS = ['Bolos de Aniversário', 'Pastelaria Semanal', 'Sobremesas', 'Padaria', 'Salgados'];
 
@@ -12,13 +11,13 @@ export const renderReceitas = async () => {
         <div class="header-section">
             <h2>📖 Fichas Técnicas HACCP</h2>
             <div class="search-bar">
-                <input type="text" id="search-receita" placeholder="🔍 Pesquisar por nome ou ingrediente...">
+                <input type="text" id="search-receita" placeholder="🔍 Pesquisar...">
                 <select id="filter-categoria">
-                    <option value="">Todas as Categorias</option>
+                    <option value="">Todas</option>
                     ${CATEGORIAS.map(c => `<option value="${c}">${c}</option>`).join('')}
                 </select>
             </div>
-            <button id="btn-abrir-modal" class="btn-action" style="margin-top:10px;">+ Criar Ficha Profissional</button>
+            <button id="btn-abrir-modal" class="btn-action" style="margin-top:10px;">+ Criar Nova Ficha</button>
         </div>
         
         <div id="lista-receitas" class="grid-receitas"></div>
@@ -26,88 +25,77 @@ export const renderReceitas = async () => {
         <div id="modal-receita" class="modal" style="display:none;">
             <div class="modal-content card">
                 <span class="close-modal">&times;</span>
-                <h3>Nova Ficha Técnica de Produção</h3>
+                <h3>Nova Ficha Técnica</h3>
                 
                 <form id="form-receita">
                     <div class="tabs-form">
                         <button type="button" class="tab-btn active" data-tab="geral">Geral/Custos</button>
-                        <button type="button" class="tab-btn" data-tab="haccp">Segurança (HACCP)</button>
+                        <button type="button" class="tab-btn" data-tab="haccp">HACCP</button>
                     </div>
 
                     <div id="form-geral" class="form-section active">
-                        <input type="text" id="rec-nome" placeholder="Designação do Produto" required>
+                        <input type="text" id="rec-nome" placeholder="Nome da Receita" required>
                         <select id="rec-categoria" required>
                             <option value="">Escolha uma Categoria</option>
                             ${CATEGORIAS.map(c => `<option value="${c}">${c}</option>`).join('')}
                         </select>
                         
                         <div class="input-group">
-                            <label>Rendimento Final (Ex: 12 unidades):</label>
-                            <input type="number" id="rec-rendimento" value="1" step="0.01">
+                            <label>Rendimento (Un/Kg):</label>
+                            <input type="number" id="rec-rendimento" value="1" step="0.01" required>
                         </div>
 
-                        <h4>Ingredientes (Custo MP)</h4>
+                        <h4>Ingredientes</h4>
                         <table id="tabela-ingredientes">
+                            <thead>
+                                <tr><th>Item</th><th>Qtd(g)</th><th>€/Kg</th><th>Sub</th></tr>
+                            </thead>
                             <tbody id="corpo-tabela"></tbody>
                         </table>
                         <button type="button" id="add-ingrediente" class="btn-small">+ Item</button>
                     </div>
 
                     <div id="form-haccp" class="form-section">
-                        <h4>⚠️ Controlo de Alérgenos</h4>
+                        <h4>⚠️ Alérgenos</h4>
                         <div class="alergenos-grid">
-                            ${ALERGENOS_LIST.map(a => `
-                                <label><input type="checkbox" name="alergenos" value="${a}"> ${a}</label>
-                            `).join('')}
+                            ${ALERGENOS_LIST.map(a => `<label><input type="checkbox" name="alergenos" value="${a}"> ${a}</label>`).join('')}
                         </div>
-
-                        <h4>🌡️ Processo e Conservação</h4>
-                        <textarea id="rec-preparacao" placeholder="Modo de preparação detalhado..."></textarea>
-                        <div class="input-group">
-                            <label>Temp. Cozedura (°C):</label>
-                            <input type="number" id="rec-temp-coz" placeholder="180">
-                        </div>
-                        <div class="input-group">
-                            <label>Validade (Dias):</label>
-                            <input type="number" id="rec-validade" placeholder="3">
-                        </div>
+                        <textarea id="rec-preparacao" placeholder="Modo de preparação..." style="margin-top:10px; height:80px;"></textarea>
+                        <input type="number" id="rec-temp-coz" placeholder="Temp. Cozedura °C">
+                        <input type="number" id="rec-validade" placeholder="Validade (Dias)">
                     </div>
 
                     <div class="resumo-fixo card">
                         <span>Custo Un: <strong id="custo-unitario">0.00€</strong></span>
-                        <span>PV Sugerido: <strong id="preco-venda" style="color:var(--primary)">0.00€</strong></span>
+                        <span>Venda: <strong id="preco-venda">0.00€</strong></span>
                     </div>
 
-                    <button type="submit" class="btn-action">Validar e Guardar Ficha</button>
+                    <button type="submit" class="btn-action">Guardar Ficha</button>
                 </form>
             </div>
         </div>
     `;
 
-    setupLógica(receitas);
-    filtrarLista(receitas);
+    setupLogic(receitas);
+    renderLista(receitas);
 };
 
-function setupLógica(receitas) {
+function setupLogic(receitas) {
     const modal = document.getElementById('modal-receita');
-    const searchInput = document.getElementById('search-receita');
-    const filterCat = document.getElementById('filter-categoria');
+    const form = document.getElementById('form-receita');
 
-    // Pesquisa e Filtro
-    const atualizar = () => {
-        const termo = searchInput.value.toLowerCase();
-        const cat = filterCat.value;
-        const filtradas = receitas.filter(r => 
-            (r.nome.toLowerCase().includes(termo) || r.ingredientes.some(i => i.nome.toLowerCase().includes(termo))) &&
-            (cat === "" || r.categoria === cat)
-        );
-        document.getElementById('lista-receitas').innerHTML = renderizarLista(filtradas);
+    // Fechar Modal
+    document.querySelector('.close-modal').onclick = () => modal.style.display = 'none';
+
+    // Abrir Modal e Reset
+    document.getElementById('btn-abrir-modal').onclick = () => {
+        form.reset();
+        document.getElementById('corpo-tabela').innerHTML = '';
+        adicionarLinha();
+        modal.style.display = 'block';
     };
 
-    searchInput.addEventListener('input', atualizar);
-    filterCat.addEventListener('change', atualizar);
-
-    // Gestão de Tabs no Modal
+    // Navegação Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.onclick = () => {
             document.querySelectorAll('.tab-btn, .form-section').forEach(el => el.classList.remove('active'));
@@ -116,85 +104,60 @@ function setupLógica(receitas) {
         };
     });
 
-    // Abrir Modal
-    document.getElementById('btn-abrir-modal').onclick = () => {
-        document.getElementById('form-receita').reset();
-        document.getElementById('corpo-tabela').innerHTML = '';
-        adicionarLinhaIngrediente();
-        modal.style.display = 'block';
+    // Cálculos em tempo real
+    document.getElementById('add-ingrediente').onclick = adicionarLinha;
+    document.getElementById('corpo-tabela').addEventListener('input', calcular);
+    document.getElementById('rec-rendimento').addEventListener('input', calcular);
+
+    // Submissão do Formulário
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        console.log("Iniciando salvamento...");
+        
+        try {
+            const novaFicha = capturarDados();
+            await addData('receitas', novaFicha);
+            modal.style.display = 'none';
+            alert('✅ Guardado!');
+            renderReceitas(); // Recarregar aba
+        } catch (err) {
+            console.error("Erro ao guardar ficha:", err);
+            alert('Erro ao guardar. Verifica a consola.');
+        }
     };
-
-    document.querySelector('.close-modal').onclick = () => modal.style.display = 'none';
-    document.getElementById('add-ingrediente').onclick = adicionarLinhaIngrediente;
-    document.getElementById('corpo-tabela').addEventListener('input', calcularTotaisRec);
 }
 
-function renderizarLista(dados) {
-    return dados.map(r => `
-        <div class="card haccp-card">
-            <div class="card-tag">${r.categoria}</div>
-            <h4>${r.nome}</h4>
-            <div class="card-details">
-                <span>📋 ${r.ingredientes.length} itens</span>
-                <span>🌡️ ${r.tempCoz || '--'}°C</span>
-                <span>⚠️ ${r.alergenos.length > 0 ? 'Contém Alérgenos' : 'Livre de Alérgenos'}</span>
-            </div>
-            <div class="card-price">Venda: <strong>${r.venda.toFixed(2)}€</strong></div>
-        </div>
-    `).join('');
-}
-function adicionarLinhaIngrediente() {
+function adicionarLinha() {
     const tbody = document.getElementById('corpo-tabela');
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td><input type="text" class="ing-nome" placeholder="Item" required></td>
-        <td><input type="number" class="ing-qtd" placeholder="g/ml" required></td>
-        <td><input type="number" class="ing-preco" placeholder="Preço/Kg" step="0.01" required></td>
-        <td class="ing-subtotal" style="font-weight:bold; color:var(--text-color)">0.00€</td>
+        <td><input type="text" class="ing-nome" required></td>
+        <td><input type="number" class="ing-qtd" value="0" required></td>
+        <td><input type="number" class="ing-preco" value="0" step="0.01" required></td>
+        <td class="ing-sub">0.00€</td>
     `;
     tbody.appendChild(tr);
 }
 
-function calcularTotaisRec() {
+function calcular() {
     let totalMP = 0;
-    const rows = document.querySelectorAll('#corpo-tabela tr');
-    
-    rows.forEach(row => {
-        const qtd = parseFloat(row.querySelector('.ing-qtd').value) || 0;
-        const precoKg = parseFloat(row.querySelector('.ing-preco').value) || 0;
-        const subtotal = (qtd / 1000) * precoKg;
-        totalMP += subtotal;
-        row.querySelector('.ing-subtotal').innerText = subtotal.toFixed(2) + '€';
+    document.querySelectorAll('#corpo-tabela tr').forEach(row => {
+        const q = parseFloat(row.querySelector('.ing-qtd').value) || 0;
+        const p = parseFloat(row.querySelector('.ing-preco').value) || 0;
+        const sub = (q / 1000) * p;
+        totalMP += sub;
+        row.querySelector('.ing-sub').innerText = sub.toFixed(2) + '€';
     });
 
-    const rendimento = parseFloat(document.getElementById('rec-rendimento').value) || 1;
-    const margemPercent = 200; // Podes tornar isto um input dinâmico se quiseres
-    
-    const custoUnitario = totalMP / rendimento;
-    const precoVenda = custoUnitario * (1 + margemPercent / 100);
+    const rend = parseFloat(document.getElementById('rec-rendimento').value) || 1;
+    const custoUn = totalMP / rend;
+    const vendaSugerida = custoUn * 3; // Margem de 200% (x3)
 
-    document.getElementById('custo-unitario').innerText = custoUnitario.toFixed(2) + '€';
-    document.getElementById('preco-venda').innerText = precoVenda.toFixed(2) + '€';
-    
-    return { totalMP, custoUnitario, precoVenda };
+    document.getElementById('custo-unitario').innerText = custoUn.toFixed(2) + '€';
+    document.getElementById('preco-venda').innerText = vendaSugerida.toFixed(2) + '€';
 }
 
-async function salvarReceita() {
-    // 1. Capturar Dados Gerais
-    const nome = document.getElementById('rec-nome').value;
-    const categoria = document.getElementById('rec-categoria').value;
-    const rendimento = parseFloat(document.getElementById('rec-rendimento').value);
-    
-    // 2. Capturar Alérgenos (Checkboxes)
-    const alergenos = Array.from(document.querySelectorAll('input[name="alergenos"]:checked'))
-                           .map(cb => cb.value);
-
-    // 3. Capturar Dados HACCP
-    const preparacao = document.getElementById('rec-preparacao').value;
-    const tempCoz = document.getElementById('rec-temp-coz').value;
-    const validade = document.getElementById('rec-validade').value;
-
-    // 4. Capturar Ingredientes
+function capturarDados() {
     const ingredientes = [];
     document.querySelectorAll('#corpo-tabela tr').forEach(row => {
         ingredientes.push({
@@ -204,32 +167,35 @@ async function salvarReceita() {
         });
     });
 
-    const totais = calcularTotaisRec();
+    const custoTotal = ingredientes.reduce((acc, i) => acc + (i.qtd/1000)*i.preco, 0);
+    const rendimento = parseFloat(document.getElementById('rec-rendimento').value) || 1;
 
-    const fichaHACCP = {
+    return {
         id: Date.now().toString(),
-        nome,
-        categoria,
-        rendimento,
-        ingredientes,
-        alergenos,
-        preparacao,
-        tempCoz,
-        validade,
-        custoTotal: totais.totalMP,
-        venda: totais.precoVenda,
-        margem: 200 // Valor fixo para este exemplo
+        nome: document.getElementById('rec-nome').value,
+        categoria: document.getElementById('rec-categoria').value,
+        rendimento: rendimento,
+        ingredientes: ingredientes,
+        alergenos: Array.from(document.querySelectorAll('input[name="alergenos"]:checked')).map(cb => cb.value),
+        preparacao: document.getElementById('rec-preparacao').value,
+        tempCoz: document.getElementById('rec-temp-coz').value,
+        validade: document.getElementById('rec-validade').value,
+        custoTotal: custoTotal,
+        venda: (custoTotal / rendimento) * 3
     };
-
-    try {
-        await addData('receitas', fichaHACCP);
-        alert('✔️ Ficha Técnica Guardada com Sucesso!');
-    } catch (err) {
-        console.error("Erro ao guardar:", err);
-        alert('❌ Erro na Base de Dados Offline.');
-    }
 }
 
-// Reutiliza as funções de cálculo e adição de linha da versão anterior, 
-// mas adicionando os campos de categoria e alérgenos no salvamento.
-
+function renderLista(receitas) {
+    const lista = document.getElementById('lista-receitas');
+    if (!receitas.length) {
+        lista.innerHTML = '<p>Nenhuma ficha encontrada.</p>';
+        return;
+    }
+    lista.innerHTML = receitas.map(r => `
+        <div class="card">
+            <small>${r.categoria}</small>
+            <h4>${r.nome}</h4>
+            <p>Venda: <strong>${r.venda.toFixed(2)}€</strong></p>
+        </div>
+    `).join('');
+}
