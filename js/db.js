@@ -1,31 +1,50 @@
-const DB = {
-  db: null,
-  async init() {
-    return new Promise((res, rej) => {
-      const req = indexedDB.open('BabeBakeryV21', 1);
-      req.onupgradeneeded = e => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains('receitas')) db.createObjectStore('receitas', {keyPath: 'id'});
-        if (!db.objectStoreNames.contains('stock')) db.createObjectStore('stock', {keyPath: 'id'});
-        if (!db.objectStoreNames.contains('encomendas')) db.createObjectStore('encomendas', {keyPath: 'id'});
-        if (!db.objectStoreNames.contains('config')) db.createObjectStore('config', {keyPath: 'key'});
-      };
-      req.onsuccess = e => { this.db = e.target.result; res(); };
-      req.onerror = rej;
+// db.js: Abstração do IndexedDB usando Promises
+const DB_NAME = 'DoceGestaoDB';
+const DB_VERSION = 1;
+
+export const initDB = () => {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            // Criação das tabelas (Object Stores)
+            if (!db.objectStoreNames.contains('receitas')) {
+                db.createObjectStore('receitas', { keyPath: 'id' });
+            }
+            if (!db.objectStoreNames.contains('agenda')) {
+                db.createObjectStore('agenda', { keyPath: 'id' });
+            }
+            if (!db.objectStoreNames.contains('configs')) {
+                db.createObjectStore('configs', { keyPath: 'key' });
+            }
+        };
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
     });
-  },
-  async getAll(store) {
-    const tx = this.db.transaction(store, 'readonly');
-    return new Promise(res => tx.objectStore(store).getAll().onsuccess = e => res(e.target.result));
-  },
-  async save(store, data) {
-    const tx = this.db.transaction(store, 'readwrite');
-    if (!data.id) data.id = Date.now();
-    tx.objectStore(store).put(data);
-    return data.id;
-  },
-  async delete(store, id) {
-    const tx = this.db.transaction(store, 'readwrite');
-    tx.objectStore(store).delete(id);
-  }
+};
+
+// Funções CRUD Genéricas
+export const addData = async (storeName, data) => {
+    const db = await initDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        store.put(data); // insert or update
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+    });
+};
+
+export const getAllData = async (storeName) => {
+    const db = await initDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    })
+      ;
 };
