@@ -1,4 +1,4 @@
-import { addData, getAllData, deleteData, addMultiple } from '../../db.js';
+import { addData, getAllData, deleteData } from '../../db.js';
 import { CATEGORIAS } from './constants.js';
 import { injectStyles } from './styles.js';
 import { renderLista } from './list.js';
@@ -19,7 +19,7 @@ export const renderReceitas = async () => {
     <div class="receitas-layout">
       <aside class="receitas-sidebar">
         <div class="sidebar-head">
-          <h2>📖 Fichas HACCP</h2>
+          <h2>📖 Fichas Técnicas</h2>
           <div class="filters">
             <input id="search-rec" placeholder="🔍 Pesquisar..." aria-label="Pesquisar receitas">
             <select id="f-cat-rec" aria-label="Filtrar por categoria">
@@ -81,8 +81,8 @@ function setupFilters() {
     const cat = catSelect.value;
 
     const filtradas = receitasCache.filter(r => {
-      const matchTermo =!termo || r.nome.toLowerCase().includes(termo) || r.codigo?.toLowerCase().includes(termo);
-      const matchCat =!cat || r.categoria === cat;
+      const matchTermo = !termo || r.nome.toLowerCase().includes(termo) || r.codigo?.toLowerCase().includes(termo);
+      const matchCat = !cat || r.categoria === cat;
       return matchTermo && matchCat;
     });
 
@@ -114,8 +114,13 @@ async function handleSubmit(e) {
   try {
     const rec = collectModalData(modalInstance);
 
-    if (!rec.nome ||!rec.categoria ||!rec.tempCoz ||!rec.validade) {
+    if (!rec.nome || !rec.categoria) {
       window.toast('❌ Preenche os campos obrigatórios *');
+      return;
+    }
+
+    if (!rec.ingredientes.length) {
+      window.toast('❌ Adiciona pelo menos 1 ingrediente');
       return;
     }
 
@@ -125,7 +130,6 @@ async function handleSubmit(e) {
     bc.postMessage('update-receitas');
     await loadReceitas();
 
-    // Seleciona a receita recém criada
     setTimeout(() => {
       document.querySelector(`.rec-item[data-id="${rec.id}"]`)?.click();
     }, 100);
@@ -155,10 +159,3 @@ async function handleDelete(id) {
     window.toast('❌ Erro ao eliminar');
   }
 }
-
-// Marca form como dirty ao editar
-document.addEventListener('input', (e) => {
-  if (e.target.closest('#f-rec')) {
-    e.target.closest('#f-rec').dataset.dirty = 'true';
-  }
-});
