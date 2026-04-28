@@ -1,11 +1,8 @@
-import {
-  addData,
-  getAllData,
-  initDB
-} from '../db.js';
+import { addData, getAllData, deleteData } from '../db.js';
 
 const ALERGENOS_LIST = ['Glúten', 'Ovos', 'Leite', 'Frutos de Casca Rija', 'Soja', 'Amendoins', 'Sésamo'];
 const CATEGORIAS = ['Bolos de Aniversário', 'Pastelaria Semanal', 'Sobremesas', 'Padaria', 'Salgados'];
+const bc = new BroadcastChannel('docegestao');
 
 export const renderReceitas = async () => {
   const container = document.getElementById('tab-receitas');
@@ -13,368 +10,144 @@ export const renderReceitas = async () => {
 
   container.innerHTML = `
   <div class="header-section">
-  <h2>📖 Fichas Técnicas HACCP</h2>
-  <div class="search-bar">
-  <input type="text" id="search-receita" placeholder="🔍 Pesquisar...">
-  <select id="filter-categoria">
-  <option value="">Todas</option>
-  ${CATEGORIAS.map(c => `<option value="${c}">${c}</option>`).join('')}
-  </select>
+    <h2>📖 Fichas Técnicas HACCP</h2>
+    <div style="display:grid;grid-template-columns:1fr 120px;gap:8px;margin:10px 0">
+      <input type="text" id="search-receita" placeholder="🔍 Pesquisar...">
+      <select id="filter-categoria"><option value="">Todas</option>${CATEGORIAS.map(c=>`<option>${c}</option>`).join('')}</select>
+    </div>
+    <button id="btn-abrir-modal" class="btn-action">+ Criar Nova Ficha</button>
   </div>
-  <button id="btn-abrir-modal" class="btn-action" style="margin-top:10px;">+ Criar Nova Ficha</button>
-  </div>
-
   <div id="lista-receitas" class="grid-receitas"></div>
-
-  <div id="modal-receita" class="modal" style="display:none;">
-  <div class="modal-content card">
-  <span class="close-modal">&times;</span>
-  <h3 id="modal-titulo">Nova Ficha Técnica</h3>
-
-  <form id="form-receita">
-  <div class="tabs-form">
-  <button type="button" class="tab-btn active" data-tab="geral">Geral/Custos</button>
-  <button type="button" class="tab-btn" data-tab="haccp">HACCP</button>
-  </div>
-
-  <div id="form-geral" class="form-section active">
-  <input type="text" id="rec-nome" placeholder="Nome da Receita" required>
-  <select id="rec-categoria" required>
-  <option value="">Escolha uma Categoria</option>
-  ${CATEGORIAS.map(c => `<option value="${c}">${c}</option>`).join('')}
-  </select>
-
-  <div class="input-group">
-  <label>Rendimento (Un/Kg):</label>
-  <input type="number" id="rec-rendimento" value="1" step="0.01" required>
-  </div>
-
-  <h4>Ingredientes</h4>
-  <table id="tabela-ingredientes">
-  <thead>
-  <tr><th>Item</th><th>Qtd(g)</th><th>€/Kg</th><th>Sub</th></tr>
-  </thead>
-  <tbody id="corpo-tabela"></tbody>
-  </table>
-  <button type="button" id="add-ingrediente" class="btn-small">+ Item</button>
-  </div>
-
-  <div id="form-haccp" class="form-section">
-  <h4>⚠️ Alérgenos</h4>
-  <div class="alergenos-grid">
-  ${ALERGENOS_LIST.map(a => `<label><input type="checkbox" name="alergenos" value="${a}"> ${a}</label>`).join('')}
-  </div>
-  <textarea id="rec-preparacao" placeholder="Modo de preparação..." style="margin-top:10px; height:80px; width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;"></textarea>
-  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-  <input type="number" id="rec-temp-coz" placeholder="Cozedura °C">
-  <input type="number" id="rec-validade" placeholder="Validade (Dias)">
-  </div>
-  </div>
-
-  <div class="resumo-fixo card" style="background:#333; color:white; margin-top:15px; padding:15px;">
-  <div style="display:flex; justify-content:space-between;">
-  <span>Custo Un: <strong id="custo-unitario" style="color:var(--primary)">0.00€</strong></span>
-  <span>Venda: <strong id="preco-venda" style="color:#4caf50">0.00€</strong></span>
-  </div>
-  </div>
-
-  <button type="submit" class="btn-action" style="margin-top:15px;">Guardar Ficha</button>
-  </form>
-  </div>
-  </div>
-  `;
+  <div id="modal-receita" class="modal"><div class="modal-content card">
+    <div style="display:flex;justify-content:space-between"><h3 id="modal-titulo">Nova Ficha</h3><span class="close-modal" style="font-size:28px;cursor:pointer">&times;</span></div>
+    <form id="form-receita">
+      <div style="display:flex;gap:5px;margin:10px 0">
+        <button type="button" class="tab-btn active" data-tab="geral" style="flex:1;padding:8px;border:none;background:var(--primary);color:white;border-radius:6px">Geral</button>
+        <button type="button" class="tab-btn" data-tab="haccp" style="flex:1;padding:8px;border:1px solid #ddd;background:white;border-radius:6px">HACCP</button>
+      </div>
+      <div id="form-geral" class="form-section">
+        <input id="rec-nome" placeholder="Nome da Receita" required>
+        <select id="rec-categoria" required style="margin-top:6px"><option value="">Categoria</option>${CATEGORIAS.map(c=>`<option>${c}</option>`).join('')}</select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <div><label style="font-size:.8rem">Rendimento</label><input type="number" id="rec-rendimento" value="1" step="0.01"></div>
+          <div><label style="font-size:.8rem">Margem %</label><input type="number" id="rec-margem" value="200" step="10"></div>
+        </div>
+        <h4 style="margin-top:12px">Ingredientes</h4>
+        <table style="width:100%;font-size:.85rem"><thead><tr style="background:#f5f5f5"><th>Item</th><th>Qtd(g)</th><th>€/Kg</th><th>Sub</th><th></th></tr></thead><tbody id="corpo-tabela"></tbody></table>
+        <button type="button" id="add-ingrediente" class="btn-small" style="margin-top:6px;padding:6px 10px;background:#4caf50;color:white;border:none;border-radius:6px">+ Item</button>
+      </div>
+      <div id="form-haccp" class="form-section" style="display:none">
+        <h4>⚠️ Alérgenos</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">${ALERGENOS_LIST.map(a=>`<label><input type="checkbox" name="alergenos" value="${a}"> ${a}</label>`).join('')}</div>
+        <textarea id="rec-preparacao" placeholder="Modo de preparação..." style="margin-top:10px;height:90px"></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <input type="number" id="rec-temp-coz" placeholder="Temp °C *">
+          <input type="number" id="rec-validade" placeholder="Validade dias *">
+        </div>
+      </div>
+      <div class="card" style="background:#333;color:white;margin-top:12px"><div style="display:flex;justify-content:space-between"><span>Custo: <strong id="custo-unitario" style="color:var(--primary)">0.00€</strong></span><span>Venda: <strong id="preco-venda" style="color:#4caf50">0.00€</strong></span></div></div>
+      <button type="submit" class="btn-action" style="margin-top:12px">Guardar</button>
+    </form>
+  </div></div>`;
 
   setupLogic(receitas);
   renderLista(receitas);
+  bc.onmessage = e => { if (e.data === 'upd') renderReceitas(); };
 };
 
-function setupLogic(receitas) {
+function setupLogic(receitasTodas){
+  let receitas = receitasTodas;
   const modal = document.getElementById('modal-receita');
   const form = document.getElementById('form-receita');
-
-  document.querySelector('.close-modal').onclick = () => modal.style.display = 'none';
-
+  document.querySelector('.close-modal').onclick = () => modal.style.display='none';
+  modal.onclick = e => { if(e.target===modal) modal.style.display='none'; };
   document.getElementById('btn-abrir-modal').onclick = () => {
-    delete form.dataset.editId;
-    form.reset();
-    document.getElementById('modal-titulo').innerText = "Nova Ficha Técnica";
-    document.getElementById('corpo-tabela').innerHTML = '';
-    document.querySelector('button[type="submit"]').innerText = "Guardar Ficha";
-    document.querySelectorAll('.tab-btn, .form-section').forEach(el => el.classList.remove('active'));
-    document.querySelector('[data-tab="geral"]').classList.add('active');
-    document.getElementById('form-geral').classList.add('active');
-    adicionarLinha();
-    modal.style.display = 'block';
+    delete form.dataset.editId; form.reset();
+    document.getElementById('corpo-tabela').innerHTML='';
+    document.getElementById('modal-titulo').innerText='Nova Ficha';
+    switchTab('geral'); adicionarLinha(); modal.style.display='block';
   };
-
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll('.tab-btn, .form-section').forEach(el => el.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(`form-${btn.dataset.tab}`).classList.add('active');
-    };
-  });
-
+  document.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+  function switchTab(t){ document.querySelectorAll('.tab-btn').forEach(el=>{el.style.background=el.dataset.tab===t?'var(--primary)':'white';el.style.color=el.dataset.tab===t?'white':'#333';}); document.querySelectorAll('.form-section').forEach(s=>s.style.display='none'); document.getElementById('form-'+t).style.display='block';}
   document.getElementById('add-ingrediente').onclick = adicionarLinha;
   document.getElementById('corpo-tabela').addEventListener('input', calcular);
-  document.getElementById('rec-rendimento').addEventListener('input', calcular);
-
-  form.onsubmit = async (e) => {
+  ['rec-rendimento','rec-margem'].forEach(id=>document.getElementById(id).addEventListener('input', calcular));
+  form.onsubmit = async e => {
     e.preventDefault();
-    try {
-      const dados = capturarDados();
-      if (form.dataset.editId) dados.id = form.dataset.editId;
-      await addData('receitas', dados);
-      modal.style.display = 'none';
-      renderReceitas();
-    } catch (err) {
-      console.error(err);
-    }
+    if(!document.querySelectorAll('#corpo-tabela tr').length){alert('Adiciona ingredientes');return;}
+    if(!document.getElementById('rec-temp-coz').value || !document.getElementById('rec-validade').value){alert('Preenche Temp e Validade HACCP');switchTab('haccp');return;}
+    const dados = capturarDados(); if(form.dataset.editId) dados.id = form.dataset.editId;
+    await addData('receitas', dados); modal.style.display='none'; bc.postMessage('upd'); renderReceitas();
   };
-
-  document.getElementById('search-receita').oninput = (e) => {
-    const termo = e.target.value.toLowerCase();
-    const filtradas = receitas.filter(r => r.nome.toLowerCase().includes(termo));
-    renderLista(filtradas);
+  const filtrar = () => {
+    const termo = document.getElementById('search-receita').value.toLowerCase();
+    const cat = document.getElementById('filter-categoria').value;
+    renderLista(receitas.filter(r=> r.nome.toLowerCase().includes(termo) && (!cat || r.categoria===cat)));
   };
+  document.getElementById('search-receita').oninput = filtrar;
+  document.getElementById('filter-categoria').onchange = filtrar;
 }
 
-function adicionarLinha() {
-  const tbody = document.getElementById('corpo-tabela');
+function adicionarLinha(){
   const tr = document.createElement('tr');
-  tr.innerHTML = `
-  <td><input type="text" class="ing-nome" required></td>
-  <td><input type="number" class="ing-qtd" value="0" required></td>
-  <td><input type="number" class="ing-preco" value="0" step="0.01" required></td>
+  tr.innerHTML = `<td><input class="ing-nome" required style="padding:4px;border:1px solid #ddd"></td>
+  <td><input type="number" class="ing-qtd" value="0" style="width:70px;padding:4px;border:1px solid #ddd"></td>
+  <td><input type="number" class="ing-preco" value="0" step="0.01" style="width:70px;padding:4px;border:1px solid #ddd"></td>
   <td class="ing-sub">0.00€</td>
-  `;
-  tbody.appendChild(tr);
+  <td><button type="button" class="btn-remove" style="background:#ff4444;color:white;border:none;border-radius:4px;padding:2px 6px">×</button></td>`;
+  tr.querySelector('.btn-remove').onclick = ()=>{tr.remove();calcular();};
+  document.getElementById('corpo-tabela').appendChild(tr);
 }
-
-function calcular() {
-  let totalMP = 0;
-  document.querySelectorAll('#corpo-tabela tr').forEach(row => {
-    const q = parseFloat(row.querySelector('.ing-qtd').value) || 0;
-    const p = parseFloat(row.querySelector('.ing-preco').value) || 0;
-    const sub = (q / 1000) * p;
-    totalMP += sub;
-    row.querySelector('.ing-sub').innerText = sub.toFixed(2) + '€';
+function calcular(){
+  let total=0;
+  document.querySelectorAll('#corpo-tabela tr').forEach(r=>{
+    const q=parseFloat(r.querySelector('.ing-qtd').value)||0;
+    const p=parseFloat(r.querySelector('.ing-preco').value)||0;
+    const sub=(q/1000)*p; total+=sub; r.querySelector('.ing-sub').innerText=sub.toFixed(2)+'€';
   });
-  const rend = parseFloat(document.getElementById('rec-rendimento').value) || 1;
-  const custoUn = totalMP / rend;
-  document.getElementById('custo-unitario').innerText = custoUn.toFixed(2) + '€';
-  document.getElementById('preco-venda').innerText = (custoUn * 3).toFixed(2) + '€';
+  const rend=parseFloat(document.getElementById('rec-rendimento').value)||1;
+  const marg=parseFloat(document.getElementById('rec-margem').value)||200;
+  const custo=total/rend; const venda=custo*(1+marg/100);
+  document.getElementById('custo-unitario').innerText=custo.toFixed(2)+'€';
+  document.getElementById('preco-venda').innerText=venda.toFixed(2)+'€';
 }
-
-function capturarDados() {
-  const ingredientes = [];
-  document.querySelectorAll('#corpo-tabela tr').forEach(row => {
-    ingredientes.push({
-      nome: row.querySelector('.ing-nome').value,
-      qtd: parseFloat(row.querySelector('.ing-qtd').value),
-      preco: parseFloat(row.querySelector('.ing-preco').value)
-    });
-  });
-  const custoTotal = ingredientes.reduce((acc, i) => acc + (i.qtd/1000)*i.preco, 0);
-  const rend = parseFloat(document.getElementById('rec-rendimento').value) || 1;
-  return {
-    id: Date.now().toString(),
-    nome: document.getElementById('rec-nome').value,
-    categoria: document.getElementById('rec-categoria').value,
-    rendimento: rend,
-    ingredientes,
-    alergenos: Array.from(document.querySelectorAll('input[name="alergenos"]:checked')).map(cb => cb.value),
-    preparacao: document.getElementById('rec-preparacao').value,
-    tempCoz: document.getElementById('rec-temp-coz').value,
-    validade: document.getElementById('rec-validade').value,
-    custoTotal,
-    venda: (custoTotal / rend) * 3
-  };
+function capturarDados(){
+  const ings=[]; document.querySelectorAll('#corpo-tabela tr').forEach(r=>{ const n=r.querySelector('.ing-nome').value; if(n) ings.push({nome:n,qtd:parseFloat(r.querySelector('.ing-qtd').value)||0,preco:parseFloat(r.querySelector('.ing-preco').value)||0});});
+  const custo=ings.reduce((a,i)=>a+(i.qtd/1000)*i.preco,0);
+  const rend=parseFloat(document.getElementById('rec-rendimento').value)||1;
+  const marg=parseFloat(document.getElementById('rec-margem').value)||200;
+  return { id:Date.now().toString(), nome:document.getElementById('rec-nome').value, categoria:document.getElementById('rec-categoria').value, rendimento:rend, margem:marg, ingredientes:ings, alergenos:Array.from(document.querySelectorAll('input[name="alergenos"]:checked')).map(c=>c.value), preparacao:document.getElementById('rec-preparacao').value, tempCoz:document.getElementById('rec-temp-coz').value, validade:document.getElementById('rec-validade').value, custoTotal:custo, venda:(custo/rend)*(1+marg/100) };
 }
+function renderLista(receitas){
+  const lista=document.getElementById('lista-receitas');
+  lista.innerHTML = receitas.length ? receitas.map(r=>`
+    <div class="card">
+      <div style="background:var(--secondary);display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem">${r.categoria}</div>
+      <h4 style="margin:6px 0">${r.nome}</h4>
+      <div style="display:flex;justify-content:space-between;font-size:.9rem"><span>Custo ${r.custoTotal.toFixed(2)}€</span><span style="color:#4caf50;font-weight:bold">Venda ${r.venda.toFixed(2)}€</span></div>
+      ${r.alergenos?.length?`<div style="color:#e57373;font-size:.75rem;margin-top:4px">⚠️ ${r.alergenos.join(', ')}</div>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px">
+        <button class="btn-small btn-edit" data-id="${r.id}" style="padding:6px;background:var(--primary);color:white;border:none;border-radius:6px">📝 Editar</button>
+        <button class="btn-small btn-dup" data-id="${r.id}" style="padding:6px;background:#2196F3;color:white;border:none;border-radius:6px">📋 Duplicar</button>
+        <button class="btn-small btn-ft" data-id="${r.id}" style="padding:6px;background:#5D4037;color:white;border:none;border-radius:6px">📄 FT</button>
+        <button class="btn-small btn-prod" data-id="${r.id}" style="padding:6px;background:#6c757d;color:white;border:none;border-radius:6px">👨‍🍳 Fabrico</button>
+      </div>
+      <button class="btn-small btn-del" data-id="${r.id}" style="width:100%;margin-top:4px;padding:4px;background:#ff4444;color:white;border:none;border-radius:6px">🗑️</button>
+    </div>`).join('') : '<p class="card" style="text-align:center">Nenhuma receita. Cria a primeira!</p>';
 
-function renderLista(receitas) {
-  const lista = document.getElementById('lista-receitas');
-  lista.innerHTML = receitas.map(r => `
-    <div class="card haccp-card">
-    <div class="card-tag">${r.categoria}</div>
-    <h4>${r.nome}</h4>
-    <p>Venda: <strong>${r.venda.toFixed(2)}€</strong></p>
-    <div style="margin-top:10px; display:flex; gap:4px; flex-wrap: wrap;">
-    <button class="btn-small btn-edit" data-id="${r.id}" style="flex:1; background:var(--primary); color:white;">📝 Editar</button>
-    <button class="btn-small btn-ft" data-id="${r.id}" style="flex:1; background:#5D4037; color:white;">📄 FT</button>
-    <button class="btn-small btn-produce" data-id="${r.id}" style="flex:1; background:#6c757d; color:white;">👨‍🍳 Fabrico</button>
-    <button class="btn-small btn-delete" data-id="${r.id}" style="width:35px; background:#ff4444; color:white;">🗑️</button>
-    </div>
-    </div>
-    `).join('');
-
-  document.querySelectorAll('.btn-edit').forEach(btn => btn.onclick = () => abrirEdicao(btn.dataset.id, receitas));
-  document.querySelectorAll('.btn-ft').forEach(btn => btn.onclick = () => gerarFichaTecnica(btn.dataset.id, receitas));
-  document.querySelectorAll('.btn-produce').forEach(btn => btn.onclick = () => abrirProducao(btn.dataset.id, receitas));
-  document.querySelectorAll('.btn-delete').forEach(btn => btn.onclick = () => eliminarReceita(btn.dataset.id));
+  document.querySelectorAll('.btn-edit').forEach(b=>b.onclick=()=>abrirEdicao(b.dataset.id, receitas));
+  document.querySelectorAll('.btn-dup').forEach(b=>b.onclick=async()=>{ const r=receitas.find(x=>x.id===b.dataset.id); await addData('receitas',{...r,id:Date.now().toString(),nome:r.nome+' (Cópia)'}); bc.postMessage('upd'); renderReceitas(); });
+  document.querySelectorAll('.btn-del').forEach(b=>b.onclick=async()=>{ if(confirm('Eliminar?')){ await deleteData('receitas',b.dataset.id); bc.postMessage('upd'); renderReceitas(); }});
+  document.querySelectorAll('.btn-ft').forEach(b=>b.onclick=()=>gerarFT(b.dataset.id,receitas));
+  document.querySelectorAll('.btn-prod').forEach(b=>b.onclick=()=>gerarProd(b.dataset.id,receitas));
 }
-
-function abrirEdicao(id, receitas) {
-  const receita = receitas.find(r => r.id === id);
-  if (!receita) return;
-  const modal = document.getElementById('modal-receita');
-  const form = document.getElementById('form-receita');
-  form.reset();
-  document.getElementById('modal-titulo').innerText = "Editar Ficha";
-  document.getElementById('corpo-tabela').innerHTML = '';
-  form.dataset.editId = receita.id;
-  document.getElementById('rec-nome').value = receita.nome;
-  document.getElementById('rec-categoria').value = receita.categoria;
-  document.getElementById('rec-rendimento').value = receita.rendimento;
-  document.getElementById('rec-preparacao').value = receita.preparacao || '';
-  document.getElementById('rec-temp-coz').value = receita.tempCoz || '';
-  document.getElementById('rec-validade').value = receita.validade || '';
-  receita.ingredientes.forEach(ing => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-    <td><input type="text" class="ing-nome" value="${ing.nome}" required></td>
-    <td><input type="number" class="ing-qtd" value="${ing.qtd}" required></td>
-    <td><input type="number" class="ing-preco" value="${ing.preco}" step="0.01" required></td>
-    <td class="ing-sub">0.00€</td>
-    `;
-    document.getElementById('corpo-tabela').appendChild(tr);
-  });
-  document.querySelectorAll('input[name="alergenos"]').forEach(cb => cb.checked = receita.alergenos.includes(cb.value));
-  calcular();
-  modal.style.display = 'block';
+function abrirEdicao(id,receitas){
+  const r=receitas.find(x=>x.id===id); const form=document.getElementById('form-receita'); form.dataset.editId=id;
+  document.getElementById('modal-titulo').innerText='Editar'; document.getElementById('corpo-tabela').innerHTML='';
+  ['rec-nome','rec-categoria','rec-rendimento','rec-margem','rec-preparacao','rec-temp-coz','rec-validade'].forEach(id=>document.getElementById(id).value=r[id.replace('rec-','').replace('-','')]||r[id.replace('rec-','')]||'');
+  document.getElementById('rec-nome').value=r.nome; document.getElementById('rec-categoria').value=r.categoria; document.getElementById('rec-rendimento').value=r.rendimento; document.getElementById('rec-margem').value=r.margem; document.getElementById('rec-preparacao').value=r.preparacao; document.getElementById('rec-temp-coz').value=r.tempCoz; document.getElementById('rec-validade').value=r.validade;
+  r.ingredientes.forEach(i=>{adicionarLinha(); const tr=document.querySelector('#corpo-tabela tr:last-child'); tr.querySelector('.ing-nome').value=i.nome; tr.querySelector('.ing-qtd').value=i.qtd; tr.querySelector('.ing-preco').value=i.preco;});
+  document.querySelectorAll('input[name="alergenos"]').forEach(cb=>cb.checked=r.alergenos.includes(cb.value)); calcular(); document.getElementById('modal-receita').style.display='block';
 }
-
-async function eliminarReceita(id) {
-  if (confirm('Eliminar permanentemente?')) {
-    const db = await initDB();
-    const tx = db.transaction('receitas', 'readwrite');
-    await tx.objectStore('receitas').delete(id);
-    renderReceitas();
-  }
-}
-
-// --- GERAÇÃO DE DOCUMENTO: FICHA TÉCNICA COMERCIAL ---
-function gerarFichaTecnica(id, receitas) {
-  const r = receitas.find(rec => rec.id === id);
-  if (!r) return;
-
-  const pesoTotal = r.ingredientes.reduce((acc, i) => acc + i.qtd, 0);
-  const dataHoje = new Date().toLocaleDateString('pt-PT');
-  const win = window.open('', '_blank');
-
-  win.document.write(`
-    <html>
-    <head>
-    <title>FT - ${r.nome}</title>
-    <style>
-    @page { size: A4; margin: 12mm; }
-    body { font-family:'Arial',sans-serif; color:#1a1a1a; font-size:10.5pt; line-height:1.4; padding:20px; }
-    .header { border-bottom:4px solid #5D4037; padding-bottom:10px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; }
-    .logo { font-size:26px; font-weight:900; color:#FF6B9D; letter-spacing:-0.5px; }
-    .doc-meta { text-align:right; font-size:9pt; color:#666; }
-    .doc-meta h1 { font-size:16pt; color:#5D4037; margin:0; }
-    .box { border:2px solid #5D4037; border-radius:6px; padding:10px; margin-bottom:12px; position:relative; background:white; }
-    .box-title { background:#5D4037; color:#fff; margin:-10px -10px 8px -10px; padding:6px 10px; font-weight:700; font-size:9pt; text-transform:uppercase; }
-    table { width:100%; border-collapse:collapse; font-size:9.5pt; }
-    th { background:#FFF5F8; border:1px solid #5D4037; padding:5px; text-align:left; }
-    td { border:1px solid #ccc; padding:5px; }
-    .alergenios { background:#FFEBEE; border:2px solid #E57373; padding:8px; margin:8px 0; font-weight:700; text-align:center; color:#b71c1c; }
-    .watermark { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-45deg); font-size:120px; color:rgba(255,107,157,0.05); font-weight:900; z-index:-1; }
-    @media print { .no-print { display:none; } }
-    </style>
-    </head>
-    <body>
-    <div class="watermark">BABE'S</div>
-    <div class="no-print" style="text-align:center; margin-bottom:20px;"><button onclick="window.print()">🖨️ Imprimir Ficha Técnica</button></div>
-    <div class="header">
-    <div class="logo">🧁 BABE'S BAKERY</div>
-    <div class="doc-meta"><h1>FICHA TÉCNICA</h1><div>Ref: FT-${r.id.slice(-6)}</div><div>${dataHoje}</div></div>
-    </div>
-    <div class="box">
-    <div class="box-title">1. Identificação do Produto</div>
-    <table>
-    <tr><th>Denominação</th><td colspan="3"><b>${r.nome}</b></td></tr>
-    <tr><th>Categoria</th><td>${r.categoria}</td><th>Código</th><td>BB-${r.id.slice(-4)}</td></tr>
-    <tr><th>Rendimento</th><td>${r.rendimento} un/kg</td><th>Peso Un.</th><td>${(pesoTotal/r.rendimento).toFixed(0)}g</td></tr>
-    <tr><th>Batch Total</th><td>${pesoTotal}g</td><th>Validade</th><td>${r.validade} dias</td></tr>
-    </table>
-    </div>
-    <div class="box">
-    <div class="box-title">2. Lista de Ingredientes</div>
-    <div style="font-size:9pt;">${r.ingredientes.sort((a, b)=>b.qtd-a.qtd).map(i => `${i.nome} (${((i.qtd/pesoTotal)*100).toFixed(1)}%)`).join(', ')}</div>
-    </div>
-    ${r.alergenos.length ? `<div class="alergenios">⚠️ ALERGÉNIOS: ${r.alergenos.join(', ').toUpperCase()}</div>`: ''}
-    <div class="box">
-    <div class="box-title">3. Processo de Fabrico</div>
-    <div style="white-space:pre-wrap; font-size:9pt;">${r.preparacao || 'Padrão.'}</div>
-    </div>
-    <div style="display:flex; justify-content:space-between; margin-top:50px; text-align:center; font-size:8pt;">
-    <div style="border-top:1px solid #000; width:30%;">Elaborado</div>
-    <div style="border-top:1px solid #000; width:30%;">Aprovado</div>
-    <div style="border-top:1px solid #000; width:30%;">Data</div>
-    </div>
-    </body>
-    </html>
-    `);
-  win.document.close();
-}
-
-// --- GERAÇÃO DE DOCUMENTO: ORDEM DE PRODUÇÃO (FABRICO) ---
-function abrirProducao(id, receitas) {
-  const r = receitas.find(rec => rec.id === id);
-  if (!r) return;
-
-  const hoje = new Date();
-  const pesoTotal = r.ingredientes.reduce((acc, i) => acc + i.qtd, 0);
-  const win = window.open('', '_blank');
-
-  win.document.write(`
-    <html>
-    <head>
-    <title>Produção - ${r.nome}</title>
-    <style>
-    @page { size: A4; margin: 10mm; }
-    body { font-family:'Arial',sans-serif; color:#1a1a1a; font-size:10pt; padding:20px; }
-    .header { background:#5D4037; color:#white; padding:10px; display:flex; justify-content:space-between; color:white; }
-    .lote { background:#FF6B9D; color:white; padding:8px; text-align:center; font-weight:700; margin:10px 0; border-radius:4px; }
-    .box { border:2px solid #5D4037; border-radius:6px; padding:10px; margin-bottom:10px; }
-    .box-title { background:#5D4037; color:white; margin:-10px -10px 8px -10px; padding:6px 10px; font-weight:700; font-size:9pt; }
-    table { width:100%; border-collapse:collapse; }
-    th, td { border:1px solid #ccc; padding:6px; text-align:left; }
-    th { background:#FFF5F8; }
-    .check { width:30px; text-align:center; }
-    @media print { .no-print { display:none; } }
-    </style>
-    </head>
-    <body>
-    <div class="no-print" style="text-align:center;"><button onclick="window.print()">🖨️ Imprimir Ordem de Fabrico</button></div>
-    <div class="header">
-    <div><h1>FICHA DE PRODUÇÃO</h1><h2>${r.nome}</h2></div>
-    <div style="text-align:right">Data: ${hoje.toLocaleDateString('pt-PT')}<br>Operador: ___________</div>
-    </div>
-    <div class="lote">LOTE: BB-${hoje.toISOString().slice(2, 10).replace(/-/g, '')}-001 | VALIDADE: ${r.validade} dias</div>
-    <div class="box">
-    <div class="box-title">Ingredientes - Checklist de Pesagem</div>
-    <table>
-    <thead><tr><th>Ingrediente</th><th>Qtd Padrão</th><th>Qtd Real</th><th class="check">OK</th></tr></thead>
-    <tbody>
-    ${r.ingredientes.map(i => `<tr><td>${i.nome}</td><td>${i.qtd}g</td><td>________</td><td class="check">☐</td></tr>`).join('')}
-    </tbody>
-    </table>
-    </div>
-    <div class="box">
-    <div class="box-title">Modo de Preparação e Pontos Críticos</div>
-    <div style="white-space:pre-wrap; min-height:100px;">${r.preparacao}</div>
-    <div style="margin-top:10px; font-weight:bold;">🌡️ Temperatura Alvo: ${r.tempCoz}°C | Real: ____°C</div>
-    </div>
-    <div class="box">
-    <div class="box-title">Rastreabilidade (Lotes MP)</div>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-    ${r.ingredientes.slice(0, 4).map(i => `<div>Lote ${i.nome}: ___________</div>`).join('')}
-    </div>
-    </div>
-    </body>
-    </html>
-    `);
-  win.document.close();
-}
+function gerarFT(id,receitas){ const r=receitas.find(x=>x.id===id); const peso=r.ingredientes.reduce((a,i)=>a+i.qtd,0); const w=open('','_blank'); w.document.write(`<title>FT ${r.nome}</title><style>body{font-family:Arial;padding:20px}h1{color:#FF6B9D}</style><h1>FICHA TÉCNICA - ${r.nome}</h1><p><b>Categoria:</b> ${r.categoria} | <b>Validade:</b> ${r.validade} dias | <b>Temp:</b> ${r.tempCoz}°C</p><h3>Ingredientes</h3><ul>${r.ingredientes.map(i=>`<li>${i.nome} - ${i.qtd}g (${((i.qtd/peso)*100).toFixed(1)}%)</li>`).join('')}</ul><p><b>Alergénios:</b> ${r.alergenos.join(', ')}</p><p><b>Preparação:</b><br>${r.preparacao}</p><button onclick="print()">Imprimir</button>`); w.document.close(); }
+function gerarProd(id,receitas){ const r=receitas.find(x=>x.id===id); const w=open('','_blank'); w.document.write(`<title>Produção ${r.nome}</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:6px}</style><h1>ORDEM DE FABRICO - ${r.nome}</h1><p>Data: ${new Date().toLocaleDateString('pt-PT')}</p><table><tr><th>Ingrediente</th><th>Qtd</th><th>OK</th></tr>${r.ingredientes.map(i=>`<tr><td>${i.nome}</td><td>${i.qtd}g</td><td>☐</td></tr>`).join('')}</table><p>Temp alvo: ${r.tempCoz}°C</p><button onclick="print()">Imprimir</button>`); w.document.close(); }

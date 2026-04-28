@@ -1,66 +1,45 @@
-import { initDB, getAllData, addData } from '../db.js';
+import { getAllData, addData } from '../db.js';
 
 export const renderGestao = () => {
-    const container = document.getElementById('tab-gestao');
-    container.innerHTML = `
-        <h2>📊 Gestão & Definições</h2>
-        
-        <div class="card">
-            <h3>💾 Sistema de Backup</h3>
-            <p>Guarda os teus dados em segurança e restaura em qualquer dispositivo.</p>
-            <br>
-            <button id="btn-export" class="btn-action" style="background:#4caf50;">⬇️ Exportar Dados (Backup)</button>
-            <br><br>
-            <input type="file" id="file-import" accept=".json" style="display:none;">
-            <button id="btn-import" class="btn-action" style="background:#ff9800;">⬆️ Importar Dados</button>
-        </div>
-    `;
+  const c = document.getElementById('tab-gestao');
+  c.innerHTML = `
+    <h2>📊 Gestão</h2>
+    <div class="card">
+      <h3>💾 Backup</h3>
+      <p>Exporta e importa todos os dados.</p>
+      <button id="btn-export" class="btn-action" style="background:#4caf50;margin-top:10px">⬇️ Exportar</button>
+      <input type="file" id="file-import" accept=".json" style="display:none">
+      <button id="btn-import" class="btn-action" style="background:#ff9800;margin-top:8px">⬆️ Importar</button>
+    </div>
+    <div class="card">
+      <h3>ℹ️ Sobre</h3>
+      <p>Doce Gestão v2.1 - PWA Offline<br>Desenvolvido para Babe's Bakery</p>
+    </div>
+  `;
 
-    // ⬇️ Exportar Backup
-    document.getElementById('btn-export').addEventListener('click', async () => {
-        const receitas = await getAllData('receitas');
-        const agenda = await getAllData('agenda');
-        
-        const backupData = {
-            data: new Date().toISOString(),
-            receitas,
-            agenda
-        };
+  document.getElementById('btn-export').onclick = async () => {
+    const receitas = await getAllData('receitas');
+    const agenda = await getAllData('agenda');
+    const blob = new Blob([JSON.stringify({data:new Date().toISOString(), receitas, agenda}, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `backup-docegestao-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+  };
 
-        const blob = new Blob([JSON.stringify(backupData)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `backup_docegestao_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-    });
-
-    // ⬆️ Importar Backup
-    const fileInput = document.getElementById('file-import');
-    document.getElementById('btn-import').addEventListener('click', () => fileInput.click());
-
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            try {
-                const data = JSON.parse(event.target.result);
-                // Restaurar tabelas
-                if (data.receitas) {
-                    for (const rec of data.receitas) await addData('receitas', rec);
-                }
-                if (data.agenda) {
-                    for (const ag of data.agenda) await addData('agenda', ag);
-                }
-                alert('✅ Backup restaurado com sucesso!');
-            } catch (error) {
-                alert('❌ Erro ao ler o ficheiro de backup.');
-            }
-        };
-        reader.readAsText(file);
-    }
-                              );
+  const fi = document.getElementById('file-import');
+  document.getElementById('btn-import').onclick = () => fi.click();
+  fi.onchange = e => {
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = async ev => {
+      try {
+        const d = JSON.parse(ev.target.result);
+        if(d.receitas) for(const rec of d.receitas) await addData('receitas', rec);
+        if(d.agenda) for(const ag of d.agenda) await addData('agenda', ag);
+        alert('✅ Backup restaurado!');
+      } catch { alert('❌ Erro no ficheiro'); }
+    };
+    r.readAsText(f);
+  };
 };
