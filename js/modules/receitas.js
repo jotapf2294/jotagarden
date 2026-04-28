@@ -222,9 +222,10 @@ function renderLista(receitas) {
         <h4>${r.nome}</h4>
         <p>Venda Sugerida: <strong>${r.venda.toFixed(2)}€</strong></p>
         <div style="margin-top:10px; display:flex; gap:5px;">
-            <button class="btn-small btn-edit" data-id="${r.id}" style="flex:3; background:var(--primary); color:white; border:none; padding:8px; border-radius:5px; cursor:pointer;">📝 Ver / Editar</button>
-            <button class="btn-small btn-delete" data-id="${r.id}" style="flex:1; background:#ff4444; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer;">🗑️</button>
-        </div>
+    <button class="btn-small btn-edit" data-id="${r.id}" style="flex:2; background:var(--primary); color:white;">📝 Editar</button>
+    <button class="btn-small btn-produce" data-id="${r.id}" style="flex:2; background:#6c757d; color:white;">👨‍🍳 Produzir</button>
+    <button class="btn-small btn-delete" data-id="${r.id}" style="flex:1; background:#ff4444; color:white;">🗑️</button>
+</div>
     </div>
   `).join('');
 
@@ -233,6 +234,11 @@ function renderLista(receitas) {
     btn.onclick = () => abrirEdicao(btn.dataset.id, receitas);
   });
 
+  // Dentro da função renderLista, onde tens os outros eventos:
+document.querySelectorAll('.btn-produce').forEach(btn => {
+    btn.onclick = () => abrirProducao(btn.dataset.id, receitas);
+});
+  
   document.querySelectorAll('.btn-delete').forEach(btn => {
     btn.onclick = () => eliminarReceita(btn.dataset.id);
   });
@@ -287,4 +293,73 @@ async function eliminarReceita(id) {
         await store.delete(id);
         renderReceitas();
     }
+
+  // Adiciona esta lógica no final do ficheiro receitas.js
+function abrirProducao(id, receitas) {
+    const receita = receitas.find(r => r.id === id);
+    if (!receita) return;
+
+    // Criar um Modal Dinâmico para Produção
+    const modalProd = document.createElement('div');
+    modalProd.className = 'modal';
+    modalProd.style.display = 'block';
+    modalProd.innerHTML = `
+        <div class="modal-content card" style="border-top: 10px solid #6c757d;">
+            <span class="close-prod" style="float:right; cursor:pointer; font-size:24px;">&times;</span>
+            <h2 style="color:#333;">👨‍🍳 Ordem de Produção: ${receita.nome}</h2>
+            <hr>
+            
+            <div style="background:#f8f9fa; padding:15px; border-radius:10px; margin:15px 0;">
+                <label><strong>Quantidade Desejada (Multiplicador):</strong></label>
+                <input type="number" id="prod-factor" value="1" step="0.5" style="width:80px; margin-left:10px;">
+                <p><small>Ex: Se queres o dobro da receita, coloca 2. Se queres metade, 0.5.</small></p>
+            </div>
+
+            <table style="width:100%; border-collapse:collapse;" id="tabela-producao">
+                <thead>
+                    <tr style="border-bottom:2px solid #ddd;">
+                        <th style="text-align:left; padding:10px;">Ingrediente</th>
+                        <th style="text-align:right; padding:10px;">Peso Necessário</th>
+                    </tr>
+                </thead>
+                <tbody id="corpo-producao">
+                    ${renderLinhasProducao(receita.ingredientes, 1)}
+                </tbody>
+            </table>
+
+            <div style="margin-top:20px; padding:15px; background:#fff3cd; border-radius:10px;">
+                <h4>📝 Modo de Preparação:</h4>
+                <p style="white-space: pre-wrap;">${receita.preparacao || 'Sem instruções registadas.'}</p>
+            </div>
+
+            <div style="margin-top:15px; font-size:0.8rem; color:#666;">
+                ⚠️ <strong>Avisos HACCP:</strong> Alérgenos: ${receita.alergenos.join(', ') || 'Nenhum'}<br>
+                🌡️ Temp. Alvo: ${receita.tempCoz}°C | 📅 Validade: ${receita.validade} dias.
+            </div>
+
+            <button onclick="window.print()" class="btn-action" style="margin-top:20px; background:#333;">Print / PDF para a Cozinha</button>
+        </div>
+    `;
+
+    document.body.appendChild(modalProd);
+
+    // Fechar Modal
+    modalProd.querySelector('.close-prod').onclick = () => modalProd.remove();
+
+    // Evento para Re-calcular em tempo real
+    modalProd.querySelector('#prod-factor').oninput = (e) => {
+        const factor = parseFloat(e.target.value) || 0;
+        document.getElementById('corpo-producao').innerHTML = renderLinhasProducao(receita.ingredientes, factor);
+    };
 }
+
+function renderLinhasProducao(ingredientes, factor) {
+    return ingredientes.map(ing => `
+        <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:10px;">${ing.nome}</td>
+            <td style="text-align:right; padding:10px;"><strong>${(ing.qtd * factor).toFixed(0)}g / ml</strong></td>
+        </tr>
+    `).join('');
+}
+}
+
