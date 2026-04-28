@@ -1,9 +1,27 @@
 import { renderDashboard } from './modules/dashboard.js';
-import { renderReceitas } from './modules/receitas.js';
+import { renderReceitas } from './modules/receitas/index.js';
 import { renderAgenda } from './modules/agenda.js';
 import { renderGestao } from './modules/gestao.js';
 
-// SW com update flow
+const theme = {
+  init() {
+    const saved = localStorage.getItem('docegestao-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const current = saved || (prefersDark ? 'dark' : 'light');
+    this.set(current);
+    document.getElementById('theme-toggle').onclick = () => this.toggle();
+  },
+  set(mode) {
+    document.documentElement.setAttribute('data-theme', mode);
+    localStorage.setItem('docegestao-theme', mode);
+    document.getElementById('theme-icon').textContent = mode === 'dark' ? '☀️' : '🌙';
+  },
+  toggle() {
+    const current = document.documentElement.getAttribute('data-theme');
+    this.set(current === 'dark' ? 'light' : 'dark');
+  }
+};
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./service-worker.js').then(reg => {
@@ -45,20 +63,23 @@ window.addEventListener('offline', () => toast('📴 Modo offline'));
 window.toast = toast;
 
 document.addEventListener('DOMContentLoaded', () => {
-  const buttons = document.querySelectorAll('.nav-btn');
+  theme.init();
+  
+  const allButtons = document.querySelectorAll('.nav-btn, .nav-item');
   const tabs = document.querySelectorAll('.tab-content');
 
   const switchTab = (targetId) => {
     tabs.forEach(t => t.classList.remove('active'));
-    buttons.forEach(b => {
+    allButtons.forEach(b => {
       b.classList.remove('active');
       b.setAttribute('aria-selected', 'false');
     });
     
     document.getElementById(`tab-${targetId}`).classList.add('active');
-    const btn = document.querySelector(`[data-target="${targetId}"]`);
-    btn.classList.add('active');
-    btn.setAttribute('aria-selected', 'true');
+    document.querySelectorAll(`[data-target="${targetId}"]`).forEach(btn => {
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+    });
 
     if (targetId === 'dashboard') renderDashboard();
     if (targetId === 'receitas') renderReceitas();
@@ -66,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (targetId === 'gestao') renderGestao();
   };
 
-  buttons.forEach(btn => {
+  allButtons.forEach(btn => {
     btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.target));
   });
 
