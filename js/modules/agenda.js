@@ -260,13 +260,18 @@ export const renderAgenda = async () => {
 
 async function loadData() {
   try {
-    [agendaCache, receitasCache] = await Promise.all([
+    const [agenda, receitas] = await Promise.all([
       getAllData('agenda'),
       getAllData('receitas')
     ]);
+
+    // FIX: Garante que é sempre array, mesmo se DB retornar undefined
+    agendaCache = Array.isArray(agenda)? agenda : [];
+    receitasCache = Array.isArray(receitas)? receitas : [];
+
     console.log('✅ Agenda:', agendaCache.length, 'Receitas:', receitasCache.length);
   } catch (err) {
-    console.warn('⚠️ Erro loadData:', err);
+    console.warn('⚠️ Erro loadData, usando arrays vazios:', err);
     agendaCache = [];
     receitasCache = [];
   }
