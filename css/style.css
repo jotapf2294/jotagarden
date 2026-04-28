@@ -87,3 +87,36 @@ input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
 .input-group { margin: 15px 0; display: flex; align-items: center; justify-content: space-between; }
 .input-group input { width: 80px
                     ; }
+
+/* Barra de Pesquisa */
+.header-section {
+    background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 20px;
+    box-shadow: var(--shadow);
+}
+.search-bar { display: flex; gap: 10px; margin-top: 10px; }
+.search-bar input { flex: 2; border-radius: 20px; border: 1px solid #ddd; padding: 10px; }
+.search-bar select { flex: 1; border-radius: 20px; border: 1px solid #ddd; }
+
+/* Tabs dentro do Modal */
+.tabs-form { display: flex; margin-bottom: 15px; border-bottom: 2px solid var(--secondary); }
+.tab-btn { flex: 1; padding: 10px; border: none; background: none; cursor: pointer; opacity: 0.6; }
+.tab-btn.active { opacity: 1; border-bottom: 2px solid var(--primary); font-weight: bold; }
+
+.form-section { display: none; }
+.form-section.active { display: block; }
+
+/* HACCP Tags */
+.haccp-card { position: relative; padding-top: 30px; border-left: 5px solid #ffb6c1; }
+.card-tag { 
+    position: absolute; top: 8px; right: 8px; 
+    font-size: 0.6rem; background: var(--secondary); padding: 3px 8px; border-radius: 10px;
+}
+.alergenos-grid { 
+    display: grid; grid-template-columns: 1fr 1fr; gap: 5px; 
+    font-size: 0.8rem; background: #fff0f0; padding: 10px; border-radius: 8px;
+}
+.resumo-fixo {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #333 !important; color: white; margin-top: 15px; padding: 15px !important
+    ;
+}
