@@ -1,33 +1,62 @@
-:root{
-  --rosa:#FF6B9D;--rosa-claro:#FFF5F8;--choco:#5D4037;--creme:#FFF8E1;
-  --verde:#81C784;--vermelho:#E57373;--sombra:0 2px 8px rgba(0,0,0,0.1);
+:root {
+    --primary: #ffb6c1; /* Rosa Pastel */
+    --secondary: #e6e6fa; /* Lavanda */
+    --bg-color: #fdfbf7; /* Creme claro */
+    --text-color: #5c4033; /* Castanho chocolate escuro */
+    --card-bg: #ffffff;
+    --shadow: 0 4px 6px rgba(92, 64, 51, 0.1);
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:system-ui,sans-serif;background:var(--rosa-claro);color:var(--choco);margin:0;padding:0 0 80px 0;font-size:16px}
-header{background:var(--rosa);color:#fff;padding:12px 16px;position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--sombra)}
-h1{margin:0;font-size:20px}
-#status{font-size:12px;background:rgba(255,255,255,0.3);padding:4px 8px;border-radius:12px;display:flex;gap:8px;align-items:center}
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;box-shadow:0 -2px 8px rgba(0,0,0,0.1);z-index:100}
-.bottom-nav button{flex:1;border:none;background:none;padding:8px 4px;font-size:24px;color:#999;min-height:64px}
-.bottom-nav button span{display:block;font-size:11px;margin-top:2px}
-.bottom-nav button.active{color:var(--rosa)}
-.card{background:#fff;border-radius:16px;padding:16px;margin:12px;box-shadow:var(--sombra)}
-input,select,textarea{width:100%;border:2px solid #F8BBD0;border-radius:12px;padding:14px;font-size:16px;margin:8px 0;background:var(--creme);color:var(--choco);min-height:48px}
-input:focus{border-color:var(--rosa);outline:none}
-.btn{width:100%;min-height:52px;border:none;border-radius:16px;font-size:18px;font-weight:700;margin:8px 0;cursor:pointer}
-.btn-rosa{background:var(--rosa);color:#fff}
-.btn-choco{background:var(--choco);color:#fff}
-.btn-small{min-height:44px;font-size:14px;width:auto;padding:0 16px;margin:4px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.badge{background:var(--vermelho);color:#fff;padding:2px 8px;border-radius:12px;font-size:12px}
-.badge-verde{background:var(--verde)}
-.tab{display:none;padding-bottom:20px}.tab.active{display:block}
-.timer-card{background:var(--choco);color:#fff;text-align:center;padding:20px;border-radius:16px;margin:8px 0;position:relative}
-.timer-time{font-size:36px;font-weight:700;color:var(--rosa)}
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--choco);color:#fff;padding:12px 24px;border-radius:24px;z-index:999}
-.camera-preview{width:100%;border-radius:12px;margin:8px 0;display:none}
-.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-.dot-green{background:#4CAF50;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-@media print{body *{visibility:hidden}.print-area,.print-area *{visibility:visible}.print-area{position:absolute;left:0;top:0}}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+body { background-color: var(--bg-color); color: var(--text-color); padding-bottom: 70px; }
+
+header {
+    background-color: var(--primary);
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: var(--shadow);
+    position: sticky; top: 0; z-index: 100;
+}
+
+main { padding: 1rem; }
+
+/* Sistema de Abas */
+.tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+.tab-content.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Cartões de Receita/Dashboard */
+.card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+    border-left: 5px solid var(--primary);
+}
+
+/* Navegação Inferior (Mobile First) */
+.bottom-nav {
+    position: fixed; bottom: 0; width: 100%;
+    background: white;
+    display: flex; justify-content: space-around;
+    padding: 0.5rem 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.nav-btn {
+    background: none; border: none; font-size: 0.9rem;
+    color: #999; cursor: pointer; transition: 0.3s;
+}
+
+.nav-btn.active { color: var(--primary); font-weight: bold; transform: scale(1.1); }
+
+/* Botões Globais */
+.btn-action {
+    background: var(--primary); color: white;
+    border: none; padding: 0.8rem 1.5rem; border-radius: 20px;
+    cursor: pointer; font-weight: bold; wid
+      th: 100%;
+}
