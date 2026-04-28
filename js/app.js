@@ -85,6 +85,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (targetId === 'receitas') renderReceitas();
     if (targetId === 'agenda') renderAgenda();
     if (targetId === 'gestao') renderGestao();
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   allButtons.forEach(btn => {
