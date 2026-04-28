@@ -1,122 +1,30 @@
-:root {
-    --primary: #ffb6c1; /* Rosa Pastel */
-    --secondary: #e6e6fa; /* Lavanda */
-    --bg-color: #fdfbf7; /* Creme claro */
-    --text-color: #5c4033; /* Castanho chocolate escuro */
-    --card-bg: #ffffff;
-    --shadow: 0 4px 6px rgba(92, 64, 51, 0.1);
+:root{
+  --primary:#FF6B9D;
+  --secondary:#FFF5F8;
+  --dark:#5D4037;
+  --bg:#fafafa;
+  --card:#ffffff;
 }
-
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-
-body { background-color: var(--bg-color); color: var(--text-color); padding-bottom: 70px; }
-
-header {
-    background-color: var(--primary);
-    color: white;
-    padding: 1rem;
-    text-align: center;
-    box-shadow: var(--shadow);
-    position: sticky; top: 0; z-index: 100;
-}
-
-main { padding: 1rem; }
-
-/* Sistema de Abas */
-.tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
-.tab-content.active { display: block; }
-
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Cartões de Receita/Dashboard */
-.card {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    box-shadow: var(--shadow);
-    border-left: 5px solid var(--primary);
-}
-
-/* Navegação Inferior (Mobile First) */
-.bottom-nav {
-    position: fixed; bottom: 0; width: 100%;
-    background: white;
-    display: flex; justify-content: space-around;
-    padding: 0.5rem 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-}
-
-.nav-btn {
-    background: none; border: none; font-size: 0.9rem;
-    color: #999; cursor: pointer; transition: 0.3s;
-}
-
-.nav-btn.active { color: var(--primary); font-weight: bold; transform: scale(1.1); }
-
-/* Botões Globais */
-.btn-action {
-    background: var(--primary); color: white;
-    border: none; padding: 0.8rem 1.5rem; border-radius: 20px;
-    cursor: pointer; font-weight: bold; wid
-      th: 100%;
-}
-
-/* Modal Estilo Profissional */
-.modal {
-    position: fixed; z-index: 1000; left: 0; top: 0;
-    width: 100%; height: 100%; background: rgba(0,0,0,0.5);
-    overflow-y: auto;
-}
-.modal-content {
-    background: white; margin: 5% auto; padding: 20px;
-    width: 90%; max-width: 600px; border-radius: 15px;
-}
-.close-modal { float: right; font-size: 28px; cursor: pointer; }
-
-/* Tabela de Ingredientes */
-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-th { text-align: left; background: var(--secondary); padding: 8px; font-size: 0.8rem; }
-td { padding: 5px 0; }
-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
-
-.btn-small {
-    background: var(--secondary); border: none; padding: 5px 10px;
-    border-radius: 5px; cursor: pointer; font-size: 0.7rem; margin-top: 5px;
-}
-
-.input-group { margin: 15px 0; display: flex; align-items: center; justify-content: space-between; }
-.input-group input { width: 80px
-                    ; }
-
-/* Barra de Pesquisa */
-.header-section {
-    background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 20px;
-    box-shadow: var(--shadow);
-}
-.search-bar { display: flex; gap: 10px; margin-top: 10px; }
-.search-bar input { flex: 2; border-radius: 20px; border: 1px solid #ddd; padding: 10px; }
-.search-bar select { flex: 1; border-radius: 20px; border: 1px solid #ddd; }
-
-/* Tabs dentro do Modal */
-.tabs-form { display: flex; margin-bottom: 15px; border-bottom: 2px solid var(--secondary); }
-.tab-btn { flex: 1; padding: 10px; border: none; background: none; cursor: pointer; opacity: 0.6; }
-.tab-btn.active { opacity: 1; border-bottom: 2px solid var(--primary); font-weight: bold; }
-
-.form-section { display: none; }
-.form-section.active { display: block; }
-
-/* HACCP Tags */
-.haccp-card { position: relative; padding-top: 30px; border-left: 5px solid #ffb6c1; }
-.card-tag { 
-    position: absolute; top: 8px; right: 8px; 
-    font-size: 0.6rem; background: var(--secondary); padding: 3px 8px; border-radius: 10px;
-}
-.alergenos-grid { 
-    display: grid; grid-template-columns: 1fr 1fr; gap: 5px; 
-    font-size: 0.8rem; background: #fff0f0; padding: 10px; border-radius: 8px;
-}
-.resumo-fixo {
-    display: flex; justify-content: space-between; align-items: center;
-    background: #333 !important; color: white; margin-top: 15px; padding: 15px !important
-    ;
-}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:#222;padding-bottom:80px}
+.app-header{position:sticky;top:0;background:var(--primary);color:white;padding:14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.1);z-index:10}
+.app-header h1{font-size:1.2rem;font-weight:700}
+main{padding:12px;max-width:720px;margin:0 auto}
+.tab-content{display:none;animation:fade .2s}
+.tab-content.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.card{background:var(--card);border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:4px solid var(--primary)}
+.btn-action{width:100%;padding:12px;border:none;border-radius:10px;background:var(--primary);color:white;font-weight:600;font-size:1rem;cursor:pointer}
+.btn-small{cursor:pointer}
+input,select,textarea,button{font-family:inherit}
+input,select,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,1fr);background:white;border-top:1px solid #eee;height:68px;z-index:20}
+.nav-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#888;font-size:.75rem;cursor:pointer}
+.nav-btn.active{color:var(--primary)}
+.nav-btn .ico{font-size:1.3rem}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:10px 18px;border-radius:20px;opacity:0;transition:.3s;pointer-events:none;z-index:9999}
+#toast.show{opacity:1}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;overflow-y:auto;z-index:1000}
+.modal-content{margin:20px auto;max-width:600px}
+.grid-receitas{display:grid;gap:10px}
+@media(min-width:600px){.grid-receitas{grid-template-columns:1fr 1fr}}
