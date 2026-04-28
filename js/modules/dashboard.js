@@ -83,19 +83,52 @@ export const renderDashboard = async () => {
     </div>
   `;
 
-  await loadStats();
-  await loadChart();
-  await loadTopReceitas();
-  await loadProximasEntregas();
-  await loadAlertas();
+  // FIX: Try/catch em cada função pra não rebentar tudo
+  try {
+    await loadStats();
+  } catch (e) {
+    console.error('Erro loadStats:', e);
+  }
+
+  try {
+    await loadChart();
+  } catch (e) {
+    console.error('Erro loadChart:', e);
+  }
+
+  try {
+    await loadTopReceitas();
+  } catch (e) {
+    console.error('Erro loadTopReceitas:', e);
+  }
+
+  try {
+    await loadProximasEntregas();
+  } catch (e) {
+    console.error('Erro loadProximasEntregas:', e);
+  }
+
+  try {
+    await loadAlertas();
+  } catch (e) {
+    console.error('Erro loadAlertas:', e);
+  }
+
   startTimersListener();
 };
 
 async function loadStats() {
-  const [agenda, receitas] = await Promise.all([
-    getAllData('agenda'),
-    getAllData('receitas')
-  ]);
+  let agenda = [];
+  let receitas = [];
+
+  try {
+    [agenda, receitas] = await Promise.all([
+      getAllData('agenda'),
+      getAllData('receitas')
+    ]);
+  } catch (e) {
+    console.warn('DB ainda vazio:', e);
+  }
 
   const hoje = new Date().toISOString().split('T')[0];
   const hojeAgenda = agenda.filter(e => e.data === hoje);
@@ -115,10 +148,17 @@ async function loadStats() {
 }
 
 async function loadChart() {
-  const [agenda, receitas] = await Promise.all([
-    getAllData('agenda'),
-    getAllData('receitas')
-  ]);
+  let agenda = [];
+  let receitas = [];
+
+  try {
+    [agenda, receitas] = await Promise.all([
+      getAllData('agenda'),
+      getAllData('receitas')
+    ]);
+  } catch (e) {
+    console.warn('DB ainda vazio:', e);
+  }
 
   const dias = [];
   const hoje = new Date();
@@ -129,8 +169,8 @@ async function loadChart() {
     const dataStr = d.toISOString().split('T')[0];
 
     const vendasDia = agenda
-     .filter(e => e.data === dataStr)
-     .reduce((sum, e) => {
+    .filter(e => e.data === dataStr)
+    .reduce((sum, e) => {
         const rec = receitas.find(r => r.nome === e.pedido);
         return sum + (rec?.venda || 0);
       }, 0);
@@ -147,6 +187,8 @@ async function loadChart() {
   document.getElementById('badge-total-7d').textContent = formatCurrency(total);
 
   const chart = document.getElementById('chart-vendas');
+  if (!chart) return;
+
   chart.innerHTML = dias.map(d => {
     const altura = (d.valor / maxValor) * 160;
     const cor = d.valor > 0? 'var(--primary)' : 'var(--border)';
@@ -172,10 +214,17 @@ async function loadChart() {
 }
 
 async function loadTopReceitas() {
-  const [agenda, receitas] = await Promise.all([
-    getAllData('agenda'),
-    getAllData('receitas')
-  ]);
+  let agenda = [];
+  let receitas = [];
+
+  try {
+    [agenda, receitas] = await Promise.all([
+      getAllData('agenda'),
+      getAllData('receitas')
+    ]);
+  } catch (e) {
+    console.warn('DB ainda vazio:', e);
+  }
 
   const contagem = {};
   agenda.forEach(e => {
@@ -183,14 +232,15 @@ async function loadTopReceitas() {
   });
 
   const top = Object.entries(contagem)
-   .sort((a, b) => b[1] - a[1])
-   .slice(0, 5)
-   .map(([nome, qtd]) => {
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 5)
+  .map(([nome, qtd]) => {
       const rec = receitas.find(r => r.nome === nome);
       return { nome, qtd, venda: rec?.venda || 0 };
     });
 
   const container = document.getElementById('top-receitas');
+  if (!container) return;
 
   if (!top.length) {
     container.innerHTML = '<div class="empty-state" style="padding:24px"><div class="emoji">📊</div><p>Sem dados ainda</p></div>';
@@ -219,20 +269,28 @@ async function loadTopReceitas() {
 }
 
 async function loadProximasEntregas() {
-  const agenda = await getAllData('agenda');
+  let agenda = [];
+
+  try {
+    agenda = await getAllData('agenda');
+  } catch (e) {
+    console.warn('DB ainda vazio:', e);
+  }
+
   const hoje = new Date();
   const proximos7 = new Date(hoje);
   proximos7.setDate(hoje.getDate() + 7);
 
   const proximas = agenda
-   .filter(e => {
+  .filter(e => {
       const dataE = new Date(e.data);
       return dataE >= hoje && dataE <= proximos7;
     })
-   .sort((a, b) => new Date(a.data + 'T' + a.hora) - new Date(b.data + 'T' + b.hora))
-   .slice(0, 5);
+  .sort((a, b) => new Date(a.data + 'T' + a.hora) - new Date(b.data + 'T' + b.hora))
+  .slice(0, 5);
 
   const container = document.getElementById('prox-entregas');
+  if (!container) return;
 
   if (!proximas.length) {
     container.innerHTML = '<div class="empty-state" style="padding:24px"><div class="emoji">📅</div><p>Sem entregas próximas</p></div>';
@@ -242,7 +300,6 @@ async function loadProximasEntregas() {
   container.innerHTML = proximas.map(e => {
     const data = new Date(e.data + 'T' + e.hora);
     const isHoje = e.data === hoje.toISOString().split('T')[0];
-    const badgeClass = isHoje? 'badge-danger' : 'badge';
 
     return `
       <div style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--radius-sm);margin-bottom:8px;background:var(--bg-hover)">
@@ -258,7 +315,6 @@ async function loadProximasEntregas() {
           <div style="font-size:.75rem;color:var(--text-secondary);margin-top:2px">
             🕐 ${e.hora}
           </div>
-        </div>
         ${isHoje? '<span class="badge badge-danger">Hoje</span>' : ''}
       </div>
     `;
@@ -266,10 +322,16 @@ async function loadProximasEntregas() {
 }
 
 async function loadAlertas() {
-  const receitas = await getAllData('receitas');
+  let receitas = [];
+
+  try {
+    receitas = await getAllData('receitas');
+  } catch (e) {
+    console.warn('DB ainda vazio:', e);
+  }
+
   const alertas = [];
 
-  // Validade curta
   receitas.forEach(r => {
     if (r.validade && r.validade <= 2) {
       alertas.push({
@@ -280,7 +342,6 @@ async function loadAlertas() {
     }
   });
 
-  // Sem PCCs definidos
   receitas.forEach(r => {
     if (!r.pccs || r.pccs.length === 0) {
       alertas.push({
@@ -291,9 +352,7 @@ async function loadAlertas() {
     }
   });
 
-  // Custo alto / margem baixa
   receitas.forEach(r => {
-    const custoUnit = (r.custoTotal || 0) / (r.rendimento || 1);
     const margem = r.margem || 200;
     if (margem < 100) {
       alertas.push({
@@ -306,6 +365,7 @@ async function loadAlertas() {
 
   const container = document.getElementById('alertas-haccp');
   const badge = document.getElementById('badge-alertas');
+  if (!container ||!badge) return;
 
   if (!alertas.length) {
     container.innerHTML = '<div class="empty-state" style="padding:24px"><div class="emoji">✅</div><p>Tudo em conformidade!</p></div>';
@@ -337,7 +397,8 @@ function startTimersListener() {
   setInterval(() => {
     const timers = JSON.parse(localStorage.getItem('dg_timers') || '[]');
     const ativos = timers.filter(t => t.fim > Date.now()).length;
-    document.getElementById('stat-timers').textContent = ativos;
+    const el = document.getElementById('stat-timers');
+    if (el) el.textContent = ativos;
   }, 1000);
 }
 
@@ -353,12 +414,13 @@ window.novaEncomendaRapida = () => {
       <label>Hora *<input type="time" name="hora" required value="10:00"></label>
       <label>Observações<textarea name="obs" rows="2" placeholder="Sem lactose, etc"></textarea></label>
       <menu>
-        <button type="button" value="cancel" class="btn">Cancelar</button>
+        <button type="button" class="btn btn-cancel">Cancelar</button>
         <button value="default" class="btn btn-primary">Guardar</button>
       </menu>
     </form>`;
   document.body.appendChild(dialog);
   dialog.showModal();
+  dialog.querySelector('.btn-cancel').onclick = () => dialog.close();
   dialog.addEventListener('close', async () => {
     if (dialog.returnValue === 'default') {
       const data = Object.fromEntries(new FormData(dialog.querySelector('form')));
@@ -384,12 +446,13 @@ window.iniciarTimerRapido = () => {
       <label>Descrição *<input name="label" required placeholder="Cozedura bolo"></label>
       <label>Minutos *<input type="number" name="minutos" required min="1" value="30"></label>
       <menu>
-        <button type="button" value="cancel" class="btn">Cancelar</button>
+        <button type="button" class="btn btn-cancel">Cancelar</button>
         <button value="default" class="btn btn-primary">Iniciar</button>
       </menu>
     </form>`;
   document.body.appendChild(dialog);
   dialog.showModal();
+  dialog.querySelector('.btn-cancel').onclick = () => dialog.close();
   dialog.addEventListener('close', () => {
     if (dialog.returnValue === 'default') {
       const data = Object.fromEntries(new FormData(dialog.querySelector('form')));
@@ -409,10 +472,17 @@ window.iniciarTimerRapido = () => {
 
 window.exportarBackup = async () => {
   const { getAllData } = await import('../db.js');
-  const [receitas, agenda] = await Promise.all([
-    getAllData('receitas'),
-    getAllData('agenda')
-  ]);
+  let receitas = [];
+  let agenda = [];
+
+  try {
+    [receitas, agenda] = await Promise.all([
+      getAllData('receitas'),
+      getAllData('agenda')
+    ]);
+  } catch (e) {
+    console.warn('DB ainda vazio:', e);
+  }
 
   const backup = {
     version: '3.0',
