@@ -143,6 +143,93 @@ function renderizarLista(dados) {
         </div>
     `).join('');
 }
+function adicionarLinhaIngrediente() {
+    const tbody = document.getElementById('corpo-tabela');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input type="text" class="ing-nome" placeholder="Item" required></td>
+        <td><input type="number" class="ing-qtd" placeholder="g/ml" required></td>
+        <td><input type="number" class="ing-preco" placeholder="Preço/Kg" step="0.01" required></td>
+        <td class="ing-subtotal" style="font-weight:bold; color:var(--text-color)">0.00€</td>
+    `;
+    tbody.appendChild(tr);
+}
+
+function calcularTotaisRec() {
+    let totalMP = 0;
+    const rows = document.querySelectorAll('#corpo-tabela tr');
+    
+    rows.forEach(row => {
+        const qtd = parseFloat(row.querySelector('.ing-qtd').value) || 0;
+        const precoKg = parseFloat(row.querySelector('.ing-preco').value) || 0;
+        const subtotal = (qtd / 1000) * precoKg;
+        totalMP += subtotal;
+        row.querySelector('.ing-subtotal').innerText = subtotal.toFixed(2) + '€';
+    });
+
+    const rendimento = parseFloat(document.getElementById('rec-rendimento').value) || 1;
+    const margemPercent = 200; // Podes tornar isto um input dinâmico se quiseres
+    
+    const custoUnitario = totalMP / rendimento;
+    const precoVenda = custoUnitario * (1 + margemPercent / 100);
+
+    document.getElementById('custo-unitario').innerText = custoUnitario.toFixed(2) + '€';
+    document.getElementById('preco-venda').innerText = precoVenda.toFixed(2) + '€';
+    
+    return { totalMP, custoUnitario, precoVenda };
+}
+
+async function salvarReceita() {
+    // 1. Capturar Dados Gerais
+    const nome = document.getElementById('rec-nome').value;
+    const categoria = document.getElementById('rec-categoria').value;
+    const rendimento = parseFloat(document.getElementById('rec-rendimento').value);
+    
+    // 2. Capturar Alérgenos (Checkboxes)
+    const alergenos = Array.from(document.querySelectorAll('input[name="alergenos"]:checked'))
+                           .map(cb => cb.value);
+
+    // 3. Capturar Dados HACCP
+    const preparacao = document.getElementById('rec-preparacao').value;
+    const tempCoz = document.getElementById('rec-temp-coz').value;
+    const validade = document.getElementById('rec-validade').value;
+
+    // 4. Capturar Ingredientes
+    const ingredientes = [];
+    document.querySelectorAll('#corpo-tabela tr').forEach(row => {
+        ingredientes.push({
+            nome: row.querySelector('.ing-nome').value,
+            qtd: parseFloat(row.querySelector('.ing-qtd').value),
+            preco: parseFloat(row.querySelector('.ing-preco').value)
+        });
+    });
+
+    const totais = calcularTotaisRec();
+
+    const fichaHACCP = {
+        id: Date.now().toString(),
+        nome,
+        categoria,
+        rendimento,
+        ingredientes,
+        alergenos,
+        preparacao,
+        tempCoz,
+        validade,
+        custoTotal: totais.totalMP,
+        venda: totais.precoVenda,
+        margem: 200 // Valor fixo para este exemplo
+    };
+
+    try {
+        await addData('receitas', fichaHACCP);
+        alert('✔️ Ficha Técnica Guardada com Sucesso!');
+    } catch (err) {
+        console.error("Erro ao guardar:", err);
+        alert('❌ Erro na Base de Dados Offline.');
+    }
+}
 
 // Reutiliza as funções de cálculo e adição de linha da versão anterior, 
 // mas adicionando os campos de categoria e alérgenos no salvamento.
+
