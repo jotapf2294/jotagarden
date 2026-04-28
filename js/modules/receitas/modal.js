@@ -6,62 +6,74 @@ export function createModal() {
   modal.id = 'modal-receita';
   modal.className = 'modalx';
   modal.innerHTML = `
-    <div class="modalx-box" style="max-width:900px;height:auto;max-height:92vh">
-      <header>
-        <h2 id="m-tit">Nova Ficha Técnica</h2>
-        <button class="x" type="button" aria-label="Fechar">&times;</button>
+    <div class="modalx-box">
+      <header style="padding:16px;border-bottom:1px solid var(--border);background:var(--bg-secondary)">
+        <h2 id="m-tit" style="font-size:1.125rem;margin:0">Nova Ficha Técnica</h2>
+        <button class="x" type="button" aria-label="Fechar" style="background:none;border:none;font-size:28px;cursor:pointer;color:var(--text-secondary);padding:0 8px;line-height:1">&times;</button>
       </header>
-      <form id="f-rec">
-        <nav class="tabs" role="tablist">
-          <button type="button" data-t="g" class="on" role="tab" aria-selected="true" aria-controls="p-g">1. Geral</button>
-          <button type="button" data-t="c" role="tab" aria-selected="false" aria-controls="p-c">2. Composição</button>
+      <form id="f-rec" style="display:flex;flex-direction:column;flex:1;min-height:0">
+        <nav class="tabs" role="tablist" style="display:flex;background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px;gap:2px;flex-shrink:0">
+          <button type="button" data-t="g" class="on" role="tab" aria-selected="true" style="padding:12px 16px;border:none;background:none;cursor:pointer;font-weight:500;border-bottom:2px solid var(--primary);color:var(--text);font-size:.875rem">Geral</button>
+          <button type="button" data-t="c" role="tab" aria-selected="false" style="padding:12px 16px;border:none;background:none;cursor:pointer;font-weight:500;border-bottom:2px solid transparent;color:var(--text-secondary);font-size:.875rem">Composição</button>
         </nav>
-        <div class="panes">
-          <div class="pane on" id="p-g" role="tabpanel" aria-labelledby="tab-g">
-            <div class="grid2">
+        
+        <div class="panes" style="flex:1;overflow-y:auto;min-height:0">
+          <div class="pane on" id="p-g" role="tabpanel" style="padding:20px">
+            <div class="grid-2">
               <div><label>Nome *<input id="n-nome" required placeholder="Bolo de Chocolate"></label></div>
               <div><label>Código<input id="n-cod" placeholder="BB-001"></label></div>
               <div><label>Categoria *<select id="n-cat" required><option value="">Escolher</option>${CATEGORIAS.map(x=>`<option>${x}</option>`).join('')}</select></label></div>
               <div><label>Versão<input id="n-ver" value="1.0"></label></div>
               <div><label>Rendimento<input type="number" id="n-rend" value="1" step="0.1" min="0.1"></label></div>
-              <div><label>Peso un (g)<input type="number" id="n-peso" placeholder="100"></label></div>
+              <div><label>Peso un (g)<input type="number" id="n-peso" placeholder="100" min="0"></label></div>
               <div><label>Margem %<input type="number" id="n-marg" value="200" min="0"></label></div>
-              <div><label>PVP €<input id="n-pvp" readonly style="background:#f5f5f5"></label></div>
+              <div><label>PVP €<input id="n-pvp" readonly style="background:var(--bg-hover)"></label></div>
             </div>
-            <label>Descrição<textarea id="n-desc" rows="3" placeholder="Notas, observações..."></textarea></label>
-            <div class="grid2" style="margin-top:16px">
-              <div><label>Validade dias<input type="number" id="h-val" placeholder="3"></label></div>
+            <label style="margin-top:16px">Descrição<textarea id="n-desc" rows="3" placeholder="Notas, observações..."></textarea></label>
+            <div class="grid-2" style="margin-top:16px">
+              <div><label>Validade dias<input type="number" id="h-val" placeholder="3" min="0"></label></div>
               <div><label>Temp armazenamento<input id="h-arm" placeholder="0-4°C"></label></div>
             </div>
           </div>
           
-          <div class="pane" id="p-c" role="tabpanel" aria-labelledby="tab-c">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-              <h4>Ingredientes (ordem decrescente)</h4>
-              <button type="button" id="add-ing" class="btn-s">+ Ingrediente</button>
+          <div class="pane" id="p-c" role="tabpanel" style="padding:20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap">
+              <h4 style="margin:0;font-size:.9375rem">Ingredientes</h4>
+              <button type="button" id="add-ing" class="btn btn-primary btn-sm">+ Adicionar</button>
             </div>
-            <div class="tbl-wrap">
-              <table class="tbl">
-                <thead><tr><th>Ingrediente *</th><th>Qtd g</th><th>%</th><th>€/kg</th><th></th></tr></thead>
-                <tbody id="tb-ing"></tbody>
-              </table>
-            </div>
-            <div class="tot">
-              <span>Peso total: <b id="t-peso">0g</b></span>
-              <span>Custo total: <b id="t-custo">0€</b></span>
+            <div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden">
+              <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+                <table style="width:100%;border-collapse:collapse;min-width:500px">
+                  <thead>
+                    <tr style="background:var(--bg-hover);border-bottom:1px solid var(--border)">
+                      <th style="padding:8px;text-align:left;font-size:.75rem;font-weight:600;text-transform:uppercase;color:var(--text-secondary)">Ingrediente *</th>
+                      <th style="padding:8px;text-align:left;font-size:.75rem;font-weight:600;text-transform:uppercase;color:var(--text-secondary);width:90px">Qtd (g)</th>
+                      <th style="padding:8px;text-align:left;font-size:.75rem;font-weight:600;text-transform:uppercase;color:var(--text-secondary);width:60px">%</th>
+                      <th style="padding:8px;text-align:left;font-size:.75rem;font-weight:600;text-transform:uppercase;color:var(--text-secondary);width:90px">€/kg</th>
+                      <th style="width:40px"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="tb-ing"></tbody>
+                </table>
+              </div>
+            <div style="display:flex;gap:16px;margin-top:12px;padding:12px;background:var(--bg-hover);border-radius:var(--radius-sm);font-size:.875rem;flex-wrap:wrap">
+              <span>Peso: <b id="t-peso">0g</b></span>
+              <span>Custo: <b id="t-custo">0€</b></span>
               <span>Custo/un: <b id="t-unit">0€</b></span>
             </div>
             <label style="margin-top:16px">Modo preparação<textarea id="h-prep" rows="4" placeholder="1. Pesar ingredientes...&#10;2. Misturar...&#10;3. Cozer a X°C..."></textarea></label>
           </div>
-        <footer>
-          <div class="bar">
+        </div>
+
+        <footer style="padding:16px;border-top:1px solid var(--border);background:var(--bg);flex-shrink:0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:.875rem;flex-wrap:wrap;gap:8px">
             <span>Custo: <b id="v-custo">0€</b></span>
             <span>PVP: <b id="v-pvp">0€</b></span>
             <span>Margem: <b id="v-marg">200%</b></span>
           </div>
-          <div>
-            <button type="button" class="btn-ghost x">Cancelar</button>
-            <button type="submit" class="btn-pri">💾 Guardar</button>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button type="button" class="btn x">Cancelar</button>
+            <button type="submit" class="btn btn-primary">💾 Guardar</button>
           </div>
         </footer>
       </form>
@@ -79,9 +91,15 @@ function setupModalEvents(modal) {
     modal.querySelectorAll('.tabs button,.pane').forEach(x => {
       x.classList.remove('on');
       x.setAttribute('aria-selected', 'false');
+      if (x.tagName === 'BUTTON') {
+        x.style.borderBottomColor = 'transparent';
+        x.style.color = 'var(--text-secondary)';
+      }
     });
     b.classList.add('on');
     b.setAttribute('aria-selected', 'true');
+    b.style.borderBottomColor = 'var(--primary)';
+    b.style.color = 'var(--text)';
     modal.querySelector('#p-' + b.dataset.t).classList.add('on');
   });
 
@@ -92,10 +110,13 @@ function setupModalEvents(modal) {
   };
   
   ['n-rend', 'n-marg', 'n-nome', 'n-cat', 'n-peso', 'h-val', 'h-arm', 'h-prep'].forEach(id => {
-    modal.querySelector('#' + id).oninput = () => {
-      calcIngredientes();
-      modal.querySelector('#f-rec').dataset.dirty = 'true';
-    };
+    const el = modal.querySelector('#' + id);
+    if (el) {
+      el.oninput = () => {
+        calcIngredientes();
+        modal.querySelector('#f-rec').dataset.dirty = 'true';
+      };
+    }
   });
 }
 
@@ -108,9 +129,16 @@ export function openModal(modal, rec = null) {
   modal.querySelectorAll('.tabs button,.pane').forEach(x => {
     x.classList.remove('on');
     x.setAttribute('aria-selected', 'false');
+    if (x.tagName === 'BUTTON') {
+      x.style.borderBottomColor = 'transparent';
+      x.style.color = 'var(--text-secondary)';
+    }
   });
-  modal.querySelector('[data-t="g"]').classList.add('on');
-  modal.querySelector('[data-t="g"]').setAttribute('aria-selected', 'true');
+  const firstTab = modal.querySelector('[data-t="g"]');
+  firstTab.classList.add('on');
+  firstTab.setAttribute('aria-selected', 'true');
+  firstTab.style.borderBottomColor = 'var(--primary)';
+  firstTab.style.color = 'var(--text)';
   modal.querySelector('#p-g').classList.add('on');
 
   if (rec) {
@@ -151,12 +179,13 @@ export function closeModal(modal) {
 
 export function addIngRow(modal, d = {}) {
   const tr = document.createElement('tr');
+  tr.style.borderBottom = '1px solid var(--border)';
   tr.innerHTML = `
-    <td><input class="nome" value="${d.nome || ''}" required placeholder="Farinha T55"></td>
-    <td><input type="number" class="qtd" value="${d.qtd || 0}" style="width:80px" step="0.1" min="0"></td>
-    <td class="pct">0%</td>
-    <td><input type="number" step="0.01" class="preco" value="${d.preco || 0}" style="width:80px" placeholder="1.20" min="0"></td>
-    <td><button type="button" class="btn-remove" style="background:var(--danger);color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer">×</button></td>
+    <td style="padding:6px"><input class="nome" value="${d.nome || ''}" required placeholder="Farinha T55" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-overlay);color:var(--text);font-size:.875rem"></td>
+    <td style="padding:6px"><input type="number" class="qtd" value="${d.qtd || 0}" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-overlay);color:var(--text);font-size:.875rem" step="0.1" min="0"></td>
+    <td class="pct" style="padding:6px;font-size:.875rem;color:var(--text-secondary);text-align:center">0%</td>
+    <td style="padding:6px"><input type="number" step="0.01" class="preco" value="${d.preco || 0}" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-overlay);color:var(--text);font-size:.875rem" placeholder="1.20" min="0"></td>
+    <td style="padding:6px;text-align:center"><button type="button" class="btn-remove" style="background:var(--danger);color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:.875rem">×</button></td>
   `;
   tr.querySelector('.btn-remove').onclick = () => { 
     tr.remove(); 
@@ -205,4 +234,4 @@ export function collectModalData(modal) {
     },
     updatedAt: new Date().toISOString()
   };
-                                           }
+}
