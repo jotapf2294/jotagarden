@@ -158,3 +158,12 @@ window.addEventListener('unhandledrejection', (e) => {
   console.error('💥 Promise rejeitada:', e.reason);
   window.toast('❌ Erro: ' + e.reason);
 });
+
+// Debug mobile
+window.addEventListener('error', (e) => {
+  alert('ERRO JS: ' + e.message + '\nLinha: ' + e.lineno);
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  alert('PROMISE ERRO: ' + e.reason);
+});
