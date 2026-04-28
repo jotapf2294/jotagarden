@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector(`[data-target="${targetId}"]`).classList.add('active');
 
     if (targetId === 'dashboard') renderDashboard();
-    if (targetId === 'receitas') renderReceitas();
+    if (targetId === 'receitas') { renderReceitas(); setTimeout(()=>{ document.querySelector('.rec-item')?.click() }, 100); }
     if (targetId === 'agenda') renderAgenda();
     if (targetId === 'gestao') renderGestao();
   };
