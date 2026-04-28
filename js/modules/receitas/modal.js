@@ -1,77 +1,85 @@
+// receitas/modal.js
 import { CATEGORIAS } from './constants.js';
 import { calcIngredientes } from './calc.js';
+import { sanitizeHTML, toNumber } from './utils.js';
 
 export function createModal() {
   const modal = document.createElement('div');
   modal.id = 'modal-receita';
   modal.className = 'modalx';
+  modal.setAttribute('aria-hidden', 'true');
+  
+  // FIX: CATEGORIAS com sanitizeHTML pra evitar XSS se vier do DB
+  const categoriasOpts = CATEGORIAS.map(x => 
+    `<option value="${sanitizeHTML(x)}">${sanitizeHTML(x)}</option>`
+  ).join('');
+
   modal.innerHTML = `
-    <div class="modalx-box">
-      <header style="padding:16px;border-bottom:1px solid var(--border);background:var(--bg-secondary)">
-        <h2 id="m-tit" style="font-size:1.125rem;margin:0">Nova Ficha Técnica</h2>
-        <button class="x" type="button" aria-label="Fechar" style="background:none;border:none;font-size:28px;cursor:pointer;color:var(--text-secondary);padding:0 8px;line-height:1">&times;</button>
+    <div class="modalx-box" role="dialog" aria-modal="true" aria-labelledby="m-tit">
+      <header>
+        <h2 id="m-tit">Nova Ficha Técnica</h2>
+        <button class="x" type="button" aria-label="Fechar modal">&times;</button>
       </header>
-      <form id="f-rec" style="display:flex;flex-direction:column;flex:1;min-height:0">
-        <nav class="tabs" role="tablist" style="display:flex;background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px;gap:2px;flex-shrink:0">
-          <button type="button" data-t="g" class="on" role="tab" aria-selected="true" style="padding:12px 16px;border:none;background:none;cursor:pointer;font-weight:500;border-bottom:2px solid var(--primary);color:var(--text);font-size:.875rem">Geral</button>
-          <button type="button" data-t="c" role="tab" aria-selected="false" style="padding:12px 16px;border:none;background:none;cursor:pointer;font-weight:500;border-bottom:2px solid transparent;color:var(--text-secondary);font-size:.875rem">Composição</button>
+      <form id="f-rec" novalidate>
+        <nav class="tabs" role="tablist">
+          <button type="button" data-t="g" class="on" role="tab" aria-selected="true" aria-controls="p-g">Geral</button>
+          <button type="button" data-t="c" role="tab" aria-selected="false" aria-controls="p-c">Composição</button>
         </nav>
         
-        <div class="panes" style="flex:1;overflow-y:auto;min-height:0">
-          <div class="pane on" id="p-g" role="tabpanel" style="padding:20px">
+        <div class="panes">
+          <div class="pane on" id="p-g" role="tabpanel" aria-labelledby="tab-g">
             <div class="grid-2">
-              <div><label>Nome *<input id="n-nome" required placeholder="Bolo de Chocolate"></label></div>
-              <div><label>Código<input id="n-cod" placeholder="BB-001"></label></div>
-              <div><label>Categoria *<select id="n-cat" required><option value="">Escolher</option>${CATEGORIAS.map(x=>`<option>${x}</option>`).join('')}</select></label></div>
-              <div><label>Versão<input id="n-ver" value="1.0"></label></div>
-              <div><label>Rendimento<input type="number" id="n-rend" value="1" step="0.1" min="0.1"></label></div>
-              <div><label>Peso un (g)<input type="number" id="n-peso" placeholder="100" min="0"></label></div>
-              <div><label>Margem %<input type="number" id="n-marg" value="200" min="0"></label></div>
-              <div><label>PVP €<input id="n-pvp" readonly style="background:var(--bg-hover)"></label></div>
+              <div><label>Nome *<input id="n-nome" required placeholder="Bolo de Chocolate" maxlength="100"></label></div>
+              <div><label>Código<input id="n-cod" placeholder="BB-001" maxlength="20"></label></div>
+              <div><label>Categoria *<select id="n-cat" required><option value="">Escolher</option>${categoriasOpts}</select></label></div>
+              <div><label>Versão<input id="n-ver" value="1.0" maxlength="10"></label></div>
+              <div><label>Rendimento<input type="number" id="n-rend" value="1" step="0.1" min="0.1" max="9999"></label></div>
+              <div><label>Peso un (g)<input type="number" id="n-peso" placeholder="100" min="0" max="99999" step="1"></label></div>
+              <div><label>Margem %<input type="number" id="n-marg" value="200" min="0" max="999"></label></div>
+              <div><label>PVP €<input id="n-pvp" readonly tabindex="-1"></label></div>
             </div>
-            <label style="margin-top:16px">Descrição<textarea id="n-desc" rows="3" placeholder="Notas, observações..."></textarea></label>
+            <label style="margin-top:16px">Descrição<textarea id="n-desc" rows="3" placeholder="Notas, observações..." maxlength="500"></textarea></label>
             <div class="grid-2" style="margin-top:16px">
-              <div><label>Validade dias<input type="number" id="h-val" placeholder="3" min="0"></label></div>
-              <div><label>Temp armazenamento<input id="h-arm" placeholder="0-4°C"></label></div>
+              <div><label>Validade dias<input type="number" id="h-val" placeholder="3" min="0" max="365"></label></div>
+              <div><label>Temp armazenamento<input id="h-arm" placeholder="0-4°C" maxlength="20"></label></div>
             </div>
           </div>
           
-          <div class="pane" id="p-c" role="tabpanel" style="padding:20px">
+          <div class="pane" id="p-c" role="tabpanel" aria-labelledby="tab-c">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap">
               <h4 style="margin:0;font-size:.9375rem">Ingredientes</h4>
               <button type="button" id="add-ing" class="btn btn-primary btn-sm">+ Adicionar</button>
             </div>
-            <div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden">
-              <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-                <table style="width:100%;border-collapse:collapse;min-width:500px">
-                  <thead>
-                    <tr style="background:var(--bg-hover);border-bottom:1px solid var(--border)">
-                      <th style="padding:8px;text-align:left;font-size:.75rem;font-weight:600;text-transform:uppercase;color:var(--text-secondary)">Ingrediente *</th>
-                      <th style="padding:8px;text-align:left;font-size:.75rem;font-weight:600;text-transform:uppercase;color:var(--text-secondary);width:90px">Qtd (g)</th>
-                      <th style="padding:8px;text-align:left;font-size:.75rem;font-weight:600;text-transform:uppercase;color:var(--text-secondary);width:60px">%</th>
-                      <th style="padding:8px;text-align:left;font-size:.75rem;font-weight:600;text-transform:uppercase;color:var(--text-secondary);width:90px">€/kg</th>
-                      <th style="width:40px"></th>
-                    </tr>
-                  </thead>
-                  <tbody id="tb-ing"></tbody>
-                </table>
-              </div>
-            <div style="display:flex;gap:16px;margin-top:12px;padding:12px;background:var(--bg-hover);border-radius:var(--radius-sm);font-size:.875rem;flex-wrap:wrap">
+            <div class="tbl-wrap">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>Ingrediente *</th>
+                    <th style="width:90px">Qtd (g)</th>
+                    <th style="width:60px">%</th>
+                    <th style="width:90px">€/kg</th>
+                    <th style="width:40px"></th>
+                  </tr>
+                </thead>
+                <tbody id="tb-ing"></tbody>
+              </table>
+            </div>
+            <div class="tot">
               <span>Peso: <b id="t-peso">0g</b></span>
               <span>Custo: <b id="t-custo">0€</b></span>
               <span>Custo/un: <b id="t-unit">0€</b></span>
             </div>
-            <label style="margin-top:16px">Modo preparação<textarea id="h-prep" rows="4" placeholder="1. Pesar ingredientes...&#10;2. Misturar...&#10;3. Cozer a X°C..."></textarea></label>
+            <label style="margin-top:16px">Modo preparação<textarea id="h-prep" rows="4" placeholder="1. Pesar ingredientes...&#10;2. Misturar...&#10;3. Cozer a X°C..." maxlength="2000"></textarea></label>
           </div>
         </div>
 
-        <footer style="padding:16px;border-top:1px solid var(--border);background:var(--bg);flex-shrink:0">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:.875rem;flex-wrap:wrap;gap:8px">
+        <footer>
+          <div class="bar">
             <span>Custo: <b id="v-custo">0€</b></span>
             <span>PVP: <b id="v-pvp">0€</b></span>
             <span>Margem: <b id="v-marg">200%</b></span>
           </div>
-          <div style="display:flex;gap:8px;justify-content:flex-end">
+          <div style="display:flex;gap:8px">
             <button type="button" class="btn x">Cancelar</button>
             <button type="submit" class="btn btn-primary">💾 Guardar</button>
           </div>
@@ -85,60 +93,79 @@ export function createModal() {
 }
 
 function setupModalEvents(modal) {
+  // Fechar modal
   modal.querySelectorAll('.x').forEach(b => b.onclick = () => closeModal(modal));
 
-  modal.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
-    modal.querySelectorAll('.tabs button,.pane').forEach(x => {
-      x.classList.remove('on');
-      x.setAttribute('aria-selected', 'false');
-      if (x.tagName === 'BUTTON') {
-        x.style.borderBottomColor = 'transparent';
-        x.style.color = 'var(--text-secondary)';
-      }
-    });
-    b.classList.add('on');
-    b.setAttribute('aria-selected', 'true');
-    b.style.borderBottomColor = 'var(--primary)';
-    b.style.color = 'var(--text)';
-    modal.querySelector('#p-' + b.dataset.t).classList.add('on');
+  // Tabs com ARIA correto
+  modal.querySelectorAll('.tabs button').forEach(b => {
+    b.onclick = () => {
+      modal.querySelectorAll('.tabs button,.pane').forEach(x => {
+        x.classList.remove('on');
+        x.setAttribute('aria-selected', 'false');
+      });
+      b.classList.add('on');
+      b.setAttribute('aria-selected', 'true');
+      modal.querySelector('#p-' + b.dataset.t).classList.add('on');
+    };
   });
 
-  modal.querySelector('#add-ing').onclick = () => addIngRow(modal);
-  modal.querySelector('#tb-ing').oninput = () => { 
-    calcIngredientes(); 
-    modal.querySelector('#f-rec').dataset.dirty = 'true';
+  // Add ingrediente
+  modal.querySelector('#add-ing').onclick = () => {
+    addIngRow(modal);
+    markDirty(modal);
   };
-  
-  ['n-rend', 'n-marg', 'n-nome', 'n-cat', 'n-peso', 'h-val', 'h-arm', 'h-prep'].forEach(id => {
+
+  // Event delegation na tabela
+  const tb = modal.querySelector('#tb-ing');
+  tb.oninput = (e) => {
+    if (e.target.matches('.qtd, .preco, .nome')) {
+      calcIngredientes();
+      markDirty(modal);
+    }
+  };
+  tb.onclick = (e) => {
+    if (e.target.matches('.btn-remove')) {
+      e.target.closest('tr').remove();
+      calcIngredientes();
+      markDirty(modal);
+    }
+  };
+
+  // Inputs gerais marcam dirty + recalculam
+  ['n-rend', 'n-marg', 'n-nome', 'n-cat', 'n-peso', 'h-val', 'h-arm', 'h-prep', 'n-desc', 'n-cod', 'n-ver'].forEach(id => {
     const el = modal.querySelector('#' + id);
     if (el) {
       el.oninput = () => {
-        calcIngredientes();
-        modal.querySelector('#f-rec').dataset.dirty = 'true';
+        if (id === 'n-rend' || id === 'n-marg') calcIngredientes();
+        markDirty(modal);
       };
     }
   });
+
+  // ESC fecha modal
+  modal.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal(modal);
+  });
+}
+
+function markDirty(modal) {
+  const form = modal.querySelector('#f-rec');
+  if (form) form.dataset.dirty = 'true';
 }
 
 export function openModal(modal, rec = null) {
   modal.classList.add('show');
-  modal.querySelector('#f-rec').dataset.edit = rec?.id || '';
-  modal.querySelector('#f-rec').dataset.dirty = 'false';
+  modal.setAttribute('aria-hidden', 'false');
+  
+  const form = modal.querySelector('#f-rec');
+  form.dataset.edit = rec?.id || '';
+  form.dataset.dirty = 'false';
 
-  // Reset para primeira tab
-  modal.querySelectorAll('.tabs button,.pane').forEach(x => {
-    x.classList.remove('on');
-    x.setAttribute('aria-selected', 'false');
-    if (x.tagName === 'BUTTON') {
-      x.style.borderBottomColor = 'transparent';
-      x.style.color = 'var(--text-secondary)';
-    }
-  });
+  // Reset tabs
+  modal.querySelectorAll('.tabs button,.pane').forEach(x => x.classList.remove('on'));
   const firstTab = modal.querySelector('[data-t="g"]');
   firstTab.classList.add('on');
   firstTab.setAttribute('aria-selected', 'true');
-  firstTab.style.borderBottomColor = 'var(--primary)';
-  firstTab.style.color = 'var(--text)';
   modal.querySelector('#p-g').classList.add('on');
 
   if (rec) {
@@ -160,78 +187,78 @@ export function openModal(modal, rec = null) {
     rec.ingredientes?.forEach(i => addIngRow(modal, i));
   } else {
     modal.querySelector('#m-tit').textContent = 'Nova Ficha Técnica';
-    modal.querySelector('#f-rec').reset();
+    form.reset();
     modal.querySelector('#n-marg').value = 200;
     modal.querySelector('#n-rend').value = 1;
     modal.querySelector('#n-ver').value = '1.0';
     modal.querySelector('#tb-ing').innerHTML = '';
-    addIngRow(modal);
+    addIngRow(modal); // 1 linha vazia pra começar
   }
+  
   calcIngredientes();
+  modal.querySelector('#n-nome').focus(); // A11y: foca primeiro campo
 }
 
 export function closeModal(modal) {
-  if (modal.querySelector('#f-rec').dataset.dirty === 'true') {
+  const form = modal.querySelector('#f-rec');
+  if (form?.dataset.dirty === 'true') {
     if (!confirm('Descartar alterações? Tens dados não guardados.')) return;
   }
   modal.classList.remove('show');
+  modal.setAttribute('aria-hidden', 'true');
+  if (form) form.dataset.dirty = 'false';
 }
 
 export function addIngRow(modal, d = {}) {
   const tr = document.createElement('tr');
-  tr.style.borderBottom = '1px solid var(--border)';
+  // FIX: sanitizeHTML em todos valores que vêm do DB
   tr.innerHTML = `
-    <td style="padding:6px"><input class="nome" value="${d.nome || ''}" required placeholder="Farinha T55" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-overlay);color:var(--text);font-size:.875rem"></td>
-    <td style="padding:6px"><input type="number" class="qtd" value="${d.qtd || 0}" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-overlay);color:var(--text);font-size:.875rem" step="0.1" min="0"></td>
-    <td class="pct" style="padding:6px;font-size:.875rem;color:var(--text-secondary);text-align:center">0%</td>
-    <td style="padding:6px"><input type="number" step="0.01" class="preco" value="${d.preco || 0}" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-overlay);color:var(--text);font-size:.875rem" placeholder="1.20" min="0"></td>
-    <td style="padding:6px;text-align:center"><button type="button" class="btn-remove" style="background:var(--danger);color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:.875rem">×</button></td>
+    <td><input class="nome" value="${sanitizeHTML(d.nome || '')}" required placeholder="Farinha T55" maxlength="100"></td>
+    <td><input type="number" class="qtd" value="${toNumber(d.qtd) || ''}" step="0.1" min="0" max="99999" placeholder="0"></td>
+    <td class="pct" style="text-align:center;color:var(--text-secondary)">0%</td>
+    <td><input type="number" step="0.01" class="preco" value="${toNumber(d.preco) || ''}" min="0" max="9999" placeholder="1.20"></td>
+    <td style="text-align:center"><button type="button" class="btn-remove" aria-label="Remover ingrediente">×</button></td>
   `;
-  tr.querySelector('.btn-remove').onclick = () => { 
-    tr.remove(); 
-    calcIngredientes(); 
-  };
   modal.querySelector('#tb-ing').appendChild(tr);
 }
 
 export function collectModalData(modal) {
   const ingredientes = [];
   modal.querySelectorAll('#tb-ing tr').forEach(tr => {
-    const nome = tr.querySelector('.nome')?.value;
-    const qtd = parseFloat(tr.querySelector('.qtd')?.value) || 0;
+    const nome = tr.querySelector('.nome')?.value?.trim();
+    const qtd = toNumber(tr.querySelector('.qtd')?.value);
+    const preco = toNumber(tr.querySelector('.preco')?.value);
+    
+    // FIX: só adiciona se tem nome E qtd > 0
     if (nome && qtd > 0) {
-      ingredientes.push({
-        nome,
-        qtd,
-        preco: parseFloat(tr.querySelector('.preco')?.value) || 0
-      });
+      ingredientes.push({ nome, qtd, preco });
     }
   });
 
-  const rend = parseFloat(modal.querySelector('#n-rend').value) || 1;
+  const rend = toNumber(modal.querySelector('#n-rend').value) || 1;
   const custoTotal = ingredientes.reduce((a, i) => a + (i.qtd / 1000) * i.preco, 0);
   const custoUnit = custoTotal / rend;
-  const marg = parseFloat(modal.querySelector('#n-marg').value) || 200;
+  const marg = toNumber(modal.querySelector('#n-marg').value) || 200;
   const venda = custoUnit * (1 + marg / 100);
 
   return {
-    id: modal.querySelector('#f-rec').dataset.edit || Date.now().toString(),
-    nome: modal.querySelector('#n-nome').value,
-    codigo: modal.querySelector('#n-cod').value,
+    id: modal.querySelector('#f-rec').dataset.edit || '',
+    nome: modal.querySelector('#n-nome').value.trim(),
+    codigo: modal.querySelector('#n-cod').value.trim(),
     categoria: modal.querySelector('#n-cat').value,
-    versao: modal.querySelector('#n-ver').value,
-    descricao: modal.querySelector('#n-desc').value,
+    versao: modal.querySelector('#n-ver').value.trim(),
+    descricao: modal.querySelector('#n-desc').value.trim(),
     rendimento: rend,
-    pesoUn: parseFloat(modal.querySelector('#n-peso').value) || null,
+    pesoUn: toNumber(modal.querySelector('#n-peso').value) || null,
     margem: marg,
-    custoTotal,
-    venda,
+    custoTotal: Math.round(custoTotal * 100) / 100, // FIX: arredonda
+    venda: Math.round(venda * 100) / 100,
     ingredientes,
-    validade: parseFloat(modal.querySelector('#h-val').value) || null,
-    preparacao: modal.querySelector('#h-prep').value,
+    validade: toNumber(modal.querySelector('#h-val').value) || null,
+    preparacao: modal.querySelector('#h-prep').value.trim(),
     armazenamento: {
-      temp: modal.querySelector('#h-arm').value
-    },
-    updatedAt: new Date().toISOString()
+      temp: modal.querySelector('#h-arm').value.trim()
+    }
+    // updatedAt/createdAt são setados no index.js
   };
 }
