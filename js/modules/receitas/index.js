@@ -1,4 +1,4 @@
-import { addData, getAllData, deleteData } from '../../db.js';
+import { addData, getAllData, deleteData, updateData } from '../../db.js';
 import { CATEGORIAS } from './constants.js';
 import { injectStyles } from './styles.js';
 import { renderLista } from './list.js';
@@ -60,21 +60,35 @@ export const renderReceitas = async () => {
 };
 
 async function loadReceitas() {
-  receitasCache = await getAllData('receitas');
-  const lista = document.getElementById('lista-rec');
-  const detail = document.getElementById('detail-rec');
+  try {
+    receitasCache = await getAllData('receitas') || [];
+    console.log('✅ Receitas carregadas:', receitasCache.length);
 
-  renderLista(receitasCache, lista, (rec) => {
-    showDetail(rec, detail, {
-      onEdit: (r) => openModal(modalInstance, r),
-      onDelete: handleDelete,
-      onFT: gerarFichaTecnica,
-      onProd: gerarEtiquetaProducao
+    const lista = document.getElementById('lista-rec');
+    const detail = document.getElementById('detail-rec');
+    if (!lista) return;
+
+    // FIX: Limpa filtros pra garantir que a nova ficha aparece
+    const searchInput = document.getElementById('search-rec');
+    const catSelect = document.getElementById('f-cat-rec');
+    if (searchInput) searchInput.value = '';
+    if (catSelect) catSelect.value = '';
+
+    renderLista(receitasCache, lista, (rec) => {
+      showDetail(rec, detail, {
+        onEdit: (r) => openModal(modalInstance, r),
+        onDelete: handleDelete,
+        onFT: gerarFichaTecnica,
+        onProd: gerarEtiquetaProducao
+      });
     });
-  });
 
-  if (receitasCache[0] && window.innerWidth >= 1024) {
-    lista.querySelector('.rec-item')?.click();
+    if (receitasCache[0] && window.innerWidth >= 1024) {
+      lista.querySelector('.rec-item')?.click();
+    }
+  } catch (err) {
+    console.error('❌ Erro ao carregar receitas:', err);
+    window.toast('❌ Erro ao carregar fichas');
   }
 }
 
@@ -83,12 +97,15 @@ function setupFilters() {
   const catSelect = document.getElementById('f-cat-rec');
 
   const filter = debounce(() => {
-    const termo = searchInput.value.toLowerCase();
+    const termo = searchInput.value.toLowerCase().trim();
     const cat = catSelect.value;
 
     const filtradas = receitasCache.filter(r => {
-      const matchTermo = !termo || r.nome.toLowerCase().includes(termo) || r.codigo?.toLowerCase().includes(termo);
-      const matchCat = !cat || r.categoria === cat;
+      const matchTermo =!termo || 
+        r.nome.toLowerCase().includes(termo) || 
+        r.codigo?.toLowerCase().includes(termo) ||
+        r.descricao?.toLowerCase().includes(termo);
+      const matchCat =!cat || r.categoria === cat;
       return matchTermo && matchCat;
     });
 
@@ -108,41 +125,70 @@ function setupFilters() {
 
 function setupBroadcast() {
   bc.onmessage = (e) => {
-    if (e.data === 'update-receitas') loadReceitas();
+    if (e.data === 'update-receitas') {
+      console.log('📡 Update recebido via BroadcastChannel');
+      loadReceitas();
+    }
   };
 }
 
 async function handleSubmit(e) {
   e.preventDefault();
   const form = e.target;
+  const submitBtn = form.querySelector('[type="submit"]');
   form.dataset.dirty = 'false';
 
   try {
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'A guardar...';
+    }
+
     const rec = collectModalData(modalInstance);
 
-    if (!rec.nome || !rec.categoria) {
-      window.toast('❌ Preenche os campos obrigatórios *');
+    if (!rec.nome?.trim() ||!rec.categoria) {
+      window.toast('❌ Preenche Nome e Categoria');
       return;
     }
 
-    if (!rec.ingredientes.length) {
+    if (!rec.ingredientes?.length) {
       window.toast('❌ Adiciona pelo menos 1 ingrediente');
       return;
     }
 
-    await addData('receitas', rec);
-    window.toast('✅ Ficha guardada!');
+    const isEdit =!!rec.id && receitasCache.some(r => r.id === rec.id);
+
+    if (isEdit) {
+      rec.updatedAt = new Date().toISOString();
+      await updateData('receitas', rec);
+      window.toast('✅ Ficha atualizada!');
+    } else {
+      rec.id = rec.id || Date.now().toString();
+      rec.createdAt = new Date().toISOString();
+      rec.updatedAt = new Date().toISOString();
+      await addData('receitas', rec);
+      window.toast('✅ Ficha guardada!');
+    }
+
+    // FIX PRINCIPAL: Recarrega lista ANTES de fechar modal
+    await loadReceitas();
+    
     closeModal(modalInstance);
     bc.postMessage('update-receitas');
-    await loadReceitas();
 
+    // Auto-seleciona a ficha guardada
     setTimeout(() => {
       document.querySelector(`.rec-item[data-id="${rec.id}"]`)?.click();
     }, 100);
 
   } catch (err) {
-    console.error(err);
-    window.toast('❌ Erro ao guardar');
+    console.error('❌ Erro ao guardar:', err);
+    window.toast('❌ Erro ao guardar ficha');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '💾 Guardar';
+    }
   }
 }
 
@@ -154,6 +200,7 @@ async function handleDelete(id) {
     window.toast('✅ Ficha eliminada');
     bc.postMessage('update-receitas');
     await loadReceitas();
+
     document.getElementById('detail-rec').innerHTML = `
       <div class="empty-state">
         <div class="emoji">🧁</div>
@@ -162,13 +209,18 @@ async function handleDelete(id) {
       </div>
     `;
   } catch (err) {
-    console.error(err);
+    console.error('❌ Erro ao eliminar:', err);
     window.toast('❌ Erro ao eliminar');
   }
 }
 
+// Marca formulário como "sujo" ao editar
 document.addEventListener('input', (e) => {
   if (e.target.closest('#f-rec')) {
     e.target.closest('#f-rec').dataset.dirty = 'true';
   }
 });
+
+// Debug: exporta pro window
+window.loadReceitas = loadReceitas;
+window.receitasCache = receitasCache;
