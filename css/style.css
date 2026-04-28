@@ -28,3 +28,7 @@ input,select,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radiu
 .modal-content{margin:20px auto;max-width:600px}
 .grid-receitas{display:grid;gap:10px}
 @media(min-width:600px){.grid-receitas{grid-template-columns:1fr 1fr}}
+/* === LAYOUT TABLET RECEITAS === */
+@media (min-width: 900px) {
+  #tab-receitas { padding: 0; }
+}
