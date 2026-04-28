@@ -1,5 +1,5 @@
-const CACHE_NAME = 'doce-gestao-v2'; // Muda versão sempre que alterar assets
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'docegestao-v2.1';
+const ASSETS = [
   './',
   './index.html',
   './css/style.css',
@@ -8,52 +8,33 @@ const ASSETS_TO_CACHE = [
   './js/modules/dashboard.js',
   './js/modules/receitas.js',
   './js/modules/agenda.js',
-  './js/modules/gestao.js'
+  './js/modules/gestao.js',
+  './manifest.json'
 ];
 
-// Instalação: cacheia tudo mas não quebra se 1 falhar
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      for (const asset of ASSETS_TO_CACHE) {
-        try {
-          await cache.add(asset);
-        } catch (err) {
-          console.warn('Falha ao cachear:', asset, err);
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      const fetchPromise = fetch(e.request).then(res => {
+        if (res && res.status === 200 && res.type === 'basic') {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
         }
-      }
-    })
-  );
-  self.skipWaiting(); // Ativa SW novo imediatamente
-});
-
-// Ativação: limpa caches antigos
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.filter(key => key !== CACHE_NAME)
-            .map(key => caches.delete(key))
-      );
-    })
-  );
-  self.clients.claim(); // Controla páginas abertas
-});
-
-// Fetch: Stale-While-Revalidate
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      const fetchPromise = fetch(event.request).then(networkRes => {
-        // Atualiza cache em background
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, networkRes.clone());
-        });
-        return networkRes;
-      }).catch(() => cached); // Se offline, usa cache
-      
+        return res;
+      }).catch(() => cached);
       return cached || fetchPromise;
     })
   );

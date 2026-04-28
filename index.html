@@ -1,32 +1,42 @@
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doce Gestão</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Doce Gestão</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#FF6B9D">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
 <body>
-    <header>
-        <h1>🧁 Doce Gestão</h1>
-    </header>
+  <header class="app-header">
+    <h1>🧁 Doce Gestão</h1>
+  </header>
 
-    <main>
-        <section id="tab-dashboard" class="tab-content active"></section>
-        <section id="tab-receitas" class="tab-content"></section>
-        <section id="tab-agenda" class="tab-content"></section>
-        <section id="tab-gestao" class="tab-content"></section>
-    </main>
+  <main id="app">
+    <section id="tab-dashboard" class="tab-content active"></section>
+    <section id="tab-receitas" class="tab-content"></section>
+    <section id="tab-agenda" class="tab-content"></section>
+    <section id="tab-gestao" class="tab-content"></section>
+  </main>
 
-    <nav class="bottom-nav">
-        <button class="nav-btn active" data-target="dashboard">🏠<br>Hoje</button>
-        <button class="nav-btn" data-target="receitas">📖<br>Receitas</button>
-        <button class="nav-btn" data-target="agenda">📅<br>Agenda</button>
-        <button class="nav-btn" data-target="gestao">📊<br>Gestão</button>
-    </nav>
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-target="dashboard">
+      <span class="ico">🏠</span><span class="lbl">Home</span>
+    </button>
+    <button class="nav-btn" data-target="receitas">
+      <span class="ico">📖</span><span class="lbl">Receitas</span>
+    </button>
+    <button class="nav-btn" data-target="agenda">
+      <span class="ico">📅</span><span class="lbl">Agenda</span>
+    </button>
+    <button class="nav-btn" data-target="gestao">
+      <span class="ico">⚙️</span><span class="lbl">Gestão</span>
+    </button>
+  </nav>
 
-    <script type="module" src="js/app.js"></script>
+  <div id="toast"></div>
+  <script type="module" src="js/app.js"></script>
 </body>
-</ht
-  ml>
+</html>
