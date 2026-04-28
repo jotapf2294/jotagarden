@@ -505,6 +505,7 @@ function mostrarEventosDia(data, eventos) {
 }
 
 function novaEncomenda() {
+function novaEncomenda() {
   const dialog = document.createElement('dialog');
   dialog.innerHTML = `
     <form method="dialog">
@@ -521,18 +522,22 @@ function novaEncomenda() {
         <span>Já está pago</span>
       </label>
       <menu>
-        <button type="button" value="cancel" class="btn">Cancelar</button>
+        <button type="button" class="btn btn-cancel">Cancelar</button>
         <button value="default" class="btn btn-primary">Guardar</button>
       </menu>
     </form>`;
   document.body.appendChild(dialog);
   dialog.showModal();
+  
+  // FIX: Event listener pro cancelar
+  dialog.querySelector('.btn-cancel').onclick = () => dialog.close();
+  
   dialog.addEventListener('close', async () => {
     if (dialog.returnValue === 'default') {
       const data = Object.fromEntries(new FormData(dialog.querySelector('form')));
       await addData('agenda', {
         id: Date.now().toString(),
-       ...data,
+        ...data,
         pago: data.pago === 'on',
         createdAt: new Date().toISOString()
       });
@@ -562,18 +567,22 @@ function editarEncomenda(e) {
         <span>Já está pago</span>
       </label>
       <menu>
-        <button type="button" value="cancel" class="btn">Cancelar</button>
+        <button type="button" class="btn btn-cancel">Cancelar</button>
         <button value="default" class="btn btn-primary">Guardar</button>
       </menu>
     </form>`;
   document.body.appendChild(dialog);
   dialog.showModal();
+  
+  // FIX: Event listener pro cancelar
+  dialog.querySelector('.btn-cancel').onclick = () => dialog.close();
+  
   dialog.addEventListener('close', async () => {
     if (dialog.returnValue === 'default') {
       const data = Object.fromEntries(new FormData(dialog.querySelector('form')));
       await addData('agenda', {
-       ...e,
-       ...data,
+        ...e,
+        ...data,
         pago: data.pago === 'on'
       });
       window.toast('✅ Encomenda atualizada!');
@@ -584,7 +593,7 @@ function editarEncomenda(e) {
     dialog.remove();
   });
 }
-
+  
 function novoTimer() {
   const dialog = document.createElement('dialog');
   dialog.innerHTML = `
@@ -619,37 +628,44 @@ function novoTimer() {
   });
 }
 
-function renderTimers() {
-  const container = document.getElementById('timers-container');
-  const timers = JSON.parse(localStorage.getItem('dg_timers') || '[]');
-
-  if (!timers.length) {
-    container.innerHTML = '<div class="empty-state"><div class="emoji">⏱️</div><p>Sem timers ativos</p></div>';
-    return;
-  }
-
-  container.innerHTML = timers.map(t => {
-    const restante = Math.max(0, t.fim - Date.now());
-    const min = Math.floor(restante / 60000);
-    const seg = Math.floor((restante % 60000) / 1000);
-    const terminado = restante === 0;
-
-    return `
-      <div class="timer-card ${terminado ? 'terminado' : ''}">
-        <div class="timer-emoji">${terminado ? '✅' : '⏱️'}</div>
-        <div class="timer-info">
-          <div class="timer-label">${t.label}</div>
-          <div class="timer-tempo ${terminado ? 'terminado' : ''}" data-fim="${t.fim}">
-            ${terminado ? 'Terminado!' : `${min}:${String(seg).padStart(2, '0')}`}
-          </div>
-          ${t.receita ? `<div style="font-size:.75rem;color:var(--text-secondary)">${t.receita}</div>` : ''}
-        </div>
-        <button class="btn btn-sm btn-danger" onclick="removerTimer(${t.id})">🗑️</button>
-      </div>
-    `;
-  }).join('');
+function novoTimer() {
+  const dialog = document.createElement('dialog');
+  dialog.innerHTML = `
+    <form method="dialog">
+      <h3>⏱️ Novo Timer</h3>
+      <label>Descrição *<input name="label" required placeholder="Cozedura bolo chocolate"></label>
+      <label>Minutos *<input type="number" name="minutos" required min="1" value="30"></label>
+      <label>Receita (opcional)<select name="receita"><option value="">Nenhuma</option>${receitasCache.map(r => `<option>${r.nome}</option>`).join('')}</select></label>
+      <menu>
+        <button type="button" class="btn btn-cancel">Cancelar</button>
+        <button value="default" class="btn btn-primary">Iniciar</button>
+      </menu>
+    </form>`;
+  document.body.appendChild(dialog);
+  dialog.showModal();
+  
+  // FIX: Event listener pro cancelar
+  dialog.querySelector('.btn-cancel').onclick = () => dialog.close();
+  
+  dialog.addEventListener('close', () => {
+    if (dialog.returnValue === 'default') {
+      const data = Object.fromEntries(new FormData(dialog.querySelector('form')));
+      const timers = JSON.parse(localStorage.getItem('dg_timers') || '[]');
+      timers.push({
+        id: Date.now(),
+        label: data.label,
+        receita: data.receita,
+        fim: Date.now() + parseInt(data.minutos) * 60000,
+        createdAt: new Date().toISOString()
+      });
+      localStorage.setItem('dg_timers', JSON.stringify(timers));
+      window.toast(`⏱️ Timer "${data.label}" iniciado!`);
+      renderTimers();
+    }
+    dialog.remove();
+  });
 }
-
+  
 window.removerTimer = (id) => {
   const timers = JSON.parse(localStorage.getItem('dg_timers') || '[]');
   const filtrados = timers.filter(t => t.id !== id);
