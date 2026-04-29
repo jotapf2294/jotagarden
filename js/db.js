@@ -118,3 +118,4 @@ export async function getById(store, id) {
 // Mantém compatibilidade com código antigo
 export const initDB = openDB;
 export const getDataById = getById;
+export const updateData = addData;
