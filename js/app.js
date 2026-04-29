@@ -1,74 +1,68 @@
 // js/app.js
 import { initDB } from './db.js';
 import { renderDashboard } from './modules/dashboard.js';
-import { renderGestao } from './modules/gestao.js'; // NOVO
+import { renderGestao } from './modules/gestao.js';
 
+/**
+ * Função Placeholder para módulos que ainda vamos construir
+ */
+const renderPlaceholder = (targetId) => {
+  const container = document.getElementById(`tab-${targetId}`);
+  if (container) {
+    const nomes = { receitas: 'Fichas Técnicas', agenda: 'Agenda' };
+    container.innerHTML = `<div style="padding: 20px; text-align: center; color: #666;">
+      <h3>🛠️ Próximo passo: ${nomes[targetId] || targetId}</h3>
+      <p>Este módulo será migrado a seguir.</p>
+    </div>`;
+  }
+};
+
+/**
+ * Maestro de Navegação (Router)
+ */
 const router = async (targetId) => {
+  console.log(`🧭 A navegar para: ${targetId}`);
+  
+  // 1. Atualizar UI: Esconder todas as abas e desativar botões
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   
+  // 2. Ativar a aba e o botão correto
   const targetTab = document.getElementById(`tab-${targetId}`);
   const targetBtn = document.querySelector(`[data-target="${targetId}"]`);
   
   if (targetTab) targetTab.classList.add('active');
   if (targetBtn) targetBtn.classList.add('active');
 
-  try {
-    if (targetId === 'dashboard') await renderDashboard();
-    if (targetId === 'gestao') await renderGestao(); // NOVO
-    if (targetId === 'receitas') document.getElementById('tab-receitas').innerHTML = '🛠️ Próximo passo: Fichas Técnicas';
-    if (targetId === 'agenda') document.getElementById('tab-agenda').innerHTML = '📅 Próximo passo: Agenda';
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-document.addEventListener('DOMContentLoaded', async () => {
-  await initDB();
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.onclick = () => router(btn.dataset.target);
-  });
-  router('dashboard');
-});
-
-// Controlador de Navegação
-const router = async (targetId) => {
-  console.log(`🧭 A navegar para: ${targetId}`);
-  
-  // 1. Atualizar UI dos botões e abas
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  
-  document.getElementById(`tab-${targetId}`)?.classList.add('active');
-  document.querySelector(`[data-target="${targetId}"]`)?.classList.add('active');
-
-  // 2. Carregar o módulo correspondente
-  const container = document.getElementById(`tab-${targetId}`);
-  
+  // 3. Renderizar o conteúdo dinâmico
   try {
     if (targetId === 'dashboard') {
       await renderDashboard();
+    } else if (targetId === 'gestao') {
+      await renderGestao();
     } else {
       renderPlaceholder(targetId);
     }
   } catch (err) {
-    console.error(`💥 Erro fatal ao renderizar ${targetId}:`, err);
-    if (container) {
-      container.innerHTML = `<div class="sys-error">Falha ao carregar aba.<br><small>${err.message}</small></div>`;
+    console.error(`💥 Erro ao carregar aba ${targetId}:`, err);
+    if (targetTab) {
+      targetTab.innerHTML = `<div style="color:red; padding:20px;">Erro: ${err.message}</div>`;
     }
   }
 };
 
-// Arranque Global (Bootstrap)
+/**
+ * Inicialização do Sistema
+ */
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('⚡ Iniciando Sistema...');
+  console.log('⚡ Iniciando Doce Gestão...');
 
   try {
-    // Garante que a DB liga antes de mostrar qualquer ecrã
+    // Inicializa a BD antes de tudo
     await initDB();
     console.log('✅ Base de Dados Operacional');
-    
-    // Configura os cliques no menu
+
+    // Configura os eventos de clique nos botões da nav
     document.querySelectorAll('.nav-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const target = e.currentTarget.getAttribute('data-target');
@@ -76,16 +70,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    // Arranca o Dashboard por defeito
+    // Carrega o dashboard inicial
     await router('dashboard');
 
   } catch (error) {
-    // Se a app morrer na raiz, mostramos um ecrã de pânico
-    document.getElementById('app-main').innerHTML = `
-      <div class="sys-error" style="margin: 40px;">
-        <h3>🚨 Falha Crítica no Arranque</h3>
-        <p>${error}</p>
-      </div>
-    `;
+    console.error('🚨 Erro fatal no arranque:', error);
+    document.body.innerHTML = `<div style="padding:40px; color:red;">
+      <h2>🚨 Erro Crítico</h2>
+      <p>${error}</p>
+    </div>`;
   }
 });
