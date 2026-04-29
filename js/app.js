@@ -1,59 +1,68 @@
 // js/app.js
 import { initDB } from './db.js';
 import { renderDashboard } from './modules/dashboard.js';
-import { renderAgenda } from './modules/agenda.js';
-import { renderGestao } from './modules/gestao.js';
-import { renderReceitas } from './modules/receitas.js';
 
-console.log('🚀 Iniciando Doce Gestão...');
+// Função para simular o "renderReceitas" enquanto não o crias de raiz
+const renderReceitas = async () => {
+  const container = document.getElementById('tab-receitas');
+  if (container) {
+    container.innerHTML = `<h2>📖 Área de Receitas (A funcionar)</h2>`;
+  }
+};
 
-// Função para forçar a renderização mesmo com erro
-async function forceRender(targetId) {
-    const container = document.getElementById(`tab-${targetId}`);
-    if (!container) return;
+// Gestor de Abas Blindado
+const switchTab = async (targetId) => {
+  // Esconde todas
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
 
-    try {
-        if (targetId === 'dashboard') await renderDashboard();
-        if (targetId === 'receitas') await renderReceitas();
-        if (targetId === 'agenda') await renderAgenda();
-        if (targetId === 'gestao') await renderGestao();
-        console.log(`✅ ${targetId} carregado`);
-    } catch (err) {
-        console.error("Erro ao renderizar:", err);
-        container.innerHTML = `<div style="padding:20px; color:red;">
-            <h3>⚠️ Erro no Módulo ${targetId}</h3>
-            <p>${err.message}</p>
-        </div>`;
+  // Mostra a selecionada
+  const targetTab = document.getElementById(`tab-${targetId}`);
+  const targetBtn = document.querySelector(`[data-target="${targetId}"]`);
+  
+  if (targetTab) targetTab.classList.add('active');
+  if (targetBtn) targetBtn.classList.add('active');
+
+  // Renderiza com try/catch para evitar falhas silenciosas
+  try {
+    if (targetId === 'dashboard') await renderDashboard();
+    if (targetId === 'receitas') await renderReceitas();
+  } catch (err) {
+    if (targetTab) {
+      targetTab.innerHTML = `<div class="error-box">Erro ao carregar ${targetId}: ${err.message}</div>`;
     }
-}
+  }
+};
 
+// Arranque da Aplicação
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Tenta abrir a DB primeiro
-    try {
-        await initDB();
-        console.log('✅ Base de Dados aberta');
-    } catch (e) {
-        console.error('❌ Falha na DB:', e);
-    }
+  try {
+    // 1. Inicia a DB antes de qualquer outra coisa
+    await initDB();
+    console.log("✅ DB Iniciada com sucesso");
 
-    // 2. Configura os botões de navegação
-    const buttons = document.querySelectorAll('[data-target]');
-    buttons.forEach(btn => {
-        btn.onclick = async () => {
-            const target = btn.dataset.target;
-            
-            // UI: Troca as abas
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-btn, .nav-item').forEach(b => b.classList.remove('active'));
-            
-            document.getElementById(`tab-${target}`).classList.add('active');
-            btn.classList.add('active');
-            
-            await forceRender(target);
-        };
+    // 2. Configura os cliques dos botões
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget.getAttribute('data-target');
+        switchTab(target);
+      });
     });
 
-    // 3. AUTO-START: Força o Dashboard a abrir
-    console.log('🎯 Chamando dashboard inicial...');
-    await forceRender('dashboard');
+    // 3. Força a renderização inicial do Dashboard
+    await switchTab('dashboard');
+
+  } catch (error) {
+    // Se a app morrer no arranque, avisa o utilizador no HTML
+    document.body.innerHTML = `
+      <div style="padding: 40px;">
+        <div class="error-box">
+          <h2>❌ Falha Fatal no Arranque</h2>
+          <p>${error}</p>
+          <p>Verifica a consola (F12) para mais detalhes.</p>
+        </div>
+      </div>
+    `;
+    console.error("Erro fatal no app.js:", error);
+  }
 });
