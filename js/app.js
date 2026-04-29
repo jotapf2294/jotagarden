@@ -1,8 +1,8 @@
-import { initDB } from './db.js';
-import { renderDashboard } from './modules/dashboard.js';
-import { renderAgenda } from './modules/agenda.js';
-import { renderGestao } from './modules/gestao.js';
-import { renderReceitas } from './modules/receitas.js';
+import { initDB } from './js/db.js';
+import { renderDashboard } from './js/modules/dashboard.js';
+import { renderAgenda } from './js/modules/agenda.js';
+import { renderGestao } from './js/modules/gestao.js';
+import { renderReceitas } from './js/modules/receitas.js';
 
 async function switchTab(targetId) {
   console.log("A tentar carregar aba:", targetId);
