@@ -1,3 +1,4 @@
+alert('O JS arrancou!');
 // js/app.js
 import { initDB } from './db.js';
 import { renderDashboard } from './modules/dashboard.js';
