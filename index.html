@@ -4,44 +4,164 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Doce Gestão - Babe's Bakery</title>
-  <meta name="theme-color" content="#e91e63">
   
   <style>
-    /* CSS Base de Sobrevivência (depois podes ligar o teu style.css completo) */
-    :root { --primary: #e91e63; --bg: #f4f4f5; --text: #333; --card: #fff; }
-    body { font-family: system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
-    .app-header { background: var(--card); padding: 15px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
-    .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -1px 3px rgba(0,0,0,0.1); }
-    .nav-btn { background: none; border: none; font-size: 1rem; color: #666; cursor: pointer; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .nav-btn.active { color: var(--primary); font-weight: bold; }
-    .tab-content { display: none; padding: 20px; padding-bottom: 80px; }
+    :root {
+      --primary: #e91e63;
+      --primary-dark: #c2185b;
+      --bg: #f8f9fa;
+      --card: #ffffff;
+      --text: #2d3436;
+      --text-light: #636e72;
+      --border: #dfe6e9;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* Layout para Desktop */
+    .app-container {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .app-header {
+      display: none; /* Escondido no PC, visível no Mobile */
+      background: var(--card);
+      padding: 15px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+
+    /* Navegação Lateral (PC) */
+    .sidebar {
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sidebar-brand {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--primary);
+      margin-bottom: 30px;
+      padding-left: 10px;
+    }
+
+    /* Bottom Nav (Mobile) */
+    .bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+      z-index: 100;
+    }
+
+    /* Botões de Navegação */
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 15px;
+      border: none;
+      background: none;
+      color: var(--text-light);
+      cursor: pointer;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      transition: all 0.2s;
+      width: 100%;
+      text-align: left;
+    }
+
+    .nav-btn.active {
+      background: #fce4ec;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .nav-btn i { font-size: 1.2rem; }
+
+    /* Conteúdo Principal */
+    main {
+      padding: 30px;
+      max-width: 1000px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
     .tab-content.active { display: block; }
-    .sys-error { background: #fee2e2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px; border-radius: 4px; color: #991b1b; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsividade (Mobile) */
+    @media (max-width: 768px) {
+      .app-container { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .app-header { display: block; }
+      .bottom-nav { display: flex; justify-content: space-around; }
+      .nav-btn { flex-direction: column; gap: 4px; font-size: 0.75rem; padding: 5px; width: auto; }
+      main { padding: 20px; padding-bottom: 100px; }
+    }
   </style>
 </head>
 <body>
 
-  <header class="app-header">
-    <h1 style="margin: 0; font-size: 1.2rem;">🧁 Doce Gestão</h1>
-  </header>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-brand">🧁 Doce Gestão</div>
+      <button class="nav-btn active" data-target="dashboard">📊 Dashboard</button>
+      <button class="nav-btn" data-target="receitas">📖 Receitas</button>
+      <button class="nav-btn" data-target="agenda">📅 Agenda</button>
+      <button class="nav-btn" data-target="gestao">⚙️ Gestão</button>
+    </aside>
 
-  <main id="app-main">
-    <section id="tab-dashboard" class="tab-content active">
-      <div style="text-align:center; padding: 40px; color: #666;">⏳ A arrancar o motor...</div>
-    </section>
-    <section id="tab-receitas" class="tab-content"></section>
-    <section id="tab-agenda" class="tab-content"></section>
-    <section id="tab-gestao" class="tab-content"></section>
-  </main>
+    <div class="main-wrapper">
+      <header class="app-header">
+        <strong style="color: var(--primary);">🧁 Doce Gestão</strong>
+      </header>
+
+      <main id="app-main">
+        <section id="tab-dashboard" class="tab-content active"></section>
+        <section id="tab-receitas" class="tab-content"></section>
+        <section id="tab-agenda" class="tab-content"></section>
+        <section id="tab-gestao" class="tab-content"></section>
+      </main>
+    </div>
+  </div>
 
   <nav class="bottom-nav">
-    <button class="nav-btn active" data-target="dashboard"><span>📊</span> Dashboard</button>
-    <button class="nav-btn" data-target="receitas"><span>📖</span> Receitas</button>
-    <button class="nav-btn" data-target="agenda"><span>📅</span> Agenda</button>
-    <button class="nav-btn" data-target="gestao"><span>⚙️</span> Gestão</button>
+    <button class="nav-btn active" data-target="dashboard"><span>📊</span><span>Dash</span></button>
+    <button class="nav-btn" data-target="receitas"><span>📖</span><span>Receitas</span></button>
+    <button class="nav-btn" data-target="agenda"><span>📅</span><span>Agenda</span></button>
+    <button class="nav-btn" data-target="gestao"><span>⚙️</span><span>Gestão</span></button>
   </nav>
 
   <script type="module" src="js/app.js"></script>
-
 </body>
 </html>
