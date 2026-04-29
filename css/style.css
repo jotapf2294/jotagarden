@@ -560,6 +560,13 @@ dialog menu {
   .hide-desktop { display: none !important }
 }
 
+@media print {
+    .no-print, .sidebar, .bottom-nav, .app-header { display: none !important; }
+    main { padding: 0 !important; }
+    body { background: white; }
+    .ficha-tecnica-print { border: none !important; margin: 0 !important; }
+}
+
 /* Fix para iOS Safari */
 @supports (-webkit-touch-callout: none) {
   .app-header {
