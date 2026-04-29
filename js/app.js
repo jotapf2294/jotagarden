@@ -2,18 +2,18 @@
 import { initDB } from './db.js';
 import { renderDashboard } from './modules/dashboard.js';
 import { renderGestao } from './modules/gestao.js';
+import { renderReceitas } from './modules/receitas.js'; // ADICIONADO
 
-/**
- * Função Placeholder para módulos que ainda vamos construir
- */
-const renderPlaceholder = (targetId) => {
-  const container = document.getElementById(`tab-${targetId}`);
-  if (container) {
-    const nomes = { receitas: 'Fichas Técnicas', agenda: 'Agenda' };
-    container.innerHTML = `<div style="padding: 20px; text-align: center; color: #666;">
-      <h3>🛠️ Próximo passo: ${nomes[targetId] || targetId}</h3>
-      <p>Este módulo será migrado a seguir.</p>
-    </div>`;
+const router = async (targetId) => {
+  // ... (mesma lógica de UI de antes) ...
+
+  try {
+    if (targetId === 'dashboard') await renderDashboard();
+    if (targetId === 'gestao') await renderGestao();
+    if (targetId === 'receitas') await renderReceitas(); // ADICIONADO
+    if (targetId === 'agenda') document.getElementById('tab-agenda').innerHTML = '📅 Próximo passo: Agenda';
+  } catch (err) {
+    console.error(err);
   }
 };
 
