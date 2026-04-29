@@ -3,15 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0969da" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="Gestão de receitas HACCP, agenda e custos para pastelaria">
-  
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Doce Gestão">
-  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
-  
   <title>Doce Gestão - Babe's Bakery</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/style.css">
@@ -20,71 +11,41 @@
   <div class="app-container">
     <header class="app-header">
       <div class="app-header-content">
-        <h1>🧁 <span class="hide-mobile">Doce Gestão</span></h1>
-        <div class="header-actions">
-          <button class="theme-toggle" id="theme-toggle" aria-label="Alternar tema">
-            <span id="theme-icon">🌙</span>
-          </button>
-        </div>
+        <h1>🧁 Doce Gestão</h1>
+        <button class="theme-toggle" id="theme-toggle">
+          <span id="theme-icon">🌙</span>
+        </button>
       </div>
     </header>
 
     <div class="app-main">
-      <nav class="desktop-nav" role="navigation" aria-label="Navegação principal">
+      <nav class="desktop-nav">
         <ul class="nav-list">
-          <li>
-            <button id="btn-dashboard-desktop" class="nav-item active" data-target="dashboard">
-              <span class="ico">📊</span>
-              <span class="nav-label">Dashboard</span>
-            </button>
-          </li>
-          <li>
-            <button id="btn-receitas-desktop" class="nav-item" data-target="receitas">
-              <span class="ico">📖</span>
-              <span class="nav-label">Receitas</span>
-            </button>
-          </li>
-          <li>
-            <button id="btn-agenda-desktop" class="nav-item" data-target="agenda">
-              <span class="ico">📅</span>
-              <span class="nav-label">Agenda</span>
-            </button>
-          </li>
-          <li>
-            <button id="btn-gestao-desktop" class="nav-item" data-target="gestao">
-              <span class="ico">⚙️</span>
-              <span class="nav-label">Gestão</span>
-            </button>
-          </li>
+          <li><button class="nav-item active" data-target="dashboard">📊 Dashboard</button></li>
+          <li><button class="nav-item" data-target="receitas">📖 Receitas</button></li>
+          <li><button class="nav-item" data-target="agenda">📅 Agenda</button></li>
+          <li><button class="nav-item" data-target="gestao">⚙️ Gestão</button></li>
         </ul>
       </nav>
 
       <main>
-        <section id="tab-dashboard" class="tab-content active" role="tabpanel"></section>
-        <section id="tab-receitas" class="tab-content" role="tabpanel"></section>
-        <section id="tab-agenda" class="tab-content" role="tabpanel"></section>
-        <section id="tab-gestao" class="tab-content" role="tabpanel"></section>
+        <section id="tab-dashboard" class="tab-content active"></section>
+        <section id="tab-receitas" class="tab-content"></section>
+        <section id="tab-agenda" class="tab-content"></section>
+        <section id="tab-gestao" class="tab-content"></section>
       </main>
     </div>
   </div>
 
-  <nav class="bottom-nav" role="tablist" aria-label="Navegação principal">
-    <button id="btn-dashboard" class="nav-btn active" data-target="dashboard" role="tab" aria-selected="true">
-      <span class="ico">📊</span><span>Dashboard</span>
-    </button>
-    <button id="btn-receitas" class="nav-btn" data-target="receitas" role="tab" aria-selected="false">
-      <span class="ico">📖</span><span>Receitas</span>
-    </button>
-    <button id="btn-agenda" class="nav-btn" data-target="agenda" role="tab" aria-selected="false">
-      <span class="ico">📅</span><span>Agenda</span>
-    </button>
-    <button id="btn-gestao" class="nav-btn" data-target="gestao" role="tab" aria-selected="false">
-      <span class="ico">⚙️</span><span>Gestão</span>
-    </button>
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-target="dashboard">📊 Dashboard</button>
+    <button class="nav-btn" data-target="receitas">📖 Receitas</button>
+    <button class="nav-btn" data-target="agenda">📅 Agenda</button>
+    <button class="nav-btn" data-target="gestao">⚙️ Gestão</button>
   </nav>
 
-  <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-  
-  <script type="module" src="./js/app.js"></script>
+  <div id="toast"></div>
+
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
