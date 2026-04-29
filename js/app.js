@@ -1,7 +1,10 @@
+// js/app.js
+import { initDB } from './db.js';
 import { renderDashboard } from './modules/dashboard.js';
-import { renderReceitas } from './modules/receitas/index.js';
 import { renderAgenda } from './modules/agenda.js';
 import { renderGestao } from './modules/gestao.js';
+import { renderReceitas } from './modules/receitas.js'; // O tal ficheiro que faz a ponte
+
 
 console.log('🚀 Doce Gestão v3.5 iniciando...');
 
