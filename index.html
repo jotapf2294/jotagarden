@@ -2,32 +2,46 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Doce Gestão - Base</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Doce Gestão - Babe's Bakery</title>
+  <meta name="theme-color" content="#e91e63">
+  
   <style>
-    body { font-family: system-ui, sans-serif; margin: 0; background: #f4f4f5; }
-    .nav-list { display: flex; gap: 10px; background: #fff; padding: 10px; list-style: none; margin: 0; border-bottom: 1px solid #ddd; }
-    .nav-btn { padding: 10px 20px; border: none; background: #eee; cursor: pointer; border-radius: 6px; }
-    .nav-btn.active { background: #0969da; color: white; }
-    .tab-content { display: none; padding: 20px; }
+    /* CSS Base de Sobrevivência (depois podes ligar o teu style.css completo) */
+    :root { --primary: #e91e63; --bg: #f4f4f5; --text: #333; --card: #fff; }
+    body { font-family: system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+    .app-header { background: var(--card); padding: 15px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
+    .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -1px 3px rgba(0,0,0,0.1); }
+    .nav-btn { background: none; border: none; font-size: 1rem; color: #666; cursor: pointer; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .nav-btn.active { color: var(--primary); font-weight: bold; }
+    .tab-content { display: none; padding: 20px; padding-bottom: 80px; }
     .tab-content.active { display: block; }
-    .error-box { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 15px; border-radius: 8px; }
+    .sys-error { background: #fee2e2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px; border-radius: 4px; color: #991b1b; }
   </style>
 </head>
 <body>
 
-  <nav>
-    <ul class="nav-list">
-      <li><button class="nav-btn active" data-target="dashboard">Dashboard</button></li>
-      <li><button class="nav-btn" data-target="receitas">Receitas</button></li>
-    </ul>
-  </nav>
+  <header class="app-header">
+    <h1 style="margin: 0; font-size: 1.2rem;">🧁 Doce Gestão</h1>
+  </header>
 
-  <main>
-    <section id="tab-dashboard" class="tab-content active">A carregar dashboard...</section>
-    <section id="tab-receitas" class="tab-content">A carregar receitas...</section>
+  <main id="app-main">
+    <section id="tab-dashboard" class="tab-content active">
+      <div style="text-align:center; padding: 40px; color: #666;">⏳ A arrancar o motor...</div>
+    </section>
+    <section id="tab-receitas" class="tab-content"></section>
+    <section id="tab-agenda" class="tab-content"></section>
+    <section id="tab-gestao" class="tab-content"></section>
   </main>
 
-  <script type="module" src="./js/app.js"></script>
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-target="dashboard"><span>📊</span> Dashboard</button>
+    <button class="nav-btn" data-target="receitas"><span>📖</span> Receitas</button>
+    <button class="nav-btn" data-target="agenda"><span>📅</span> Agenda</button>
+    <button class="nav-btn" data-target="gestao"><span>⚙️</span> Gestão</button>
+  </nav>
+
+  <script type="module" src="js/app.js"></script>
+
 </body>
 </html>
