@@ -1,1 +1,2 @@
-export { renderReceitas } from './receitas/index.js';
+import { renderReceitas } from './receitas/index.js';
+export { renderReceitas };
