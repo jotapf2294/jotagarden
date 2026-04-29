@@ -2,50 +2,32 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Doce Gestão - Babe's Bakery</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doce Gestão - Base</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #f4f4f5; }
+    .nav-list { display: flex; gap: 10px; background: #fff; padding: 10px; list-style: none; margin: 0; border-bottom: 1px solid #ddd; }
+    .nav-btn { padding: 10px 20px; border: none; background: #eee; cursor: pointer; border-radius: 6px; }
+    .nav-btn.active { background: #0969da; color: white; }
+    .tab-content { display: none; padding: 20px; }
+    .tab-content.active { display: block; }
+    .error-box { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 15px; border-radius: 8px; }
+  </style>
 </head>
 <body>
-  <div class="app-container">
-    <header class="app-header">
-      <div class="app-header-content">
-        <h1>🧁 Doce Gestão</h1>
-        <button class="theme-toggle" id="theme-toggle">
-          <span id="theme-icon">🌙</span>
-        </button>
-      </div>
-    </header>
 
-    <div class="app-main">
-      <nav class="desktop-nav">
-        <ul class="nav-list">
-          <li><button class="nav-item active" data-target="dashboard">📊 Dashboard</button></li>
-          <li><button class="nav-item" data-target="receitas">📖 Receitas</button></li>
-          <li><button class="nav-item" data-target="agenda">📅 Agenda</button></li>
-          <li><button class="nav-item" data-target="gestao">⚙️ Gestão</button></li>
-        </ul>
-      </nav>
-
-      <main>
-        <section id="tab-dashboard" class="tab-content active"></section>
-        <section id="tab-receitas" class="tab-content"></section>
-        <section id="tab-agenda" class="tab-content"></section>
-        <section id="tab-gestao" class="tab-content"></section>
-      </main>
-    </div>
-  </div>
-
-  <nav class="bottom-nav">
-    <button class="nav-btn active" data-target="dashboard">📊 Dashboard</button>
-    <button class="nav-btn" data-target="receitas">📖 Receitas</button>
-    <button class="nav-btn" data-target="agenda">📅 Agenda</button>
-    <button class="nav-btn" data-target="gestao">⚙️ Gestão</button>
+  <nav>
+    <ul class="nav-list">
+      <li><button class="nav-btn active" data-target="dashboard">Dashboard</button></li>
+      <li><button class="nav-btn" data-target="receitas">Receitas</button></li>
+    </ul>
   </nav>
 
-  <div id="toast"></div>
+  <main>
+    <section id="tab-dashboard" class="tab-content active">A carregar dashboard...</section>
+    <section id="tab-receitas" class="tab-content">A carregar receitas...</section>
+  </main>
 
-  <script type="module" src="js/app.js?v=123"></script>
+  <script type="module" src="./js/app.js"></script>
 </body>
 </html>
