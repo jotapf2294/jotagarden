@@ -2,7 +2,7 @@
 import { initDB } from './db.js';
 import { renderDashboard } from './modules/dashboard.js';
 import { renderGestao } from './modules/gestao.js';
-import { renderReceitas } from './modules/receitas.js';
+import { renderReceitas } from './modules/receitas/index.js';
 
 /**
  * Renderiza um aviso para abas ainda não construídas
