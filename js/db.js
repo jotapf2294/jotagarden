@@ -16,7 +16,18 @@ export const initDB = () => {
   });
 };
 
-// Ler todos
+// NOVO: Buscar apenas um item pelo ID (Necessário para Editar)
+export const getById = async (storeName, id) => {
+  const db = await initDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const req = store.get(id);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+};
+
 export const getAll = async (storeName) => {
   const db = await initDB();
   return new Promise((resolve) => {
@@ -27,7 +38,6 @@ export const getAll = async (storeName) => {
   });
 };
 
-// Guardar ou Atualizar
 export const save = async (storeName, data) => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
@@ -38,7 +48,6 @@ export const save = async (storeName, data) => {
   });
 };
 
-// Apagar
 export const remove = async (storeName, id) => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
