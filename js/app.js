@@ -2,67 +2,67 @@
 import { initDB } from './db.js';
 import { renderDashboard } from './modules/dashboard.js';
 
-// Função para simular o "renderReceitas" enquanto não o crias de raiz
-const renderReceitas = async () => {
-  const container = document.getElementById('tab-receitas');
-  if (container) {
-    container.innerHTML = `<h2>📖 Área de Receitas (A funcionar)</h2>`;
-  }
+// Função placeholder para as outras abas enquanto não as criamos
+const renderPlaceholder = (nomeAba) => {
+  const el = document.getElementById(`tab-${nomeAba}`);
+  if (el) el.innerHTML = `<div style="padding: 20px; text-align: center; color: #666;">Em construção: Módulo ${nomeAba.toUpperCase()} 🛠️</div>`;
 };
 
-// Gestor de Abas Blindado
-const switchTab = async (targetId) => {
-  // Esconde todas
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-
-  // Mostra a selecionada
-  const targetTab = document.getElementById(`tab-${targetId}`);
-  const targetBtn = document.querySelector(`[data-target="${targetId}"]`);
+// Controlador de Navegação
+const router = async (targetId) => {
+  console.log(`🧭 A navegar para: ${targetId}`);
   
-  if (targetTab) targetTab.classList.add('active');
-  if (targetBtn) targetBtn.classList.add('active');
+  // 1. Atualizar UI dos botões e abas
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  
+  document.getElementById(`tab-${targetId}`)?.classList.add('active');
+  document.querySelector(`[data-target="${targetId}"]`)?.classList.add('active');
 
-  // Renderiza com try/catch para evitar falhas silenciosas
+  // 2. Carregar o módulo correspondente
+  const container = document.getElementById(`tab-${targetId}`);
+  
   try {
-    if (targetId === 'dashboard') await renderDashboard();
-    if (targetId === 'receitas') await renderReceitas();
+    if (targetId === 'dashboard') {
+      await renderDashboard();
+    } else {
+      renderPlaceholder(targetId);
+    }
   } catch (err) {
-    if (targetTab) {
-      targetTab.innerHTML = `<div class="error-box">Erro ao carregar ${targetId}: ${err.message}</div>`;
+    console.error(`💥 Erro fatal ao renderizar ${targetId}:`, err);
+    if (container) {
+      container.innerHTML = `<div class="sys-error">Falha ao carregar aba.<br><small>${err.message}</small></div>`;
     }
   }
 };
 
-// Arranque da Aplicação
+// Arranque Global (Bootstrap)
 document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    // 1. Inicia a DB antes de qualquer outra coisa
-    await initDB();
-    console.log("✅ DB Iniciada com sucesso");
+  console.log('⚡ Iniciando Sistema...');
 
-    // 2. Configura os cliques dos botões
+  try {
+    // Garante que a DB liga antes de mostrar qualquer ecrã
+    await initDB();
+    console.log('✅ Base de Dados Operacional');
+    
+    // Configura os cliques no menu
     document.querySelectorAll('.nav-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const target = e.currentTarget.getAttribute('data-target');
-        switchTab(target);
+        router(target);
       });
     });
 
-    // 3. Força a renderização inicial do Dashboard
-    await switchTab('dashboard');
+    // Arranca o Dashboard por defeito
+    await router('dashboard');
 
   } catch (error) {
-    // Se a app morrer no arranque, avisa o utilizador no HTML
-    document.body.innerHTML = `
-      <div style="padding: 40px;">
-        <div class="error-box">
-          <h2>❌ Falha Fatal no Arranque</h2>
-          <p>${error}</p>
-          <p>Verifica a consola (F12) para mais detalhes.</p>
-        </div>
+    // Se a app morrer na raiz, mostramos um ecrã de pânico
+    document.getElementById('app-main').innerHTML = `
+      <div class="sys-error" style="margin: 40px;">
+        <h3>🚨 Falha Crítica no Arranque</h3>
+        <p>${error}</p>
       </div>
     `;
-    console.error("Erro fatal no app.js:", error);
   }
 });
