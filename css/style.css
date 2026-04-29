@@ -560,11 +560,25 @@ dialog menu {
   .hide-desktop { display: none !important }
 }
 
+@media screen {
+    .only-print { display: none; }
+}
+
 @media print {
-    .no-print, .sidebar, .bottom-nav, .app-header { display: none !important; }
-    main { padding: 0 !important; }
-    body { background: white; }
-    .ficha-tecnica-print { border: none !important; margin: 0 !important; }
+    /* Esconde tudo o que não é a ficha técnica */
+    .sidebar, .bottom-nav, .app-header, main, .no-print, #details-form, #search-receita, #lista-receitas-cards {
+        display: none !important;
+    }
+    
+    .only-print {
+        display: block !important;
+        width: 100%;
+    }
+
+    body { background: white !important; }
+    
+    /* Força quebra de página se tiveres muitas fichas */
+    .ficha-producao { page-break-after: always; }
 }
 
 /* Fix para iOS Safari */
