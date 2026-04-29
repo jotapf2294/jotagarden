@@ -97,4 +97,3 @@ export const renderReceitas = async () => {
         };
     });
 };
-
