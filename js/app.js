@@ -1,12 +1,35 @@
 // js/app.js
 import { initDB } from './db.js';
 import { renderDashboard } from './modules/dashboard.js';
+import { renderGestao } from './modules/gestao.js'; // NOVO
 
-// Função placeholder para as outras abas enquanto não as criamos
-const renderPlaceholder = (nomeAba) => {
-  const el = document.getElementById(`tab-${nomeAba}`);
-  if (el) el.innerHTML = `<div style="padding: 20px; text-align: center; color: #666;">Em construção: Módulo ${nomeAba.toUpperCase()} 🛠️</div>`;
+const router = async (targetId) => {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  
+  const targetTab = document.getElementById(`tab-${targetId}`);
+  const targetBtn = document.querySelector(`[data-target="${targetId}"]`);
+  
+  if (targetTab) targetTab.classList.add('active');
+  if (targetBtn) targetBtn.classList.add('active');
+
+  try {
+    if (targetId === 'dashboard') await renderDashboard();
+    if (targetId === 'gestao') await renderGestao(); // NOVO
+    if (targetId === 'receitas') document.getElementById('tab-receitas').innerHTML = '🛠️ Próximo passo: Fichas Técnicas';
+    if (targetId === 'agenda') document.getElementById('tab-agenda').innerHTML = '📅 Próximo passo: Agenda';
+  } catch (err) {
+    console.error(err);
+  }
 };
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await initDB();
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.onclick = () => router(btn.dataset.target);
+  });
+  router('dashboard');
+});
 
 // Controlador de Navegação
 const router = async (targetId) => {
