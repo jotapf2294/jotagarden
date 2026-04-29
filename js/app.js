@@ -1,48 +1,59 @@
-import { initDB } from './js/db.js';
-import { renderDashboard } from './js/modules/dashboard.js';
-import { renderAgenda } from './js/modules/agenda.js';
-import { renderGestao } from './js/modules/gestao.js';
-import { renderReceitas } from './js/modules/receitas.js';
+// js/app.js
+import { initDB } from './db.js';
+import { renderDashboard } from './modules/dashboard.js';
+import { renderAgenda } from './modules/agenda.js';
+import { renderGestao } from './modules/gestao.js';
+import { renderReceitas } from './modules/receitas.js';
 
-async function switchTab(targetId) {
-  console.log("A tentar carregar aba:", targetId);
-  const tabs = document.querySelectorAll('.tab-content');
-  const buttons = document.querySelectorAll('.nav-btn, .nav-item');
-  
-  tabs.forEach(t => t.classList.remove('active'));
-  buttons.forEach(b => b.classList.remove('active'));
+console.log('🚀 Iniciando Doce Gestão...');
 
-  const targetTab = document.getElementById(`tab-${targetId}`);
-  if (!targetTab) {
-    alert("ERRO: Não encontrei no HTML o ID: tab-" + targetId);
-    return;
-  }
+// Função para forçar a renderização mesmo com erro
+async function forceRender(targetId) {
+    const container = document.getElementById(`tab-${targetId}`);
+    if (!container) return;
 
-  targetTab.classList.add('active');
-  document.querySelectorAll(`[data-target="${targetId}"]`).forEach(b => b.classList.add('active'));
-  
-  try {
-    if (targetId === 'dashboard') await renderDashboard();
-    if (targetId === 'receitas') await renderReceitas();
-    if (targetId === 'agenda') await renderAgenda();
-    if (targetId === 'gestao') await renderGestao();
-    console.log("Renderizado com sucesso:", targetId);
-  } catch (err) {
-    console.error(err);
-    targetTab.innerHTML = `<div style="color:red; padding:20px;">Erro ao carregar módulo: ${err.message}</div>`;
-  }
+    try {
+        if (targetId === 'dashboard') await renderDashboard();
+        if (targetId === 'receitas') await renderReceitas();
+        if (targetId === 'agenda') await renderAgenda();
+        if (targetId === 'gestao') await renderGestao();
+        console.log(`✅ ${targetId} carregado`);
+    } catch (err) {
+        console.error("Erro ao renderizar:", err);
+        container.innerHTML = `<div style="padding:20px; color:red;">
+            <h3>⚠️ Erro no Módulo ${targetId}</h3>
+            <p>${err.message}</p>
+        </div>`;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    await initDB();
-    // Forçar clique inicial
-    switchTab('dashboard');
-  } catch (e) {
-    alert("Falha no arranque: " + e);
-  }
+    // 1. Tenta abrir a DB primeiro
+    try {
+        await initDB();
+        console.log('✅ Base de Dados aberta');
+    } catch (e) {
+        console.error('❌ Falha na DB:', e);
+    }
 
-  document.querySelectorAll('[data-target]').forEach(btn => {
-    btn.onclick = () => switchTab(btn.dataset.target);
-  });
+    // 2. Configura os botões de navegação
+    const buttons = document.querySelectorAll('[data-target]');
+    buttons.forEach(btn => {
+        btn.onclick = async () => {
+            const target = btn.dataset.target;
+            
+            // UI: Troca as abas
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn, .nav-item').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(`tab-${target}`).classList.add('active');
+            btn.classList.add('active');
+            
+            await forceRender(target);
+        };
+    });
+
+    // 3. AUTO-START: Força o Dashboard a abrir
+    console.log('🎯 Chamando dashboard inicial...');
+    await forceRender('dashboard');
 });
