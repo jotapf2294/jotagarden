@@ -1,226 +1,99 @@
-import { addData, getAllData, deleteData, updateData } from '../../db.js';
-import { CATEGORIAS } from './constants.js';
-import { injectStyles } from './styles.js';
-import { renderLista } from './list.js';
-import { showDetail } from './detail.js';
-import { createModal, openModal, collectModalData, closeModal } from './modal.js';
-import { gerarFichaTecnica, gerarEtiquetaProducao } from './export.js';
-import { debounce } from './utils.js';
-
-const bc = new BroadcastChannel('docegestao');
-let receitasCache = [];
-let modalInstance = null;
+// js/modules/receitas/index.js
+import { getAll, save, remove } from '../../db.js';
+import { calcularCustoTotalReceita } from './logic.js';
 
 export const renderReceitas = async () => {
-  injectStyles();
+    const container = document.getElementById('tab-receitas');
+    if (!container) return;
 
-  const c = document.getElementById('tab-receitas');
-  c.innerHTML = `
-    <div style="display:flex;gap:16px;height:calc(100vh - 120px);min-height:500px">
-      <aside style="width:360px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0">
-        <div style="padding:16px;border-bottom:1px solid var(--border)">
-          <h2 style="font-size:1rem;font-weight:600;margin:0 0 12px">📖 Fichas Técnicas</h2>
-          <div style="display:grid;grid-template-columns:1fr 140px;gap:8px;margin-bottom:12px">
-            <input id="search-rec" placeholder="🔍 Pesquisar..." aria-label="Pesquisar receitas" style="min-height:32px">
-            <select id="f-cat-rec" aria-label="Filtrar por categoria" style="min-height:32px">
-              <option value="">Todas</option>
-              ${CATEGORIAS.map(x => `<option>${x}</option>`).join('')}
-            </select>
-          </div>
-          <button id="btn-nova-rec" class="btn btn-primary btn-block">+ Nova Ficha</button>
+    const [receitas, insumos] = await Promise.all([
+        getAll('receitas'),
+        getAll('insumos')
+    ]);
+
+    container.innerHTML = `
+        <div style="max-width: 800px; margin: 0 auto;">
+            <div style="background: white; padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 30px;">
+                <h3 style="margin-top:0; color: var(--primary);">📖 Nova Ficha Técnica</h3>
+                <form id="form-receita" style="display: flex; flex-direction: column; gap: 15px;">
+                    <input type="text" id="rec-nome" placeholder="Nome da Receita" required style="padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px;">
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="rec-rendimento" placeholder="Rendimento" required style="flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px;">
+                        <input type="text" id="rec-unidade" placeholder="Unid. (fatias, kg)" required style="flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px;">
+                    </div>
+                    <div style="border: 1px solid #eee; padding: 15px; border-radius: 8px; background: #fafafa;">
+                        <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                            <select id="sel-insumo" style="flex: 2; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                                <option value="">Escolher ingrediente...</option>
+                                ${insumos.map(i => `<option value="${i.id}">${i.nome} (${i.unidade})</option>`).join('')}
+                            </select>
+                            <input type="number" id="qtd-insumo-rec" placeholder="Qtd" step="0.01" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                            <button type="button" id="btn-add-ing" style="background: #2ecc71; color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-weight: bold;">+</button>
+                        </div>
+                        <div id="lista-temp-ingredientes" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                    </div>
+                    <button type="submit" style="background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">Guardar Ficha Técnica</button>
+                </form>
+            </div>
+
+            <div id="lista-receitas">
+                <h3 style="margin-bottom: 15px;">Minhas Receitas</h3>
+                <div style="display: grid; gap: 15px;">
+                    ${receitas.map(r => {
+                        const custoTotal = calcularCustoTotalReceita(r.ingredientes, insumos);
+                        const custoUnid = custoTotal / (parseFloat(r.rendimento) || 1);
+                        return `
+                            <div style="background: white; padding: 20px; border-radius: var(--radius); border-left: 6px solid var(--primary); box-shadow: var(--shadow);">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <strong>${r.nome}</strong>
+                                    <button class="btn-del-rec" data-id="${r.id}" style="background:none; border:none; color:#ff7675; cursor:pointer;">🗑️</button>
+                                </div>
+                                <div style="display: flex; gap: 20px; margin-top: 10px; background: #fff5f7; padding: 10px; border-radius: 8px;">
+                                    <span>Custo Total: <b>${custoTotal.toFixed(2)}€</b></span>
+                                    <span>Custo p/ ${r.unidade}: <b>${custoUnid.toFixed(2)}€</b></span>
+                                </div>
+                            </div>`;
+                    }).join('')}
+                </div>
+            </div>
         </div>
-        <div id="lista-rec" style="flex:1;overflow-y:auto;padding:8px" role="list"></div>
-      </aside>
-      <main style="flex:1;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);padding:24px;overflow-y:auto;min-width:0" id="detail-rec" role="main">
-        <div class="empty-state">
-          <div class="emoji">🧁</div>
-          <h2 style="font-size:1.25rem;margin-bottom:8px">Seleciona uma receita</h2>
-          <p>Vista otimizada para tablet e desktop</p>
-        </div>
-      </main>
-    </div>
-  `;
-
-  // Mobile: stack vertical
-  if (window.innerWidth < 1024) {
-    c.querySelector('div[style*="display:flex"]').style.cssText = 'display:flex;flex-direction:column;gap:16px;height:auto';
-    c.querySelector('aside').style.cssText = 'width:100%;height:45vh;flex-shrink:0';
-  }
-
-  if (!modalInstance) {
-    modalInstance = createModal();
-    modalInstance.querySelector('#f-rec').onsubmit = handleSubmit;
-  }
-
-  await loadReceitas();
-  setupFilters();
-  setupBroadcast();
-
-  document.getElementById('btn-nova-rec').onclick = () => openModal(modalInstance, null);
-};
-
-async function loadReceitas() {
-  try {
-    receitasCache = await getAllData('receitas') || [];
-    console.log('✅ Receitas carregadas:', receitasCache.length);
-
-    const lista = document.getElementById('lista-rec');
-    const detail = document.getElementById('detail-rec');
-    if (!lista) return;
-
-    // FIX: Limpa filtros pra garantir que a nova ficha aparece
-    const searchInput = document.getElementById('search-rec');
-    const catSelect = document.getElementById('f-cat-rec');
-    if (searchInput) searchInput.value = '';
-    if (catSelect) catSelect.value = '';
-
-    renderLista(receitasCache, lista, (rec) => {
-      showDetail(rec, detail, {
-        onEdit: (r) => openModal(modalInstance, r),
-        onDelete: handleDelete,
-        onFT: gerarFichaTecnica,
-        onProd: gerarEtiquetaProducao
-      });
-    });
-
-    if (receitasCache[0] && window.innerWidth >= 1024) {
-      lista.querySelector('.rec-item')?.click();
-    }
-  } catch (err) {
-    console.error('❌ Erro ao carregar receitas:', err);
-    window.toast('❌ Erro ao carregar fichas');
-  }
-}
-
-function setupFilters() {
-  const searchInput = document.getElementById('search-rec');
-  const catSelect = document.getElementById('f-cat-rec');
-
-  const filter = debounce(() => {
-    const termo = searchInput.value.toLowerCase().trim();
-    const cat = catSelect.value;
-
-    const filtradas = receitasCache.filter(r => {
-      const matchTermo =!termo || 
-        r.nome.toLowerCase().includes(termo) || 
-        r.codigo?.toLowerCase().includes(termo) ||
-        r.descricao?.toLowerCase().includes(termo);
-      const matchCat =!cat || r.categoria === cat;
-      return matchTermo && matchCat;
-    });
-
-    renderLista(filtradas, document.getElementById('lista-rec'), (rec) => {
-      showDetail(rec, document.getElementById('detail-rec'), {
-        onEdit: (r) => openModal(modalInstance, r),
-        onDelete: handleDelete,
-        onFT: gerarFichaTecnica,
-        onProd: gerarEtiquetaProducao
-      });
-    });
-  }, 300);
-
-  searchInput.oninput = filter;
-  catSelect.onchange = filter;
-}
-
-function setupBroadcast() {
-  bc.onmessage = (e) => {
-    if (e.data === 'update-receitas') {
-      console.log('📡 Update recebido via BroadcastChannel');
-      loadReceitas();
-    }
-  };
-}
-
-async function handleSubmit(e) {
-  e.preventDefault();
-  const form = e.target;
-  const submitBtn = form.querySelector('[type="submit"]');
-  form.dataset.dirty = 'false';
-
-  try {
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'A guardar...';
-    }
-
-    const rec = collectModalData(modalInstance);
-
-    if (!rec.nome?.trim() ||!rec.categoria) {
-      window.toast('❌ Preenche Nome e Categoria');
-      return;
-    }
-
-    if (!rec.ingredientes?.length) {
-      window.toast('❌ Adiciona pelo menos 1 ingrediente');
-      return;
-    }
-
-    const isEdit =!!rec.id && receitasCache.some(r => r.id === rec.id);
-
-    if (isEdit) {
-      rec.updatedAt = new Date().toISOString();
-      await updateData('receitas', rec);
-      window.toast('✅ Ficha atualizada!');
-    } else {
-      rec.id = rec.id || Date.now().toString();
-      rec.createdAt = new Date().toISOString();
-      rec.updatedAt = new Date().toISOString();
-      await addData('receitas', rec);
-      window.toast('✅ Ficha guardada!');
-    }
-
-    // FIX PRINCIPAL: Recarrega lista ANTES de fechar modal
-    await loadReceitas();
-    
-    closeModal(modalInstance);
-    bc.postMessage('update-receitas');
-
-    // Auto-seleciona a ficha guardada
-    setTimeout(() => {
-      document.querySelector(`.rec-item[data-id="${rec.id}"]`)?.click();
-    }, 100);
-
-  } catch (err) {
-    console.error('❌ Erro ao guardar:', err);
-    window.toast('❌ Erro ao guardar ficha');
-  } finally {
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = '💾 Guardar';
-    }
-  }
-}
-
-async function handleDelete(id) {
-  if (!confirm('Eliminar esta ficha técnica? Esta ação não pode ser desfeita.')) return;
-
-  try {
-    await deleteData('receitas', id);
-    window.toast('✅ Ficha eliminada');
-    bc.postMessage('update-receitas');
-    await loadReceitas();
-
-    document.getElementById('detail-rec').innerHTML = `
-      <div class="empty-state">
-        <div class="emoji">🧁</div>
-        <h2 style="font-size:1.25rem;margin-bottom:8px">Seleciona uma receita</h2>
-        <p>Vista otimizada para tablet e desktop</p>
-      </div>
     `;
-  } catch (err) {
-    console.error('❌ Erro ao eliminar:', err);
-    window.toast('❌ Erro ao eliminar');
-  }
-}
 
-// Marca formulário como "sujo" ao editar
-document.addEventListener('input', (e) => {
-  if (e.target.closest('#f-rec')) {
-    e.target.closest('#f-rec').dataset.dirty = 'true';
-  }
-});
+    // Lógica de manipulação de ingredientes e submissão (Mantida aqui por ser interface)
+    const listaTemp = [];
+    const divTemp = document.getElementById('lista-temp-ingredientes');
 
-// Debug: exporta pro window
-window.loadReceitas = loadReceitas;
-window.receitasCache = receitasCache;
+    document.getElementById('btn-add-ing').onclick = () => {
+        const idInsumo = document.getElementById('sel-insumo').value;
+        const qtd = document.getElementById('qtd-insumo-rec').value;
+        const insumoObj = insumos.find(i => i.id === idInsumo);
+        if (insumoObj && qtd) {
+            listaTemp.push({ idInsumo, nome: insumoObj.nome, qtd: parseFloat(qtd) });
+            divTemp.innerHTML = listaTemp.map(item => `<span style="background:#e17055; color:white; padding:4px 12px; border-radius:20px; font-size:0.85rem;">${item.nome}: ${item.qtd}</span>`).join('');
+            document.getElementById('sel-insumo').value = '';
+            document.getElementById('qtd-insumo-rec').value = '';
+        }
+    };
+
+    document.getElementById('form-receita').onsubmit = async (e) => {
+        e.preventDefault();
+        if (listaTemp.length === 0) return alert("Adiciona ingredientes!");
+        await save('receitas', {
+            id: Date.now().toString(),
+            nome: document.getElementById('rec-nome').value,
+            rendimento: document.getElementById('rec-rendimento').value,
+            unidade: document.getElementById('rec-unidade').value,
+            ingredientes: listaTemp
+        });
+        renderReceitas();
+    };
+
+    container.querySelectorAll('.btn-del-rec').forEach(btn => {
+        btn.onclick = async () => {
+            if (confirm('Apagar?')) {
+                await remove('receitas', btn.dataset.id);
+                renderReceitas();
+            }
+        };
+    });
+};
