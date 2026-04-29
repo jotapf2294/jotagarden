@@ -16,12 +16,6 @@ const router = async (targetId) => {
     console.error(err);
   }
 };
-
-/**
- * Maestro de Navegação (Router)
- */
-const router = async (targetId) => {
-  console.log(`🧭 A navegar para: ${targetId}`);
   
   // 1. Atualizar UI: Esconder todas as abas e desativar botões
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
