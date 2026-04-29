@@ -62,10 +62,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initDB();
     console.log('✅ Base de Dados Operacional');
 
-    // Configura os eventos de clique nos botões da nav
+        // Configura os cliques em TODOS os botões de navegação (Sidebar + Bottom Nav)
     document.querySelectorAll('.nav-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const target = e.currentTarget.getAttribute('data-target');
+        
+        // Sincroniza todos os botões com o mesmo target
+        document.querySelectorAll('.nav-btn').forEach(b => {
+          b.classList.toggle('active', b.getAttribute('data-target') === target);
+        });
+
         router(target);
       });
     });
