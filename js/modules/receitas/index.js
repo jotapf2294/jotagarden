@@ -223,47 +223,124 @@ window.visualizarFicha = async (id) => {
     const r = receitas.find(x => x.id === id);
     
     const printArea = document.getElementById('print-area');
-    printArea.innerHTML = gerarLayoutImpressao(r, insumos);
+    
+    // Geramos as duas! Uma folha para a pasta da ASAE e outra para a Bancada.
+    printArea.innerHTML = `
+        <div class="ficha-haccp">${gerarLayoutHACCP(r, insumos)}</div>
+        <div style="page-break-before: always;" class="ficha-producao">${gerarLayoutProducao(r)}</div>
+    `;
+    
     window.print();
 };
 
-function gerarLayoutImpressao(r, insumos) {
+// 1. VISÃO ASAE / CONTROLO DE GESTÃO (Com Alergénios e Custos)
+function gerarLayoutHACCP(r, insumos) {
+    const total = calcularTotalGeral(r.ingredientes, insumos);
+    const custoUn = total / (parseFloat(r.rendimento) || 1);
+    
     return `
-        <div style="padding: 30px; font-family: Arial, sans-serif;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 3px solid #000; padding-bottom: 10px;">
-                <h1 style="margin:0;">FICHA DE PRODUÇÃO: ${r.nome.toUpperCase()}</h1>
-                <div style="width:80px; height:80px; border:1px solid #000;">
-                    ${r.foto ? `<img src="${r.foto}" style="width:100%; height:100%; object-fit:cover;">` : ''}
+        <div style="padding: 30px; font-family: 'Segoe UI', Arial; color: #333; border: 1px solid #000; background: #fff;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px;">
+                <div>
+                    <h1 style="margin:0; color:#000;">FICHA TÉCNICA DE PRODUTO ACABADO</h1>
+                    <p style="margin:5px 0; font-size: 1.1rem;"><b>PRODUTO:</b> ${r.nome.toUpperCase()}</p>
+                    <p style="margin:5px 0;"><b>CATEGORIA:</b> ${r.categoria}</p>
+                </div>
+                <div style="text-align: right; font-size: 0.8rem;">
+                    <p>Cód. Receita: ${r.id}</p>
+                    <p>Data de Emissão: ${new Date().toLocaleDateString('pt-PT')}</p>
                 </div>
             </div>
-            
-            <p style="margin: 15px 0;"><b>RENDIMENTO:</b> ${r.rendimento} ${r.unidade} | <b>CATEGORIA:</b> ${r.categoria}</p>
 
-            <table style="width:100%; border-collapse:collapse; margin-top:20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                <div style="border: 1px solid #ccc; padding: 10px;">
+                    <h4 style="margin:0 0 10px 0; background: #f0f0f0; padding: 5px;">CONSERVAÇÃO E VALIDADE</h4>
+                    <p><b>Temp. Conservação:</b> < 5°C (Refrigeração)</p>
+                    <p><b>Validade:</b> 3 a 5 dias</p>
+                    <p><b>Condições:</b> Local seco e fresco, em recipiente hermético.</p>
+                </div>
+                <div style="border: 1px solid #e74c3c; padding: 10px;">
+                    <h4 style="margin:0 0 10px 0; background: #fdeaea; color: #c0392b; padding: 5px;">⚠️ ALERGÉNIOS (Reg. UE 1169/2011)</h4>
+                    <p style="font-size: 0.9rem;">Contém: Glúten, Ovos, Leite. Pode conter vestígios de frutos de casca rija.</p>
+                </div>
+            </div>
+
+            <h4 style="background: #000; color: #fff; padding: 8px; margin-top: 20px;">COMPOSIÇÃO E CUSTOS</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                 <thead>
-                    <tr style="background:#000; color:#fff;">
-                        <th style="padding:10px; text-align:left;">INGREDIENTE</th>
-                        <th style="padding:10px; text-align:right;">PESO / QUANTIDADE</th>
-                        <th style="padding:10px; text-align:center; width:50px;">OK</th>
+                    <tr style="border-bottom: 2px solid #000;">
+                        <th style="text-align: left; padding: 8px;">Ingrediente</th>
+                        <th style="text-align: center; padding: 8px;">P. Bruto</th>
+                        <th style="text-align: center; padding: 8px;">P. Líquido</th>
+                        <th style="text-align: center; padding: 8px;">FC</th>
+                        <th style="text-align: right; padding: 8px;">Custo Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${r.ingredientes.map(ing => {
+                        const info = insumos.find(i => i.id === ing.idInsumo);
+                        const custo = calcularCustoIngrediente(info, ing.pesoBruto);
+                        const fc = (ing.pesoBruto / (ing.pesoLiquido || 1)).toFixed(2);
+                        return `
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 8px;">${ing.nome.toUpperCase()}</td>
+                                <td style="padding: 8px; text-align: center;">${ing.pesoBruto} ${ing.un}</td>
+                                <td style="padding: 8px; text-align: center;">${ing.pesoLiquido} ${ing.un}</td>
+                                <td style="padding: 8px; text-align: center;">${fc}</td>
+                                <td style="padding: 8px; text-align: right;">${custo.toFixed(2)}€</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+                <tfoot>
+                    <tr style="font-weight: bold; background: #f9f9f9;">
+                        <td colspan="4" style="padding: 10px; text-align: right;">CUSTO TOTAL DA RECEITA:</td>
+                        <td style="padding: 10px; text-align: right;">${total.toFixed(2)}€</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    `;
+}
+
+// 2. VISÃO PRODUÇÃO (Operacional - Robusta para a cozinha)
+function gerarLayoutProducao(r) {
+    return `
+        <div style="padding: 20px; font-family: 'Arial Black', Gadget, sans-serif;">
+            <div style="border: 4px solid #000; padding: 15px; text-align: center; margin-bottom: 20px;">
+                <h1 style="margin:0; font-size: 2.5rem;">ORDEM DE PRODUÇÃO</h1>
+                <h2 style="margin:5px 0; background: #000; color: #fff; padding: 10px;">${r.nome.toUpperCase()}</h2>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 1.2rem; margin-bottom: 20px;">
+                <span><b>RENDIMENTO:</b> ${r.rendimento} ${r.unidade}</span>
+                <span><b>LOTE:</b> ___________</span>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #ddd; border: 2px solid #000;">
+                        <th style="padding: 15px; text-align: left; font-size: 1.3rem;">INGREDIENTE</th>
+                        <th style="padding: 15px; text-align: right; font-size: 1.3rem;">PESAR (LÍQUIDO)</th>
+                        <th style="padding: 15px; text-align: center; width: 80px;">V</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${r.ingredientes.map(ing => `
-                        <tr style="border-bottom:1px solid #000;">
-                            <td style="padding:12px;">${ing.nome.toUpperCase()}</td>
-                            <td style="padding:12px; text-align:right; font-size:1.2rem;"><b>${ing.pesoLiquido} ${ing.un}</b></td>
-                            <td style="border:1px solid #000;"></td>
+                        <tr style="border-bottom: 2px solid #000;">
+                            <td style="padding: 15px; font-size: 1.2rem;">${ing.nome.toUpperCase()}</td>
+                            <td style="padding: 15px; text-align: right; font-size: 1.8rem;"><b>${ing.pesoLiquido} ${ing.un}</b></td>
+                            <td style="border-left: 2px solid #000;"></td>
                         </tr>
                     `).join('')}
                 </tbody>
             </table>
 
-            <div style="margin-top:30px; border:2px solid #000; padding:15px;">
-                <h3 style="margin-top:0;">MODO DE PREPARO:</h3>
-                <p style="white-space:pre-wrap; font-size:1.1rem; line-height:1.6;">${r.preparo || 'Sem instruções.'}</p>
+            <div style="margin-top: 20px; border: 2px solid #000; padding: 15px;">
+                <h3 style="margin-top: 0; text-decoration: underline;">INSTRUÇÕES TÉCNICAS (HACCP):</h3>
+                <p style="font-size: 1.2rem; line-height: 1.5;">${r.preparo || 'Consultar manual de boas práticas.'}</p>
+                <p style="margin-top: 20px; font-size: 0.9rem;"><i>* Higienizar as mãos e bancada antes de iniciar. Utilizar utensílios desinfetados.</i></p>
             </div>
-            
-            <p style="font-size:0.8rem; margin-top:20px;">Doces Gestão - Ficha Técnica Profissional</p>
         </div>
     `;
 }
