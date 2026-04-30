@@ -95,42 +95,32 @@ input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--bo
 }
 
 @media print {
-    /* 1. ESCONDER INTERFACE */
-    .app-container, .bottom-nav, .app-header, #details-form, #search-receita, .btn {
+    /* Esconde tudo o que não interessa na impressão */
+    .app-container, .bottom-nav, .app-header, #details-form, #search-nome, #search-categoria, .btn, .card {
         display: none !important;
     }
-
-    /* 2. CONFIGURAÇÃO DA FOLHA (MARGENS MÍNIMAS) */
-    @page {
-        size: portrait;
-        margin: 0.5cm !important;
-    }
-
-    html, body {
+    
+    body {
         background: white !important;
-        height: auto !important;
-        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
-    /* 3. ÁREA DE CONTEÚDO */
     #print-area {
         display: block !important;
-        visibility: visible !important;
         width: 100% !important;
+        margin: 0 !important;
     }
 
-    #section-to-print {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 5px !important;
-    }
-
-    /* EVITAR QUEBRAS DE PÁGINA */
-    .ficha-haccp-wrapper, .ficha-producao-wrapper {
-        page-break-inside: avoid !important;
-        page-break-before: auto !important;
+    /* Força que a ficha ocupe a página toda mas sem margens feias */
+    .ficha {
+        box-shadow: none !important;
+        border: none !important;
+        width: 210mm; /* A4 */
+        min-height: 297mm;
     }
 }
+
 
 @media screen {
     #print-area { display: none; }
