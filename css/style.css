@@ -94,29 +94,50 @@ input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--bo
     main { padding: 15px; padding-bottom: 80px; }
 }
 
-/* === BLINDAGEM DE IMPRESSÃO (O FIX) === */
+/* === REGRAS DE IMPRESSÃO VERSÃO 2.0 (iPad/Safari Proof) === */
 @media print {
-    /* Esconde TUDO */
-    body * { visibility: hidden !important; }
-    
-    /* Mostra APENAS a print-area */
-    #print-area, #print-area * {
-        visibility: visible !important;
+    /* 1. Esconde os grandes blocos da interface */
+    .app-container, 
+    .bottom-nav, 
+    .app-header, 
+    .sidebar, 
+    #details-form, 
+    #search-receita,
+    .nav-btn,
+    .btn {
+        display: none !important;
     }
 
+    /* 2. Garante que o body e html não cortem o conteúdo */
+    html, body {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    /* 3. Força a área de print a ocupar tudo e ser visível */
     #print-area {
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
-        width: 100% !important;
         display: block !important;
+        position: relative !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
         background: white !important;
     }
 
-    /* Força o resto a sumir mesmo */
-    .app-container, .bottom-nav, .app-header { display: none !important; }
-    
-    @page { margin: 1cm; size: portrait; }
+    /* 4. Ajustes finos para as fichas */
+    .ficha-haccp, .ficha-producao {
+        width: 100% !important;
+        page-break-inside: avoid !important;
+    }
+
+    /* 5. Configuração da página */
+    @page {
+        size: portrait;
+        margin: 1.5cm;
+    }
 }
 
 @media screen {
