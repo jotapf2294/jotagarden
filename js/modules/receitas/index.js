@@ -69,27 +69,155 @@ export const renderReceitas = async () => {
         </div>
     `;
 
-    // Removido o print-area daqui de dentro! Ele deve viver apenas no index.html.
-
     setupEvents(receitas, insumos);
     renderCards(receitas, insumos);
 };
 
-// ... (setupEvents, renderCards, resetForm, atualizarListaTemp mantêm-se iguais)
+const setupEvents = (receitas, insumos) => {
+    // Foto Base64
+    document.getElementById('rec-foto').onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = () => { fotoBase64 = reader.result; };
+        if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
+    };
+
+    // Adicionar Ingrediente
+    document.getElementById('btn-add-ing').onclick = () => {
+        const id = document.getElementById('sel-insumo').value;
+        const bruto = document.getElementById('inp-bruto').value;
+        const liquido = document.getElementById('inp-liquido').value;
+        const insumo = insumos.find(i => i.id === id);
+
+        if (insumo && bruto) {
+            ingredientesTemp.push({ 
+                idInsumo: id, 
+                nome: insumo.nome, 
+                un: insumo.unidade,
+                pesoBruto: parseFloat(bruto), 
+                pesoLiquido: parseFloat(liquido || bruto) 
+            });
+            atualizarListaTemp();
+            document.getElementById('inp-bruto').value = '';
+            document.getElementById('inp-liquido').value = '';
+            document.getElementById('sel-insumo').value = '';
+        } else {
+            alert("Seleciona um insumo e define o peso bruto!");
+        }
+    };
+
+    // Guardar Receita
+    document.getElementById('form-receita').onsubmit = async (e) => {
+        e.preventDefault();
+        if (ingredientesTemp.length === 0) return alert("A receita precisa de pelo menos 1 ingrediente!");
+
+        const nova = {
+            id: modoEdicaoId || Date.now().toString(),
+            nome: document.getElementById('rec-nome').value,
+            categoria: document.getElementById('rec-categoria').value,
+            rendimento: document.getElementById('rec-rendimento').value,
+            unidade: document.getElementById('rec-unidade').value,
+            preparo: document.getElementById('rec-preparo').value,
+            foto: fotoBase64,
+            ingredientes: ingredientesTemp
+        };
+
+        await save('receitas', nova);
+        resetForm();
+        renderReceitas();
+    };
+
+    document.getElementById('btn-cancelar-edit').onclick = resetForm;
+
+    // Pesquisa
+    document.getElementById('search-receita').oninput = (e) => {
+        const termo = e.target.value.toLowerCase();
+        const filtradas = receitas.filter(r => r.nome.toLowerCase().includes(termo));
+        renderCards(filtradas, insumos);
+    };
+};
+
+const renderCards = (lista, insumos) => {
+    const display = document.getElementById('lista-receitas-cards');
+    if (!display) return;
+
+    display.innerHTML = lista.map(r => {
+        const total = calcularTotalGeral(r.ingredientes, insumos);
+        return `
+            <div class="card" style="display:flex; align-items:center; padding:12px; gap:15px;">
+                <div style="width:70px; height:70px; background:var(--bg-hover); border-radius:8px; overflow:hidden; flex-shrink:0;">
+                    ${r.foto ? `<img src="${r.foto}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="text-align:center; padding-top:22px;">📷</div>`}
+                </div>
+                <div style="flex:1;">
+                    <h4 style="margin:0;">${r.nome}</h4>
+                    <span class="badge">${r.categoria}</span>
+                    <div style="color:var(--success); font-weight:bold;">${total.toFixed(2)}€</div>
+                </div>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn btn-sm" onclick="window.visualizarFicha('${r.id}')">👁️</button>
+                    <button class="btn btn-sm" onclick="window.editarFicha('${r.id}')">✏️</button>
+                    <button class="btn btn-sm btn-danger" onclick="window.eliminarFicha('${r.id}')">🗑️</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+const resetForm = () => {
+    modoEdicaoId = null;
+    ingredientesTemp = [];
+    fotoBase64 = "";
+    const form = document.getElementById('form-receita');
+    if(form) form.reset();
+    document.getElementById('form-title').innerText = "➕ Nova Ficha Técnica";
+    document.getElementById('lista-temp-ing').innerHTML = "";
+    document.getElementById('details-form').open = false;
+};
+
+const atualizarListaTemp = () => {
+    const div = document.getElementById('lista-temp-ing');
+    div.innerHTML = ingredientesTemp.map((ing, idx) => `
+        <span style="background:var(--primary); color:white; padding:5px 12px; border-radius:20px; font-size:0.75rem; display:flex; align-items:center; gap:8px;">
+            ${ing.nome} (${ing.pesoBruto}) 
+            <b style="cursor:pointer;" onclick="window.removeIngTemp(${idx})">×</b>
+        </span>
+    `).join('');
+};
+
+// --- EXPOSIÇÃO GLOBAL ---
+window.removeIngTemp = (idx) => {
+    ingredientesTemp.splice(idx, 1);
+    atualizarListaTemp();
+};
+
+window.eliminarFicha = async (id) => {
+    if (confirm("Deseja apagar esta receita?")) {
+        await remove('receitas', id);
+        renderReceitas();
+    }
+};
+
+window.editarFicha = async (id) => {
+    const r = await getById('receitas', id);
+    if (!r) return;
+    modoEdicaoId = id;
+    document.getElementById('details-form').open = true;
+    document.getElementById('form-title').innerText = "✏️ Editando: " + r.nome;
+    document.getElementById('rec-nome').value = r.nome;
+    document.getElementById('rec-categoria').value = r.categoria;
+    document.getElementById('rec-rendimento').value = r.rendimento;
+    document.getElementById('rec-unidade').value = r.unidade;
+    document.getElementById('rec-preparo').value = r.preparo;
+    ingredientesTemp = [...r.ingredientes];
+    fotoBase64 = r.foto || "";
+    atualizarListaTemp();
+};
 
 window.visualizarFicha = async (id) => {
     const receitas = await getAll('receitas');
     const insumos = await getAll('insumos');
     const r = receitas.find(x => x.id === id);
-
-    // Seleciona a print-area que está no ROOT do documento (index.html)
     const printArea = document.getElementById('print-area');
-    if (!printArea) {
-        console.error("ERRO: Elemento #print-area não encontrado no index.html");
-        return;
-    }
 
-    // Injetamos com IDs específicos para garantir que o CSS de impressão os veja
     printArea.innerHTML = `
         <div id="section-to-print">
             <div class="ficha-haccp-wrapper" style="margin-bottom: 40px;">
@@ -102,131 +230,64 @@ window.visualizarFicha = async (id) => {
         </div>
     `;
 
-    // Forçamos o browser a "respirar" para desenhar o HTML antes de imprimir
-    setTimeout(() => {
-        window.print();
-    }, 800);
-
-    window.onafterprint = () => {
-        printArea.innerHTML = "";
-    };
+    setTimeout(() => { window.print(); }, 800);
+    window.onafterprint = () => { printArea.innerHTML = ""; };
 };
 
-// ... (funções gerarLayoutHACCP e gerarLayoutProducao )
-
-
+// Funções de Layout (HACCP e Produção)
 function gerarLayoutHACCP(r, insumos) {
     const total = calcularTotalGeral(r.ingredientes, insumos);
     const rendimento = parseFloat(r.rendimento) || 1;
     const custoPorPorcao = total / rendimento;
 
     return `
-        <div style="font-family: Arial, sans-serif; color: #333; max-width: 800px; margin: auto;">
-            <div style="background-color: #28a745; color: white; text-align: center; padding: 5px; font-weight: bold; border: 1px solid #000;">
-                FICHA TÉCNICA DE PREPARAÇÃO
-            </div>
-            
-            <div style="display: flex; border: 1px solid #000; border-top: none;">
-                <div style="flex: 1; padding: 10px; border-right: 1px solid #000;">
-                    <p style="margin: 0; font-weight: bold;">NOME DA PREPARAÇÃO:</p>
-                    <p style="margin: 5px 0 15px 0; font-size: 1.2rem;">${r.nome.toUpperCase()}</p>
-                    <p style="margin: 0; font-weight: bold;">PROFISSIONAL:</p>
-                    <p style="margin: 5px 0 0 0;">Babe's Bakery</p>
+        <div style="font-family: Arial; color: #333; max-width: 800px; margin: auto; border: 1px solid #000; padding: 10px;">
+            <div style="background: #28a745; color: white; text-align: center; padding: 5px; font-weight: bold;">FICHA TÉCNICA DE PREPARAÇÃO</div>
+            <div style="display: flex; margin-top: 10px;">
+                <div style="flex: 1;">
+                    <b>PRODUTO:</b> ${r.nome.toUpperCase()}<br>
+                    <b>CATEGORIA:</b> ${r.categoria}
                 </div>
-                <div style="width: 250px; height: 150px; background: #eee; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 150px; height: 100px; border: 1px solid #ddd;">
                     ${r.foto ? `<img src="${r.foto}" style="width:100%; height:100%; object-fit:cover;">` : 'FOTO'}
                 </div>
             </div>
-
-            <div style="background-color: #28a745; color: white; text-align: center; padding: 3px; font-size: 0.9rem; font-weight: bold; border: 1px solid #000; border-top: none;">
-                INSUMOS
-            </div>
-
-            <table style="width: 100%; border-collapse: collapse; border: 1px solid #000;">
-                <thead>
-                    <tr style="background-color: #28a745; color: white; font-size: 0.8rem;">
-                        <th style="border: 1px solid #000; padding: 5px; text-align: left;">ITEM</th>
-                        <th style="border: 1px solid #000; padding: 5px;">UN</th>
-                        <th style="border: 1px solid #000; padding: 5px;">Peso Bruto</th>
-                        <th style="border: 1px solid #000; padding: 5px;">Peso Líquido</th>
-                        <th style="border: 1px solid #000; padding: 5px;">FC</th>
-                        <th style="border: 1px solid #000; padding: 5px;">Custo Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${r.ingredientes.map(ing => {
-                        const info = insumos.find(i => i.id === ing.idInsumo);
-                        const custo = calcularCustoIngrediente(info, ing.pesoBruto);
-                        const fc = (ing.pesoBruto / (ing.pesoLiquido || 1)).toFixed(3);
-                        return `
-                            <tr style="font-size: 0.85rem; text-align: center;">
-                                <td style="border: 1px solid #000; padding: 4px; text-align: left;">${ing.nome.toUpperCase()}</td>
-                                <td style="border: 1px solid #000; padding: 4px;">${ing.un}</td>
-                                <td style="border: 1px solid #000; padding: 4px;">${ing.pesoBruto.toFixed(3)}</td>
-                                <td style="border: 1px solid #000; padding: 4px;">${ing.pesoLiquido.toFixed(3)}</td>
-                                <td style="border: 1px solid #000; padding: 4px;">${fc}</td>
-                                <td style="border: 1px solid #000; padding: 4px; text-align: right;">${custo.toFixed(2)}€</td>
-                            </tr>
-                        `;
-                    }).join('')}
-                    <tr style="font-weight: bold; background: #eee;">
-                        <td colspan="5" style="border: 1px solid #000; padding: 5px; text-align: right;">TOTAL DOS INSUMOS:</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${total.toFixed(2)}€</td>
-                    </tr>
-                </tbody>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                <tr style="background: #eee;">
+                    <th style="border: 1px solid #000; padding: 4px;">Ingrediente</th>
+                    <th style="border: 1px solid #000; padding: 4px;">P. Bruto</th>
+                    <th style="border: 1px solid #000; padding: 4px;">P. Líquido</th>
+                    <th style="border: 1px solid #000; padding: 4px;">Custo</th>
+                </tr>
+                ${r.ingredientes.map(ing => {
+                    const info = insumos.find(i => i.id === ing.idInsumo);
+                    const custo = calcularCustoIngrediente(info, ing.pesoBruto);
+                    return `<tr>
+                        <td style="border: 1px solid #000; padding: 4px;">${ing.nome}</td>
+                        <td style="border: 1px solid #000; padding: 4px; text-align: center;">${ing.pesoBruto} ${ing.un}</td>
+                        <td style="border: 1px solid #000; padding: 4px; text-align: center;">${ing.pesoLiquido} ${ing.un}</td>
+                        <td style="border: 1px solid #000; padding: 4px; text-align: right;">${custo.toFixed(2)}€</td>
+                    </tr>`;
+                }).join('')}
+                <tr style="font-weight: bold;">
+                    <td colspan="3" style="border: 1px solid #000; text-align: right; padding: 4px;">TOTAL:</td>
+                    <td style="border: 1px solid #000; text-align: right; padding: 4px;">${total.toFixed(2)}€</td>
+                </tr>
             </table>
-
-            <div style="border: 1px solid #000; border-top: none; padding: 10px;">
-                <p style="margin: 0; font-weight: bold; text-decoration: underline;">Modo de Preparo:</p>
-                <p style="margin: 10px 0; font-size: 0.9rem; white-space: pre-wrap;">${r.preparo || 'Sem instruções.'}</p>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid #000; border-top: none; font-size: 0.9rem;">
-                <div style="padding: 5px; border-right: 1px solid #000;">Rendimento: ${r.rendimento} ${r.unidade}</div>
-                <div style="padding: 5px; border-right: 1px solid #000;">Custo Total: ${total.toFixed(2)}€</div>
-                <div style="padding: 5px;">Custo/Unidade: ${custoPorPorcao.toFixed(2)}€</div>
-            </div>
         </div>
     `;
 }
 
-// 2. VISÃO PRODUÇÃO (Operacional - Robusta para a cozinha)
 function gerarLayoutProducao(r) {
     return `
-        <div style="padding: 20px; font-family: 'Arial Black', Gadget, sans-serif;">
-            <div style="border: 4px solid #000; padding: 15px; text-align: center; margin-bottom: 20px;">
-                <h1 style="margin:0; font-size: 2.5rem;">ORDEM DE PRODUÇÃO</h1>
-                <h2 style="margin:5px 0; background: #000; color: #fff; padding: 10px;">${r.nome.toUpperCase()}</h2>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; font-size: 1.2rem; margin-bottom: 20px;">
-                <span><b>RENDIMENTO:</b> ${r.rendimento} ${r.unidade}</span>
-                <span><b>LOTE:</b> ___________</span>
-            </div>
-
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="background: #ddd; border: 2px solid #000;">
-                        <th style="padding: 15px; text-align: left; font-size: 1.3rem;">INGREDIENTE</th>
-                        <th style="padding: 15px; text-align: right; font-size: 1.3rem;">PESAR (LÍQUIDO)</th>
-                        <th style="padding: 15px; text-align: center; width: 80px;">V</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${r.ingredientes.map(ing => `
-                        <tr style="border-bottom: 2px solid #000;">
-                            <td style="padding: 15px; font-size: 1.2rem;">${ing.nome.toUpperCase()}</td>
-                            <td style="padding: 15px; text-align: right; font-size: 1.8rem;"><b>${ing.pesoLiquido} ${ing.un}</b></td>
-                            <td style="border-left: 2px solid #000;"></td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-
-            <div style="margin-top: 20px; border: 2px solid #000; padding: 15px;">
-                <h3 style="margin-top: 0; text-decoration: underline;">INSTRUÇÕES TÉCNICAS (HACCP):</h3>
-                <p style="font-size: 1.2rem; line-height: 1.5;">${r.preparo || 'Consultar manual de boas práticas.'}</p>
-                <p style="margin-top: 20px; font-size: 0.9rem;"><i>* Higienizar as mãos e bancada antes de iniciar. Utilizar utensílios desinfetados.</i></p>
+        <div style="padding: 20px; font-family: sans-serif; border: 2px solid #000;">
+            <h2 style="text-align: center; border-bottom: 2px solid #000;">ORDEM DE PRODUÇÃO: ${r.nome.toUpperCase()}</h2>
+            <p><b>RENDIMENTO ESPERADO:</b> ${r.rendimento} ${r.unidade}</p>
+            <ul style="font-size: 1.2rem;">
+                ${r.ingredientes.map(ing => `<li><b>${ing.pesoLiquido} ${ing.un}</b> - ${ing.nome}</li>`).join('')}
+            </ul>
+            <div style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;">
+                <b>PREPARO:</b><br>${r.preparo || 'N/A'}
             </div>
         </div>
     `;
