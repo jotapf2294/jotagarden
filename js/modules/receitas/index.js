@@ -20,43 +20,44 @@ export const renderReceitas = async () => {
                 <summary id="form-title" style="cursor:pointer; font-weight:bold; color:var(--primary); padding: 5px;">➕ Nova Ficha Técnica</summary>
                 <form id="form-receita" style="display: grid; gap: 12px; margin-top:15px;">
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                        <input type="text" id="rec-codigo" placeholder="Cód. Receita (Ex: 1777)">
+                        <input type="text" id="rec-codigo" placeholder="Cód. Receita">
                         <input type="text" id="rec-nome" placeholder="Nome da Receita" required style="grid-column: span 2;">
                     </div>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                         <select id="rec-categoria">
+                            <option value="Todos">Todas as Categorias</option>
                             <option value="Bolos">Bolos</option>
                             <option value="Tartes">Tartes</option>
                             <option value="Salgados">Salgados</option>
                             <option value="Outros">Outros</option>
                         </select>
                         <input type="number" id="rec-rendimento" placeholder="Rende quanto?" required>
-                        <input type="text" id="rec-unidade" placeholder="Ex: fatias, kg" required>
+                        <input type="text" id="rec-unidade-medida" placeholder="Ex: fatias, kg" required>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <input type="text" id="rec-temp" placeholder="Temp. Conservação (Ex: < 5°C)">
-                        <input type="text" id="rec-validade" placeholder="Validade (Ex: 3 a 5 dias)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                        <input type="text" id="rec-temp" placeholder="Temp. Conservação">
+                        <input type="text" id="rec-validade" placeholder="Validade">
+                        <input type="text" id="rec-alergenos" placeholder="Alérgenos">
                     </div>
-
-                    <input type="text" id="rec-alergenos" placeholder="Alérgenos (Ex: Glúten, Ovos, Leite)">
                     
-                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;">
-                        <input type="file" id="rec-foto" accept="image/*" style="font-size: 12px;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="file" id="rec-foto" accept="image/*" style="font-size: 12px; flex: 1;">
                         <div id="preview-foto" style="width:40px; height:40px; border-radius:4px; background:#eee; overflow:hidden;"></div>
                     </div>
 
                     <div style="background: var(--bg); padding: 15px; border-radius: 8px; border: 1px dashed var(--border);">
-                        <label style="font-size: 0.8rem; font-weight: bold;">INGREDIENTES:</label>
-                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 40px; gap: 8px; margin-top: 10px;">
+                        <label style="font-size: 0.8rem; font-weight: bold;">ADICIONAR INGREDIENTE:</label>
+                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 40px; gap: 8px; margin-top: 10px;">
                             <select id="sel-insumo">
-                                <option value="">Escolher Insumo...</option>
+                                <option value="">Escolher Nome...</option>
                                 ${insumos.map(i => `<option value="${i.id}">${i.nome}</option>`).join('')}
                             </select>
+                            <input type="text" id="inp-un" placeholder="Un (g, kg, un)">
                             <input type="number" id="inp-bruto" placeholder="P. Bruto" step="0.001">
                             <input type="number" id="inp-liquido" placeholder="P. Líquido" step="0.001">
-                            <button type="button" id="btn-add-ing" style="background:var(--primary); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">+</button>
+                            <button type="button" id="btn-add-ing" style="background:var(--primary); color:white; border:none; border-radius:6px; cursor:pointer;">+</button>
                         </div>
                         <div id="lista-temp-ing" style="margin-top:15px; display:flex; flex-wrap:wrap; gap:8px;"></div>
                     </div>
@@ -69,6 +70,18 @@ export const renderReceitas = async () => {
                     </div>
                 </form>
             </details>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 20px;">
+                <input type="text" id="search-nome" placeholder="🔍 Pesquisar por nome..." style="padding: 12px; border-radius: 25px;">
+                <select id="search-categoria" style="padding: 12px; border-radius: 25px;">
+                    <option value="Todos">Todas Categorias</option>
+                    <option value="Bolos">Bolos</option>
+                    <option value="Tartes">Tartes</option>
+                    <option value="Salgados">Salgados</option>
+                    <option value="Outros">Outros</option>
+                </select>
+            </div>
+
             <div id="lista-receitas-cards" style="display: grid; gap: 15px;"></div>
         </div>
     `;
@@ -78,6 +91,7 @@ export const renderReceitas = async () => {
 };
 
 const setupEvents = (receitas, insumos) => {
+    // Foto
     document.getElementById('rec-foto').onchange = (e) => {
         const reader = new FileReader();
         reader.onload = () => { 
@@ -87,24 +101,34 @@ const setupEvents = (receitas, insumos) => {
         if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
     };
 
+    // Adicionar Ingrediente com unidade manual
     document.getElementById('btn-add-ing').onclick = () => {
         const id = document.getElementById('sel-insumo').value;
+        const un = document.getElementById('inp-un').value;
         const bruto = document.getElementById('inp-bruto').value;
         const liquido = document.getElementById('inp-liquido').value;
         const insumo = insumos.find(i => i.id === id);
 
-        if (insumo && bruto) {
+        if (insumo && bruto && un) {
             ingredientesTemp.push({ 
-                idInsumo: id, nome: insumo.nome, un: insumo.unidade,
+                idInsumo: id, 
+                nome: insumo.nome, 
+                un: un, // Unidade manual inserida pelo utilizador
                 pesoBruto: parseFloat(bruto), 
-                pesoLiquido: liquido ? parseFloat(liquido) : parseFloat(bruto) // CORREÇÃO: Fallback para bruto se líquido estiver vazio
+                pesoLiquido: liquido ? parseFloat(liquido) : parseFloat(bruto) 
             });
             atualizarListaTemp();
+            // Limpar campos de ingredientes
+            document.getElementById('inp-un').value = '';
             document.getElementById('inp-bruto').value = '';
             document.getElementById('inp-liquido').value = '';
+            document.getElementById('sel-insumo').value = '';
+        } else {
+            alert("Preencha o insumo, unidade e peso bruto!");
         }
     };
 
+    // Guardar Receita
     document.getElementById('form-receita').onsubmit = async (e) => {
         e.preventDefault();
         const nova = {
@@ -113,7 +137,7 @@ const setupEvents = (receitas, insumos) => {
             nome: document.getElementById('rec-nome').value,
             categoria: document.getElementById('rec-categoria').value,
             rendimento: document.getElementById('rec-rendimento').value,
-            unidade: document.getElementById('rec-unidade').value,
+            unidade: document.getElementById('rec-unidade-medida').value,
             temp: document.getElementById('rec-temp').value,
             validade: document.getElementById('rec-validade').value,
             alergenos: document.getElementById('rec-alergenos').value,
@@ -127,6 +151,22 @@ const setupEvents = (receitas, insumos) => {
     };
 
     document.getElementById('btn-cancelar-edit').onclick = () => renderReceitas();
+
+    // PESQUISA COMBINADA (NOME + CATEGORIA)
+    const filtrar = () => {
+        const termo = document.getElementById('search-nome').value.toLowerCase();
+        const cat = document.getElementById('search-categoria').value;
+        
+        const filtradas = receitas.filter(r => {
+            const matchesNome = r.nome.toLowerCase().includes(termo);
+            const matchesCat = (cat === "Todos" || r.categoria === cat);
+            return matchesNome && matchesCat;
+        });
+        renderCards(filtradas, insumos);
+    };
+
+    document.getElementById('search-nome').oninput = filtrar;
+    document.getElementById('search-categoria').onchange = filtrar;
 };
 
 const renderCards = (lista, insumos) => {
@@ -136,7 +176,7 @@ const renderCards = (lista, insumos) => {
         const total = calcularTotalGeral(r.ingredientes, insumos);
         return `
             <div class="card" style="display:flex; align-items:center; padding:12px; gap:15px;">
-                <div style="width:60px; height:60px; border-radius:8px; overflow:hidden; background:#eee;">
+                <div style="width:60px; height:60px; border-radius:8px; overflow:hidden; background:#eee; flex-shrink:0;">
                     ${r.foto ? `<img src="${r.foto}" style="width:100%; height:100%; object-fit:cover;">` : '📷'}
                 </div>
                 <div style="flex:1;">
@@ -154,19 +194,38 @@ const renderCards = (lista, insumos) => {
     }).join('');
 };
 
+const atualizarListaTemp = () => {
+    document.getElementById('lista-temp-ing').innerHTML = ingredientesTemp.map((ing, idx) => `
+        <span style="background:var(--primary); color:white; padding:4px 10px; border-radius:15px; font-size:0.7rem; display:flex; align-items:center; gap:5px;">
+            ${ing.nome} (${ing.pesoBruto}${ing.un}) <b style="cursor:pointer" onclick="window.removeIngTemp(${idx})">×</b>
+        </span>
+    `).join('');
+};
+
+// --- FUNÇÕES GLOBAIS ---
+
+window.removeIngTemp = (idx) => { ingredientesTemp.splice(idx, 1); atualizarListaTemp(); };
+
+window.eliminarFicha = async (id) => {
+    if (confirm("Deseja apagar permanentemente esta receita?")) {
+        await remove('receitas', id);
+        renderReceitas(); // Recarrega a lista
+    }
+};
+
 window.editarFicha = async (id) => {
     const r = await getById('receitas', id);
     if (!r) return;
     modoEdicaoId = id;
+    
     document.getElementById('details-form').open = true;
     document.getElementById('form-title').innerText = "✏️ Editando: " + r.nome;
     
-    // REPOPULAR TODOS OS CAMPOS (CORREÇÃO)
     document.getElementById('rec-codigo').value = r.codigo || "";
     document.getElementById('rec-nome').value = r.nome;
     document.getElementById('rec-categoria').value = r.categoria;
     document.getElementById('rec-rendimento').value = r.rendimento;
-    document.getElementById('rec-unidade').value = r.unidade;
+    document.getElementById('rec-unidade-medida').value = r.unidade;
     document.getElementById('rec-temp').value = r.temp || "";
     document.getElementById('rec-validade').value = r.validade || "";
     document.getElementById('rec-alergenos').value = r.alergenos || "";
@@ -178,16 +237,6 @@ window.editarFicha = async (id) => {
     atualizarListaTemp();
 };
 
-const atualizarListaTemp = () => {
-    document.getElementById('lista-temp-ing').innerHTML = ingredientesTemp.map((ing, idx) => `
-        <span style="background:var(--primary); color:white; padding:4px 10px; border-radius:15px; font-size:0.7rem; display:flex; align-items:center; gap:5px;">
-            ${ing.nome} (${ing.pesoBruto}${ing.un}) <b style="cursor:pointer" onclick="window.removeIngTemp(${idx})">×</b>
-        </span>
-    `).join('');
-};
-
-window.removeIngTemp = (idx) => { ingredientesTemp.splice(idx, 1); atualizarListaTemp(); };
-
 window.visualizarFicha = async (id) => {
     const receitas = await getAll('receitas');
     const insumos = await getAll('insumos');
@@ -196,8 +245,8 @@ window.visualizarFicha = async (id) => {
 
     printArea.innerHTML = `
         <div id="section-to-print" style="display: flex; flex-direction: column; gap: 10px;">
-            <div class="ficha-haccp-wrapper">${gerarLayoutHACCP(r, insumos)}</div>
-            <div class="ficha-producao-wrapper" style="border-top: 1px dashed #000; padding-top: 10px;">
+            ${gerarLayoutHACCP(r, insumos)}
+            <div style="border-top: 1px dashed #000; padding-top: 10px;">
                 ${gerarLayoutProducao(r)}
             </div>
         </div>
@@ -205,59 +254,40 @@ window.visualizarFicha = async (id) => {
     setTimeout(() => { window.print(); }, 800);
 };
 
+// Funções de layout mantêm-se semelhantes, usando r.unidade e ing.un
 function gerarLayoutHACCP(r, insumos) {
     const total = calcularTotalGeral(r.ingredientes, insumos);
     return `
         <div style="font-family: Arial; font-size: 9pt; border: 1.5px solid #000; padding: 10px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
-                <h2 style="margin:0; font-size: 14pt;">FICHA TÉCNICA DE PRODUTO ACABADO</h2>
-                <div style="text-align: right; font-size: 8pt;">Cód: ${r.codigo || '---'}<br>Emissão: ${r.dataEmissao}</div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 5px;">
+                <h2 style="margin:0;">FICHA TÉCNICA: ${r.nome.toUpperCase()}</h2>
+                <div>Cód: ${r.codigo || '---'} | Data: ${r.dataEmissao}</div>
             </div>
-
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 10px;">
-                <div>
-                    <b>PRODUTO:</b> ${r.nome.toUpperCase()}<br>
-                    <b>CATEGORIA:</b> ${r.categoria}<br>
-                    <b>RENDIMENTO:</b> ${r.rendimento} ${r.unidade}
-                </div>
-                <div style="border: 1px solid #ddd; height: 80px; text-align: center;">
-                    ${r.foto ? `<img src="${r.foto}" style="width:100%; height:100%; object-fit:contain;">` : 'FOTO'}
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                <div style="border: 1px solid #000; padding: 5px; background: #f9f9f9;">
-                    <b style="font-size: 8pt; text-decoration: underline;">CONSERVAÇÃO E VALIDADE</b><br>
-                    Temp: ${r.temp || 'N/A'}<br>
-                    Validade: ${r.validade || 'N/A'}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                <div style="border: 1px solid #000; padding: 5px;">
+                    <b>Conservação:</b> ${r.temp || 'N/A'}<br>
+                    <b>Validade:</b> ${r.validade || 'N/A'}<br>
+                    <b>Rendimento:</b> ${r.rendimento} ${r.unidade}
                 </div>
                 <div style="border: 1px solid #d1242f; padding: 5px; color: #d1242f;">
-                    <b style="font-size: 8pt;">⚠️ ALERGÉNIOS (Reg. UE 1169/2011)</b><br>
-                    ${r.alergenos || 'Não especificado.'}
+                    <b>⚠️ ALERGÉNIOS:</b> ${r.alergenos || 'Não especificado.'}
                 </div>
             </div>
-
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
                 <tr style="background: #000; color: #fff;">
-                    <th style="border: 1px solid #000; text-align: left; padding: 4px;">ITEM</th>
-                    <th style="border: 1px solid #000; padding: 4px;">P. BRUTO</th>
-                    <th style="border: 1px solid #000; padding: 4px;">P. LÍQUIDO</th>
-                    <th style="border: 1px solid #000; padding: 4px;">CUSTO</th>
+                    <th style="border: 1px solid #000; padding: 4px;">Ingrediente</th>
+                    <th style="border: 1px solid #000;">Bruto</th>
+                    <th style="border: 1px solid #000;">Líquido</th>
+                    <th style="border: 1px solid #000;">Custo</th>
                 </tr>
-                ${r.ingredientes.map(ing => {
-                    const info = insumos.find(i => i.id === ing.idInsumo);
-                    const custo = calcularCustoIngrediente(info, ing.pesoBruto);
-                    return `<tr>
+                ${r.ingredientes.map(ing => `
+                    <tr>
                         <td style="border: 1px solid #000; padding: 3px;">${ing.nome.toUpperCase()}</td>
                         <td style="border: 1px solid #000; text-align: center;">${ing.pesoBruto}${ing.un}</td>
                         <td style="border: 1px solid #000; text-align: center;">${ing.pesoLiquido}${ing.un}</td>
-                        <td style="border: 1px solid #000; text-align: right;">${custo.toFixed(2)}€</td>
-                    </tr>`;
-                }).join('')}
-                <tr style="font-weight: bold; background: #eee;">
-                    <td colspan="3" style="border: 1px solid #000; text-align: right; padding: 4px;">TOTAL CUSTO PRODUÇÃO:</td>
-                    <td style="border: 1px solid #000; text-align: right; padding: 4px;">${total.toFixed(2)}€</td>
-                </tr>
+                        <td style="border: 1px solid #000; text-align: right;">${calcularCustoIngrediente(insumos.find(i=>i.id===ing.idInsumo), ing.pesoBruto).toFixed(2)}€</td>
+                    </tr>
+                `).join('')}
             </table>
         </div>
     `;
@@ -266,18 +296,13 @@ function gerarLayoutHACCP(r, insumos) {
 function gerarLayoutProducao(r) {
     return `
         <div style="font-family: Arial; font-size: 10pt; border: 1.5px solid #000; padding: 10px;">
-            <div style="text-align: center; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px;">ORDEM DE PRODUÇÃO: ${r.nome.toUpperCase()}</div>
-            <div style="margin-bottom: 10px;"><b>PESAR (VALORES LÍQUIDOS):</b></div>
+            <div style="text-align: center; font-weight: bold; border-bottom: 1px solid #000;">ORDEM DE PRODUÇÃO</div>
+            <p><b>PESAR (LÍQUIDOS):</b></p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                ${r.ingredientes.map(ing => `
-                    <div style="border-bottom: 1px solid #eee; padding: 3px; font-size: 11pt;">
-                        ☐ <b>${ing.pesoLiquido}${ing.un}</b> - ${ing.nome.toUpperCase()}
-                    </div>
-                `).join('')}
+                ${r.ingredientes.map(ing => `<div>☐ <b>${ing.pesoLiquido}${ing.un}</b> - ${ing.nome.toUpperCase()}</div>`).join('')}
             </div>
-            <div style="margin-top: 15px; border-top: 1px solid #000; padding-top: 5px;">
-                <b style="text-decoration: underline;">MODO DE PREPARAÇÃO:</b><br>
-                <div style="white-space: pre-wrap; font-size: 10pt; margin-top: 5px;">${r.preparo || 'Consultar manual.'}</div>
+            <div style="margin-top: 10px; border-top: 1px solid #000;">
+                <b>PREPARO:</b><br><div style="white-space: pre-wrap;">${r.preparo}</div>
             </div>
         </div>
     `;
