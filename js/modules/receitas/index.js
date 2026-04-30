@@ -224,14 +224,25 @@ window.visualizarFicha = async (id) => {
     
     const printArea = document.getElementById('print-area');
     
-    // Geramos as duas! Uma folha para a pasta da ASAE e outra para a Bancada.
+    // Inserimos o conteúdo
     printArea.innerHTML = `
         <div class="ficha-haccp">${gerarLayoutHACCP(r, insumos)}</div>
-        <div style="page-break-before: always;" class="ficha-producao">${gerarLayoutProducao(r)}</div>
+        <div class="ficha-producao">${gerarLayoutProducao(r)}</div>
     `;
     
-    window.print();
+    // Damos um pequeno timeout para o browser processar o estilo antes de abrir o print
+    setTimeout(() => {
+        window.print();
+    }, 250);
+
+    // O TRUQUE: Assim que o utilizador fecha a janela de print (Cancela ou Imprime), 
+    // limpamos a área para a APP voltar ao normal.
+    window.onafterprint = () => {
+        printArea.innerHTML = "";
+        console.log("Cleanup do print realizado.");
+    };
 };
+
 
 // 1. VISÃO ASAE / CONTROLO DE GESTÃO (Com Alergénios e Custos)
 function gerarLayoutHACCP(r, insumos) {
