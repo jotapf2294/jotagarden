@@ -221,25 +221,22 @@ window.visualizarFicha = async (id) => {
     const receitas = await getAll('receitas');
     const insumos = await getAll('insumos');
     const r = receitas.find(x => x.id === id);
-    
+
     const printArea = document.getElementById('print-area');
-    
-    // Inserimos o conteúdo
+
+    // Injetamos o conteúdo
     printArea.innerHTML = `
         <div class="ficha-haccp">${gerarLayoutHACCP(r, insumos)}</div>
         <div class="ficha-producao">${gerarLayoutProducao(r)}</div>
     `;
-    
-    // Damos um pequeno timeout para o browser processar o estilo antes de abrir o print
+
+    // 500ms é o "doce ponto" para o browser processar o CSS de impressão
     setTimeout(() => {
         window.print();
-    }, 250);
+    }, 500);
 
-    // O TRUQUE: Assim que o utilizador fecha a janela de print (Cancela ou Imprime), 
-    // limpamos a área para a APP voltar ao normal.
     window.onafterprint = () => {
         printArea.innerHTML = "";
-        console.log("Cleanup do print realizado.");
     };
 };
 
