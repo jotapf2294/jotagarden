@@ -268,10 +268,8 @@ window.visualizarFicha = async (id) => {
                     <thead>
                         <tr style="background: #f1f5f9;">
                             <th style="border: 1px solid #e2e8f0; padding: 8px; text-align:left;">Ingrediente</th>
-                            <th style="border: 1px solid #e2e8f0; padding: 8px;">PB</th>
-                            <th style="border: 1px solid #e2e8f0; padding: 8px;">Un</th>
-                            <th style="border: 1px solid #e2e8f0; padding: 8px;">FC</th>
-                            <th style="border: 1px solid #e2e8f0; padding: 8px;">PL Usado</th>
+                            <th style="border: 1px solid #e2e8f0; padding: 8px; text-align:center;">Peso Bruto</th>
+                            <th style="border: 1px solid #e2e8f0; padding: 8px; text-align:center;">FC</th>
                             <th style="border: 1px solid #e2e8f0; padding: 8px; text-align:right;">€ Total</th>
                         </tr>
                     </thead>
@@ -281,10 +279,8 @@ window.visualizarFicha = async (id) => {
                             const custo = calcularCustoIngrediente(info, ing.pesoBruto);
                             return `<tr>
                                 <td style="border: 1px solid #e2e8f0; padding: 6px;">${ing.nome}</td>
-                                <td style="border: 1px solid #e2e8f0; padding: 6px; text-align:center;">${ing.pesoBruto}</td>
-                                <td style="border: 1px solid #e2e8f0; padding: 6px; text-align:center;">${ing.un}</td>
+                                <td style="border: 1px solid #e2e8f0; padding: 6px; text-align:center;">${ing.pesoBruto} ${ing.un}</td>
                                 <td style="border: 1px solid #e2e8f0; padding: 6px; text-align:center;">${ing.fc}</td>
-                                <td style="border: 1px solid #e2e8f0; padding: 6px; text-align:center;">${ing.pesoLiquido.toFixed(3)}</td>
                                 <td style="border: 1px solid #e2e8f0; padding: 6px; text-align:right;">${custo.toFixed(2)}€</td>
                             </tr>`;
                         }).join('')}
@@ -302,7 +298,7 @@ window.visualizarFicha = async (id) => {
                     </div>
                 </div>
 
-                <h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; margin-bottom:12px;">Modo de Preparo e Segurança</h2>
+                <h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 29px solid #e2e8f0; text-transform: uppercase; margin-bottom:12px;">Modo de Preparo e Segurança</h2>
                 <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px; font-size: 11px; margin-bottom: 12px; border-radius:4px;">
                     <strong>⚠️ PCC (PONTO CRÍTICO):</strong> ${r.pcc || 'Não especificado'}
                 </div>
