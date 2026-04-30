@@ -565,21 +565,35 @@ dialog menu {
 }
 
 @media print {
-    /* Esconde tudo o que não é a ficha técnica */
-    .sidebar, .bottom-nav, .app-header, main, .no-print, #details-form, #search-receita, #lista-receitas-cards {
+    /* 1. Esconde TUDO o que não deve estar no papel */
+    nav, .sidebar, .bottom-nav, .app-header, .btn, button, details, #search-receita, .no-print {
         display: none !important;
     }
-    
-    .only-print {
+
+    /* 2. Garante que o main e os containers não tenham margens ou scroll */
+    body, main, .app-container, .main-wrapper {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
         display: block !important;
-        width: 100%;
+        width: 100% !important;
+        overflow: visible !important;
     }
 
-    body { background: white !important; }
+    /* 3. Força a Ficha Técnica a ocupar a página toda */
+    #print-area {
+        display: block !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 9999;
+    }
     
-    /* Força quebra de página se tiveres muitas fichas */
-    .ficha-producao { page-break-after: always; }
+    /* Quebra de página entre a ficha HACCP e a de Produção */
+    .ficha-haccp { page-break-after: always; }
 }
+
 
 /* Fix para iOS Safari */
 @supports (-webkit-touch-callout: none) {
