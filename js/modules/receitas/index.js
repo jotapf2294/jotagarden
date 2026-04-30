@@ -50,7 +50,7 @@ export const renderReceitas = async () => {
                             <input type="text" id="inp-un" placeholder="Un (g/kg)">
                             <input type="number" id="inp-bruto" placeholder="P. Bruto" step="0.001">
                             <input type="number" id="inp-fc" placeholder="FC (1.00)" step="0.01" value="1.00">
-                            <button type="button" id="btn-add-ing" style="background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer;">+</button>
+                            <button type="button" id="btn-add-ing" style="background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer;">➕</button>
                         </div>
                         <div id="lista-temp-ing" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:5px;"></div>
                     </div>
