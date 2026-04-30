@@ -96,17 +96,15 @@ input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--bo
 
 /* === REGRAS DE IMPRESSÃO VERSÃO 2.0 (iPad/Safari Proof) === */
 @media print {
-    /* 1. Esconde os grandes blocos da interface */
-    .app-container, 
-    .bottom-nav, 
-    .app-header, 
-    .sidebar, 
-    #details-form, 
-    #search-receita,
-    .nav-btn,
-    .btn {
-        display: none !important;
+    #section-to-print {
+        display: block !important;
+        visibility: visible !important;
     }
+    .ficha-haccp-wrapper, .ficha-producao-wrapper {
+        display: block !important;
+        width: 100% !important;
+    }
+}
 
     /* 2. Garante que o body e html não cortem o conteúdo */
     html, body {
