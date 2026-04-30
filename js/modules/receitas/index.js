@@ -1,8 +1,6 @@
-// js/modules/receitas/index.js
 import { getAll, save, remove, getById } from '../../db.js';
 import { calcularFC, calcularCustoIngrediente, calcularTotalGeral } from './logic.js';
 
-// Variáveis de estado do módulo
 let ingredientesTemp = [];
 let fotoBase64 = "";
 let modoEdicaoId = null;
@@ -11,7 +9,6 @@ export const renderReceitas = async () => {
     const container = document.getElementById('tab-receitas');
     if (!container) return;
 
-    // Reset de estado ao abrir a aba
     ingredientesTemp = [];
     fotoBase64 = "";
     modoEdicaoId = null;
@@ -53,18 +50,16 @@ export const renderReceitas = async () => {
                         </div>
                         <div id="lista-temp-ing" style="margin-top:15px; display:flex; flex-wrap:wrap; gap:8px;"></div>
                     </div>
-                    <textarea id="rec-preparo" placeholder="Modo de preparo / Passo-a-passo..." style="height: 100px;"></textarea>
+                    <textarea id="rec-preparo" placeholder="Modo de preparo..." style="height: 100px;"></textarea>
                     <div style="display:flex; gap:10px;">
                         <button type="submit" class="btn btn-primary" style="flex:2; padding: 15px;">GUARDAR RECEITA</button>
                         <button type="button" id="btn-cancelar-edit" class="btn" style="flex:1;">CANCELAR</button>
                     </div>
                 </form>
             </details>
-
             <div style="margin-bottom: 20px;">
-                <input type="text" id="search-receita" placeholder="🔍 Pesquisar receitas por nome..." style="padding: 15px; border-radius: 30px;">
+                <input type="text" id="search-receita" placeholder="🔍 Pesquisar receitas..." style="padding: 15px; border-radius: 30px;">
             </div>
-
             <div id="lista-receitas-cards" style="display: grid; gap: 15px;"></div>
         </div>
     `;
@@ -74,14 +69,12 @@ export const renderReceitas = async () => {
 };
 
 const setupEvents = (receitas, insumos) => {
-    // Foto Base64
     document.getElementById('rec-foto').onchange = (e) => {
         const reader = new FileReader();
         reader.onload = () => { fotoBase64 = reader.result; };
         if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
     };
 
-    // Adicionar Ingrediente
     document.getElementById('btn-add-ing').onclick = () => {
         const id = document.getElementById('sel-insumo').value;
         const bruto = document.getElementById('inp-bruto').value;
@@ -90,26 +83,18 @@ const setupEvents = (receitas, insumos) => {
 
         if (insumo && bruto) {
             ingredientesTemp.push({ 
-                idInsumo: id, 
-                nome: insumo.nome, 
-                un: insumo.unidade,
-                pesoBruto: parseFloat(bruto), 
-                pesoLiquido: parseFloat(liquido || bruto) 
+                idInsumo: id, nome: insumo.nome, un: insumo.unidade,
+                pesoBruto: parseFloat(bruto), pesoLiquido: parseFloat(liquido || bruto) 
             });
             atualizarListaTemp();
             document.getElementById('inp-bruto').value = '';
             document.getElementById('inp-liquido').value = '';
             document.getElementById('sel-insumo').value = '';
-        } else {
-            alert("Seleciona um insumo e define o peso bruto!");
         }
     };
 
-    // Guardar Receita
     document.getElementById('form-receita').onsubmit = async (e) => {
         e.preventDefault();
-        if (ingredientesTemp.length === 0) return alert("A receita precisa de pelo menos 1 ingrediente!");
-
         const nova = {
             id: modoEdicaoId || Date.now().toString(),
             nome: document.getElementById('rec-nome').value,
@@ -120,15 +105,12 @@ const setupEvents = (receitas, insumos) => {
             foto: fotoBase64,
             ingredientes: ingredientesTemp
         };
-
         await save('receitas', nova);
-        resetForm();
         renderReceitas();
     };
 
-    document.getElementById('btn-cancelar-edit').onclick = resetForm;
+    document.getElementById('btn-cancelar-edit').onclick = () => renderReceitas();
 
-    // Pesquisa
     document.getElementById('search-receita').oninput = (e) => {
         const termo = e.target.value.toLowerCase();
         const filtradas = receitas.filter(r => r.nome.toLowerCase().includes(termo));
@@ -139,17 +121,15 @@ const setupEvents = (receitas, insumos) => {
 const renderCards = (lista, insumos) => {
     const display = document.getElementById('lista-receitas-cards');
     if (!display) return;
-
     display.innerHTML = lista.map(r => {
         const total = calcularTotalGeral(r.ingredientes, insumos);
         return `
             <div class="card" style="display:flex; align-items:center; padding:12px; gap:15px;">
-                <div style="width:70px; height:70px; background:var(--bg-hover); border-radius:8px; overflow:hidden; flex-shrink:0;">
-                    ${r.foto ? `<img src="${r.foto}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="text-align:center; padding-top:22px;">📷</div>`}
+                <div style="width:60px; height:60px; border-radius:8px; overflow:hidden;">
+                    ${r.foto ? `<img src="${r.foto}" style="width:100%; height:100%; object-fit:cover;">` : '📷'}
                 </div>
                 <div style="flex:1;">
                     <h4 style="margin:0;">${r.nome}</h4>
-                    <span class="badge">${r.categoria}</span>
                     <div style="color:var(--success); font-weight:bold;">${total.toFixed(2)}€</div>
                 </div>
                 <div style="display:flex; gap:5px;">
@@ -162,38 +142,18 @@ const renderCards = (lista, insumos) => {
     }).join('');
 };
 
-const resetForm = () => {
-    modoEdicaoId = null;
-    ingredientesTemp = [];
-    fotoBase64 = "";
-    const form = document.getElementById('form-receita');
-    if(form) form.reset();
-    document.getElementById('form-title').innerText = "➕ Nova Ficha Técnica";
-    document.getElementById('lista-temp-ing').innerHTML = "";
-    document.getElementById('details-form').open = false;
-};
-
 const atualizarListaTemp = () => {
-    const div = document.getElementById('lista-temp-ing');
-    div.innerHTML = ingredientesTemp.map((ing, idx) => `
-        <span style="background:var(--primary); color:white; padding:5px 12px; border-radius:20px; font-size:0.75rem; display:flex; align-items:center; gap:8px;">
-            ${ing.nome} (${ing.pesoBruto}) 
-            <b style="cursor:pointer;" onclick="window.removeIngTemp(${idx})">×</b>
+    document.getElementById('lista-temp-ing').innerHTML = ingredientesTemp.map((ing, idx) => `
+        <span style="background:var(--primary); color:white; padding:4px 10px; border-radius:15px; font-size:0.7rem;">
+            ${ing.nome} <b style="cursor:pointer" onclick="window.removeIngTemp(${idx})">×</b>
         </span>
     `).join('');
 };
 
-// --- EXPOSIÇÃO GLOBAL ---
-window.removeIngTemp = (idx) => {
-    ingredientesTemp.splice(idx, 1);
-    atualizarListaTemp();
-};
+window.removeIngTemp = (idx) => { ingredientesTemp.splice(idx, 1); atualizarListaTemp(); };
 
 window.eliminarFicha = async (id) => {
-    if (confirm("Deseja apagar esta receita?")) {
-        await remove('receitas', id);
-        renderReceitas();
-    }
+    if (confirm("Apagar receita?")) { await remove('receitas', id); renderReceitas(); }
 };
 
 window.editarFicha = async (id) => {
@@ -201,12 +161,7 @@ window.editarFicha = async (id) => {
     if (!r) return;
     modoEdicaoId = id;
     document.getElementById('details-form').open = true;
-    document.getElementById('form-title').innerText = "✏️ Editando: " + r.nome;
     document.getElementById('rec-nome').value = r.nome;
-    document.getElementById('rec-categoria').value = r.categoria;
-    document.getElementById('rec-rendimento').value = r.rendimento;
-    document.getElementById('rec-unidade').value = r.unidade;
-    document.getElementById('rec-preparo').value = r.preparo;
     ingredientesTemp = [...r.ingredientes];
     fotoBase64 = r.foto || "";
     atualizarListaTemp();
@@ -219,60 +174,40 @@ window.visualizarFicha = async (id) => {
     const printArea = document.getElementById('print-area');
 
     printArea.innerHTML = `
-        <div id="section-to-print">
-            <div class="ficha-haccp-wrapper" style="margin-bottom: 40px;">
-                ${gerarLayoutHACCP(r, insumos)}
-            </div>
-            <div style="page-break-before: always;"></div>
-            <div class="ficha-producao-wrapper">
+        <div id="section-to-print" style="display: flex; flex-direction: column; gap: 5px;">
+            <div class="ficha-haccp-wrapper">${gerarLayoutHACCP(r, insumos)}</div>
+            <div class="ficha-producao-wrapper" style="border-top: 1px dashed #000; margin-top: 10px;">
                 ${gerarLayoutProducao(r)}
             </div>
         </div>
     `;
-
     setTimeout(() => { window.print(); }, 800);
     window.onafterprint = () => { printArea.innerHTML = ""; };
 };
 
-// Funções de Layout (HACCP e Produção)
 function gerarLayoutHACCP(r, insumos) {
     const total = calcularTotalGeral(r.ingredientes, insumos);
-    const rendimento = parseFloat(r.rendimento) || 1;
-    const custoPorPorcao = total / rendimento;
-
     return `
-        <div style="font-family: Arial; color: #333; max-width: 800px; margin: auto; border: 1px solid #000; padding: 10px;">
-            <div style="background: #28a745; color: white; text-align: center; padding: 5px; font-weight: bold;">FICHA TÉCNICA DE PREPARAÇÃO</div>
-            <div style="display: flex; margin-top: 10px;">
-                <div style="flex: 1;">
-                    <b>PRODUTO:</b> ${r.nome.toUpperCase()}<br>
-                    <b>CATEGORIA:</b> ${r.categoria}
-                </div>
-                <div style="width: 150px; height: 100px; border: 1px solid #ddd;">
-                    ${r.foto ? `<img src="${r.foto}" style="width:100%; height:100%; object-fit:cover;">` : 'FOTO'}
-                </div>
+        <div style="font-family: Arial; font-size: 10pt; border: 1px solid #000; padding: 8px;">
+            <div style="background: #28a745; color: white; text-align: center; font-weight: bold; padding: 3px;">FICHA TÉCNICA: ${r.nome.toUpperCase()}</div>
+            <div style="display: flex; margin: 5px 0;">
+                <div style="flex: 1;"><b>Rendimento:</b> ${r.rendimento} ${r.unidade}</div>
+                <div style="width: 100px; height: 60px; border: 1px solid #ddd;">${r.foto ? `<img src="${r.foto}" style="width:100%; height:100%; object-fit:cover;">` : ''}</div>
             </div>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <table style="width: 100%; border-collapse: collapse;">
                 <tr style="background: #eee;">
-                    <th style="border: 1px solid #000; padding: 4px;">Ingrediente</th>
-                    <th style="border: 1px solid #000; padding: 4px;">P. Bruto</th>
-                    <th style="border: 1px solid #000; padding: 4px;">P. Líquido</th>
-                    <th style="border: 1px solid #000; padding: 4px;">Custo</th>
+                    <th style="border: 1px solid #000;">Ingrediente</th>
+                    <th style="border: 1px solid #000;">Peso Bruto</th>
+                    <th style="border: 1px solid #000;">Custo</th>
                 </tr>
                 ${r.ingredientes.map(ing => {
                     const info = insumos.find(i => i.id === ing.idInsumo);
-                    const custo = calcularCustoIngrediente(info, ing.pesoBruto);
                     return `<tr>
-                        <td style="border: 1px solid #000; padding: 4px;">${ing.nome}</td>
-                        <td style="border: 1px solid #000; padding: 4px; text-align: center;">${ing.pesoBruto} ${ing.un}</td>
-                        <td style="border: 1px solid #000; padding: 4px; text-align: center;">${ing.pesoLiquido} ${ing.un}</td>
-                        <td style="border: 1px solid #000; padding: 4px; text-align: right;">${custo.toFixed(2)}€</td>
+                        <td style="border: 1px solid #000; padding: 2px;">${ing.nome}</td>
+                        <td style="border: 1px solid #000; text-align: center;">${ing.pesoBruto} ${ing.un}</td>
+                        <td style="border: 1px solid #000; text-align: right;">${calcularCustoIngrediente(info, ing.pesoBruto).toFixed(2)}€</td>
                     </tr>`;
                 }).join('')}
-                <tr style="font-weight: bold;">
-                    <td colspan="3" style="border: 1px solid #000; text-align: right; padding: 4px;">TOTAL:</td>
-                    <td style="border: 1px solid #000; text-align: right; padding: 4px;">${total.toFixed(2)}€</td>
-                </tr>
             </table>
         </div>
     `;
@@ -280,15 +215,12 @@ function gerarLayoutHACCP(r, insumos) {
 
 function gerarLayoutProducao(r) {
     return `
-        <div style="padding: 20px; font-family: sans-serif; border: 2px solid #000;">
-            <h2 style="text-align: center; border-bottom: 2px solid #000;">ORDEM DE PRODUÇÃO: ${r.nome.toUpperCase()}</h2>
-            <p><b>RENDIMENTO ESPERADO:</b> ${r.rendimento} ${r.unidade}</p>
-            <ul style="font-size: 1.2rem;">
-                ${r.ingredientes.map(ing => `<li><b>${ing.pesoLiquido} ${ing.un}</b> - ${ing.nome}</li>`).join('')}
+        <div style="font-family: Arial; font-size: 10pt; border: 1px solid #000; padding: 8px;">
+            <div style="text-align: center; font-weight: bold; border-bottom: 1px solid #000;">ORDEM DE PRODUÇÃO</div>
+            <ul style="margin: 5px 0;">
+                ${r.ingredientes.map(ing => `<li><b>${ing.pesoLiquido}${ing.un}</b> - ${ing.nome}</li>`).join('')}
             </ul>
-            <div style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;">
-                <b>PREPARO:</b><br>${r.preparo || 'N/A'}
-            </div>
+            <div style="font-size: 9pt;"><b>Modo:</b> ${r.preparo || 'N/A'}</div>
         </div>
     `;
 }
