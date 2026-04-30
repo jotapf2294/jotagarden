@@ -560,35 +560,43 @@ dialog menu {
   .hide-desktop { display: none !important }
 }
 
-@media screen {
-    .only-print { display: none; }
-}
-
 @media print {
-    /* 1. Esconde TUDO o que não deve estar no papel */
-    nav, .sidebar, .bottom-nav, .app-header, .btn, button, details, #search-receita, .no-print {
+    /* 1. Esconde absolutamente tudo o que pertence à aplicação */
+    .app-container, .sidebar, .bottom-nav, .app-header, .main-wrapper, 
+    main, section, button, .btn, #details-form, #search-receita {
         display: none !important;
-    }
-
-    /* 2. Garante que o main e os containers não tenham margens ou scroll */
-    body, main, .app-container, .main-wrapper {
-        background: white !important;
+        height: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
-        display: block !important;
-        width: 100% !important;
-        overflow: visible !important;
+        overflow: hidden !important;
     }
 
-    /* 3. Força a Ficha Técnica a ocupar a página toda */
+    /* 2. Garante que apenas a área de print seja visível */
     #print-area {
         display: block !important;
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
-        z-index: 9999;
+        background: white;
     }
+
+    /* 3. Configurações de página para parecer profissional */
+    @page {
+        size: auto;
+        margin: 1cm;
+    }
+
+    body {
+        background: white !important;
+    }
+}
+
+/* Esconde a área de print enquanto navegas na app */
+@media screen {
+    #print-area { display: none; }
+}
+
     
     /* Quebra de página entre a ficha HACCP e a de Produção */
     .ficha-haccp { page-break-after: always; }
