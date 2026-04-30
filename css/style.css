@@ -96,17 +96,12 @@ input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--bo
 
 /* === REGRAS DE IMPRESSÃO VERSÃO 2.0 (iPad/Safari Proof) === */
 @media print {
-    #section-to-print {
-        display: block !important;
-        visibility: visible !important;
+    /* 1. ESCONDER TUDO O QUE NÃO É RECEITA */
+    .app-container, .bottom-nav, .app-header, #details-form, #search-receita, .btn {
+        display: none !important;
     }
-    .ficha-haccp-wrapper, .ficha-producao-wrapper {
-        display: block !important;
-        width: 100% !important;
-    }
-}
 
-    /* 2. Garante que o body e html não cortem o conteúdo */
+    /* 2. CONFIGURAÇÃO DO CORPO */
     html, body {
         background: white !important;
         margin: 0 !important;
@@ -115,29 +110,35 @@ input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--bo
         overflow: visible !important;
     }
 
-    /* 3. Força a área de print a ocupar tudo e ser visível */
+    /* 3. FORÇAR A ÁREA DE PRINT */
     #print-area {
         display: block !important;
+        visibility: visible !important;
         position: relative !important;
         width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
-        background: white !important;
     }
 
-    /* 4. Ajustes finos para as fichas */
-    .ficha-haccp, .ficha-producao {
+    #section-to-print {
+        display: block !important;
+        visibility: visible !important;
+    }
+
+    .ficha-haccp-wrapper, .ficha-producao-wrapper {
+        display: block !important;
         width: 100% !important;
         page-break-inside: avoid !important;
     }
 
-    /* 5. Configuração da página */
+    /* 4. CONFIGURAÇÃO DA PÁGINA */
     @page {
         size: portrait;
         margin: 1.5cm;
     }
 }
 
+/* ESCONDER ÁREA DE PRINT NO ECRÃ */
 @media screen {
     #print-area { display: none; }
 }
