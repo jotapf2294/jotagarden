@@ -256,11 +256,15 @@ window.visualizarFicha = async (id) => {
 
             <div style="padding: 24px;">
                 <h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; margin-bottom:12px;">Informações Básicas</h2>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; font-size: 12px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; font-size: 12px; margin-bottom: 10px;">
                     <div><b>PRODUTO:</b><br>${r.nome}</div>
                     <div><b>CATEGORIA:</b><br>${r.categoria}</div>
                     <div><b>RENDIMENTO:</b><br>${r.rendTotal}</div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; font-size: 12px; margin-bottom: 20px;">
                     <div><b>PORÇÕES:</b><br>${r.rendPorcoes}</div>
+                    <div><b>TEMPO DE PREPARO:</b><br>${r.tempo || '---'}</div>
+                    <div><b>TEMP. ARMAZENAMENTO:</b><br>${r.tempArm || '---'}</div>
                 </div>
 
                 <h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; margin-bottom:12px;">Ingredientes e Custos</h2>
@@ -298,7 +302,7 @@ window.visualizarFicha = async (id) => {
                     </div>
                 </div>
 
-                <h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 29px solid #e2e8f0; text-transform: uppercase; margin-bottom:12px;">Modo de Preparo e Segurança</h2>
+                <h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; margin-bottom:12px;">Modo de Preparo e Segurança</h2>
                 <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px; font-size: 11px; margin-bottom: 12px; border-radius:4px;">
                     <strong>⚠️ PCC (PONTO CRÍTICO):</strong> ${r.pcc || 'Não especificado'}
                 </div>
