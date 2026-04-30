@@ -244,72 +244,77 @@ window.visualizarFicha = async (id) => {
 };
 
 
-// 1. VISÃO ASAE / CONTROLO DE GESTÃO (Com Alergénios e Custos)
 function gerarLayoutHACCP(r, insumos) {
     const total = calcularTotalGeral(r.ingredientes, insumos);
-    const custoUn = total / (parseFloat(r.rendimento) || 1);
-    
+    const rendimento = parseFloat(r.rendimento) || 1;
+    const custoPorPorcao = total / rendimento;
+
     return `
-        <div style="padding: 30px; font-family: 'Segoe UI', Arial; color: #333; border: 1px solid #000; background: #fff;">
-            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px;">
-                <div>
-                    <h1 style="margin:0; color:#000;">FICHA TÉCNICA DE PRODUTO ACABADO</h1>
-                    <p style="margin:5px 0; font-size: 1.1rem;"><b>PRODUTO:</b> ${r.nome.toUpperCase()}</p>
-                    <p style="margin:5px 0;"><b>CATEGORIA:</b> ${r.categoria}</p>
+        <div style="font-family: Arial, sans-serif; color: #333; max-width: 800px; margin: auto;">
+            <div style="background-color: #28a745; color: white; text-align: center; padding: 5px; font-weight: bold; border: 1px solid #000;">
+                FICHA TÉCNICA DE PREPARAÇÃO
+            </div>
+            
+            <div style="display: flex; border: 1px solid #000; border-top: none;">
+                <div style="flex: 1; padding: 10px; border-right: 1px solid #000;">
+                    <p style="margin: 0; font-weight: bold;">NOME DA PREPARAÇÃO:</p>
+                    <p style="margin: 5px 0 15px 0; font-size: 1.2rem;">${r.nome.toUpperCase()}</p>
+                    <p style="margin: 0; font-weight: bold;">PROFISSIONAL:</p>
+                    <p style="margin: 5px 0 0 0;">Babe's Bakery</p>
                 </div>
-                <div style="text-align: right; font-size: 0.8rem;">
-                    <p>Cód. Receita: ${r.id}</p>
-                    <p>Data de Emissão: ${new Date().toLocaleDateString('pt-PT')}</p>
+                <div style="width: 250px; height: 150px; background: #eee; display: flex; align-items: center; justify-content: center;">
+                    ${r.foto ? `<img src="${r.foto}" style="width:100%; height:100%; object-fit:cover;">` : 'FOTO'}
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
-                <div style="border: 1px solid #ccc; padding: 10px;">
-                    <h4 style="margin:0 0 10px 0; background: #f0f0f0; padding: 5px;">CONSERVAÇÃO E VALIDADE</h4>
-                    <p><b>Temp. Conservação:</b> < 5°C (Refrigeração)</p>
-                    <p><b>Validade:</b> 3 a 5 dias</p>
-                    <p><b>Condições:</b> Local seco e fresco, em recipiente hermético.</p>
-                </div>
-                <div style="border: 1px solid #e74c3c; padding: 10px;">
-                    <h4 style="margin:0 0 10px 0; background: #fdeaea; color: #c0392b; padding: 5px;">⚠️ ALERGÉNIOS (Reg. UE 1169/2011)</h4>
-                    <p style="font-size: 0.9rem;">Contém: Glúten, Ovos, Leite. Pode conter vestígios de frutos de casca rija.</p>
-                </div>
+            <div style="background-color: #28a745; color: white; text-align: center; padding: 3px; font-size: 0.9rem; font-weight: bold; border: 1px solid #000; border-top: none;">
+                INSUMOS
             </div>
 
-            <h4 style="background: #000; color: #fff; padding: 8px; margin-top: 20px;">COMPOSIÇÃO E CUSTOS</h4>
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid #000;">
                 <thead>
-                    <tr style="border-bottom: 2px solid #000;">
-                        <th style="text-align: left; padding: 8px;">Ingrediente</th>
-                        <th style="text-align: center; padding: 8px;">P. Bruto</th>
-                        <th style="text-align: center; padding: 8px;">P. Líquido</th>
-                        <th style="text-align: center; padding: 8px;">FC</th>
-                        <th style="text-align: right; padding: 8px;">Custo Total</th>
+                    <tr style="background-color: #28a745; color: white; font-size: 0.8rem;">
+                        <th style="border: 1px solid #000; padding: 5px; text-align: left;">ITEM</th>
+                        <th style="border: 1px solid #000; padding: 5px;">UN</th>
+                        <th style="border: 1px solid #000; padding: 5px;">Peso Bruto</th>
+                        <th style="border: 1px solid #000; padding: 5px;">Peso Líquido</th>
+                        <th style="border: 1px solid #000; padding: 5px;">FC</th>
+                        <th style="border: 1px solid #000; padding: 5px;">Custo Total</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${r.ingredientes.map(ing => {
                         const info = insumos.find(i => i.id === ing.idInsumo);
                         const custo = calcularCustoIngrediente(info, ing.pesoBruto);
-                        const fc = (ing.pesoBruto / (ing.pesoLiquido || 1)).toFixed(2);
+                        const fc = (ing.pesoBruto / (ing.pesoLiquido || 1)).toFixed(3);
                         return `
-                            <tr style="border-bottom: 1px solid #eee;">
-                                <td style="padding: 8px;">${ing.nome.toUpperCase()}</td>
-                                <td style="padding: 8px; text-align: center;">${ing.pesoBruto} ${ing.un}</td>
-                                <td style="padding: 8px; text-align: center;">${ing.pesoLiquido} ${ing.un}</td>
-                                <td style="padding: 8px; text-align: center;">${fc}</td>
-                                <td style="padding: 8px; text-align: right;">${custo.toFixed(2)}€</td>
+                            <tr style="font-size: 0.85rem; text-align: center;">
+                                <td style="border: 1px solid #000; padding: 4px; text-align: left;">${ing.nome.toUpperCase()}</td>
+                                <td style="border: 1px solid #000; padding: 4px;">${ing.un}</td>
+                                <td style="border: 1px solid #000; padding: 4px;">${ing.pesoBruto.toFixed(3)}</td>
+                                <td style="border: 1px solid #000; padding: 4px;">${ing.pesoLiquido.toFixed(3)}</td>
+                                <td style="border: 1px solid #000; padding: 4px;">${fc}</td>
+                                <td style="border: 1px solid #000; padding: 4px; text-align: right;">${custo.toFixed(2)}€</td>
                             </tr>
                         `;
                     }).join('')}
-                </tbody>
-                <tfoot>
-                    <tr style="font-weight: bold; background: #f9f9f9;">
-                        <td colspan="4" style="padding: 10px; text-align: right;">CUSTO TOTAL DA RECEITA:</td>
-                        <td style="padding: 10px; text-align: right;">${total.toFixed(2)}€</td>
+                    <tr style="font-weight: bold; background: #eee;">
+                        <td colspan="5" style="border: 1px solid #000; padding: 5px; text-align: right;">TOTAL DOS INSUMOS:</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${total.toFixed(2)}€</td>
                     </tr>
-                </tfoot>
+                </tbody>
             </table>
+
+            <div style="border: 1px solid #000; border-top: none; padding: 10px;">
+                <p style="margin: 0; font-weight: bold; text-decoration: underline;">Modo de Preparo:</p>
+                <p style="margin: 10px 0; font-size: 0.9rem; white-space: pre-wrap;">${r.preparo || 'Sem instruções.'}</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid #000; border-top: none; font-size: 0.9rem;">
+                <div style="padding: 5px; border-right: 1px solid #000;">Rendimento: ${r.rendimento} ${r.unidade}</div>
+                <div style="padding: 5px; border-right: 1px solid #000;">Custo Total: ${total.toFixed(2)}€</div>
+                <div style="padding: 5px;">Custo/Unidade: ${custoPorPorcao.toFixed(2)}€</div>
+            </div>
         </div>
     `;
 }
