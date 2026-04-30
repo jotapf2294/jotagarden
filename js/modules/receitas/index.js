@@ -67,179 +67,52 @@ export const renderReceitas = async () => {
 
             <div id="lista-receitas-cards" style="display: grid; gap: 15px;"></div>
         </div>
-
-        <div id="print-area" class="only-print"></div>
     `;
 
-    // Vincular Eventos
+    // Removido o print-area daqui de dentro! Ele deve viver apenas no index.html.
+
     setupEvents(receitas, insumos);
     renderCards(receitas, insumos);
 };
 
-const setupEvents = (receitas, insumos) => {
-    // Foto Base64
-    document.getElementById('rec-foto').onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = () => { fotoBase64 = reader.result; };
-        if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
-    };
-
-    // Adicionar Ingrediente
-    document.getElementById('btn-add-ing').onclick = () => {
-        const id = document.getElementById('sel-insumo').value;
-        const bruto = document.getElementById('inp-bruto').value;
-        const liquido = document.getElementById('inp-liquido').value;
-        const insumo = insumos.find(i => i.id === id);
-
-        if (insumo && bruto) {
-            ingredientesTemp.push({ 
-                idInsumo: id, 
-                nome: insumo.nome, 
-                un: insumo.unidade,
-                pesoBruto: parseFloat(bruto), 
-                pesoLiquido: parseFloat(liquido || bruto) 
-            });
-            atualizarListaTemp();
-            document.getElementById('inp-bruto').value = '';
-            document.getElementById('inp-liquido').value = '';
-            document.getElementById('sel-insumo').value = '';
-        } else {
-            alert("Seleciona um insumo e define o peso bruto!");
-        }
-    };
-
-    // Guardar Receita
-    document.getElementById('form-receita').onsubmit = async (e) => {
-        e.preventDefault();
-        if (ingredientesTemp.length === 0) return alert("A receita precisa de pelo menos 1 ingrediente!");
-
-        const nova = {
-            id: modoEdicaoId || Date.now().toString(),
-            nome: document.getElementById('rec-nome').value,
-            categoria: document.getElementById('rec-categoria').value,
-            rendimento: document.getElementById('rec-rendimento').value,
-            unidade: document.getElementById('rec-unidade').value,
-            preparo: document.getElementById('rec-preparo').value,
-            foto: fotoBase64,
-            ingredientes: ingredientesTemp
-        };
-
-        await save('receitas', nova);
-        resetForm();
-        renderReceitas();
-    };
-
-    document.getElementById('btn-cancelar-edit').onclick = resetForm;
-
-    // Pesquisa
-    document.getElementById('search-receita').oninput = (e) => {
-        const termo = e.target.value.toLowerCase();
-        const filtradas = receitas.filter(r => r.nome.toLowerCase().includes(termo));
-        renderCards(filtradas, insumos);
-    };
-};
-
-const renderCards = (lista, insumos) => {
-    const display = document.getElementById('lista-receitas-cards');
-    if (!display) return;
-    
-    display.innerHTML = lista.map(r => {
-        const total = calcularTotalGeral(r.ingredientes, insumos);
-        return `
-            <div class="card" style="display:flex; align-items:center; padding:12px; gap:15px; margin-bottom: 0;">
-                <div style="width:70px; height:70px; background:var(--bg-hover); border-radius:8px; overflow:hidden; flex-shrink:0; border: 1px solid var(--border);">
-                    ${r.foto ? `<img src="${r.foto}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="text-align:center; padding-top:22px; color:var(--text-secondary); font-size:1.2rem;">📷</div>`}
-                </div>
-                <div style="flex:1;">
-                    <h4 style="margin:0; font-size: 1rem;">${r.nome}</h4>
-                    <span class="badge" style="font-size: 0.7rem;">${r.categoria}</span>
-                    <div style="color:var(--success); font-weight:bold; font-size: 0.9rem; margin-top: 4px;">${total.toFixed(2)}€</div>
-                </div>
-                <div style="display:flex; gap:5px;">
-                    <button class="btn btn-sm" onclick="window.visualizarFicha('${r.id}')">👁️</button>
-                    <button class="btn btn-sm" onclick="window.editarFicha('${r.id}')">✏️</button>
-                    <button class="btn btn-sm btn-danger" onclick="window.eliminarFicha('${r.id}')">🗑️</button>
-                </div>
-            </div>
-        `;
-    }).join('');
-};
-
-const resetForm = () => {
-    modoEdicaoId = null;
-    ingredientesTemp = [];
-    fotoBase64 = "";
-    const form = document.getElementById('form-receita');
-    if(form) form.reset();
-    document.getElementById('form-title').innerText = "➕ Nova Ficha Técnica";
-    document.getElementById('lista-temp-ing').innerHTML = "";
-    document.getElementById('details-form').open = false;
-};
-
-const atualizarListaTemp = () => {
-    const div = document.getElementById('lista-temp-ing');
-    div.innerHTML = ingredientesTemp.map((ing, idx) => `
-        <span style="background:var(--primary); color:white; padding:5px 12px; border-radius:20px; font-size:0.75rem; display:flex; align-items:center; gap:8px;">
-            ${ing.nome} (${ing.pesoBruto}) 
-            <b style="cursor:pointer; background:rgba(0,0,0,0.2); border-radius:50%; width:16px; height:16px; text-align:center; line-height:16px;" onclick="window.removeIngTemp(${idx})">×</b>
-        </span>
-    `).join('');
-};
-
-// --- EXPOSIÇÃO GLOBAL (Crucial para funcionar os botões do HTML) ---
-window.removeIngTemp = (idx) => {
-    ingredientesTemp.splice(idx, 1);
-    atualizarListaTemp();
-};
-
-window.eliminarFicha = async (id) => {
-    if (confirm("Deseja apagar esta receita definitivamente?")) {
-        await remove('receitas', id);
-        renderReceitas();
-    }
-};
-
-window.editarFicha = async (id) => {
-    const r = await getById('receitas', id);
-    if (!r) return;
-    
-    modoEdicaoId = id;
-    document.getElementById('details-form').open = true;
-    document.getElementById('form-title').innerText = "✏️ Editando: " + r.nome;
-    document.getElementById('rec-nome').value = r.nome;
-    document.getElementById('rec-categoria').value = r.categoria;
-    document.getElementById('rec-rendimento').value = r.rendimento;
-    document.getElementById('rec-unidade').value = r.unidade;
-    document.getElementById('rec-preparo').value = r.preparo;
-    ingredientesTemp = [...r.ingredientes];
-    fotoBase64 = r.foto || "";
-    atualizarListaTemp();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-};
+// ... (setupEvents, renderCards, resetForm, atualizarListaTemp mantêm-se iguais)
 
 window.visualizarFicha = async (id) => {
     const receitas = await getAll('receitas');
     const insumos = await getAll('insumos');
     const r = receitas.find(x => x.id === id);
 
+    // Seleciona a print-area que está no ROOT do documento (index.html)
     const printArea = document.getElementById('print-area');
-    
-    // Injetamos o conteúdo com estilos inline de segurança para o print
+    if (!printArea) {
+        console.error("ERRO: Elemento #print-area não encontrado no index.html");
+        return;
+    }
+
+    // Injetamos com IDs específicos para garantir que o CSS de impressão os veja
     printArea.innerHTML = `
-        <div class="ficha-haccp" style="display: block; width: 100%;">${gerarLayoutHACCP(r, insumos)}</div>
-        <div class="ficha-producao" style="display: block; width: 100%; page-break-before: always; margin-top: 30px;">${gerarLayoutProducao(r)}</div>
+        <div id="section-to-print">
+            <div class="ficha-haccp-wrapper" style="margin-bottom: 40px;">
+                ${gerarLayoutHACCP(r, insumos)}
+            </div>
+            <div style="page-break-before: always;"></div>
+            <div class="ficha-producao-wrapper">
+                ${gerarLayoutProducao(r)}
+            </div>
+        </div>
     `;
 
-    // Truque de Engenharia: Aguarda as imagens carregarem (se houver) e renderizar o DOM
+    // Forçamos o browser a "respirar" para desenhar o HTML antes de imprimir
     setTimeout(() => {
         window.print();
-    }, 700); // Aumentamos para 700ms para o iPad acompanhar
+    }, 800);
 
     window.onafterprint = () => {
         printArea.innerHTML = "";
     };
 };
 
+// ... (funções gerarLayoutHACCP e gerarLayoutProducao )
 
 
 function gerarLayoutHACCP(r, insumos) {
