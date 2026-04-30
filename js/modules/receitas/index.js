@@ -223,22 +223,23 @@ window.visualizarFicha = async (id) => {
     const r = receitas.find(x => x.id === id);
 
     const printArea = document.getElementById('print-area');
-
-    // Injetamos o conteúdo
+    
+    // Injetamos o conteúdo com estilos inline de segurança para o print
     printArea.innerHTML = `
-        <div class="ficha-haccp">${gerarLayoutHACCP(r, insumos)}</div>
-        <div class="ficha-producao">${gerarLayoutProducao(r)}</div>
+        <div class="ficha-haccp" style="display: block; width: 100%;">${gerarLayoutHACCP(r, insumos)}</div>
+        <div class="ficha-producao" style="display: block; width: 100%; page-break-before: always; margin-top: 30px;">${gerarLayoutProducao(r)}</div>
     `;
 
-    // 500ms é o "doce ponto" para o browser processar o CSS de impressão
+    // Truque de Engenharia: Aguarda as imagens carregarem (se houver) e renderizar o DOM
     setTimeout(() => {
         window.print();
-    }, 500);
+    }, 700); // Aumentamos para 700ms para o iPad acompanhar
 
     window.onafterprint = () => {
         printArea.innerHTML = "";
     };
 };
+
 
 
 function gerarLayoutHACCP(r, insumos) {
