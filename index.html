@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Doce Gestão - Babe's Bakery</title>
+    <title>Doce Gestão - Professional Bakery</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        input, select, textarea { font-size: 16px !important; }
+    </style>
 </head>
 <body>
 
@@ -12,7 +15,7 @@
         <aside class="sidebar desktop-nav">
             <div class="sidebar-brand">🧁 Doce Gestão</div>
             <nav class="nav-list">
-                <button class="nav-item active" data-target="dashboard">
+                <button class="nav-item" data-target="dashboard">
                     <span class="ico">📊</span> <span class="nav-label">Dashboard</span>
                 </button>
                 <button class="nav-item" data-target="receitas">
@@ -22,7 +25,7 @@
                     <span class="ico">📅</span> <span class="nav-label">Agenda</span>
                 </button>
                 <button class="nav-item" data-target="gestao">
-                    <span class="ico">⚙️</span> <span class="nav-label">Gestão</span>
+                    <span class="ico">📈</span> <span class="nav-label">Gestão</span>
                 </button>
             </nav>
         </aside>
@@ -31,11 +34,12 @@
             <header class="app-header">
                 <div class="app-header-content">
                     <h1>🧁 Doce Gestão</h1>
+                    <div id="online-status" style="font-size: 0.7rem; color: #059669;">● Sistema Local Ativo</div>
                 </div>
             </header>
 
             <main id="app-main">
-                <section id="tab-dashboard" class="tab-content active"></section>
+                <section id="tab-dashboard" class="tab-content"></section>
                 <section id="tab-receitas" class="tab-content"></section>
                 <section id="tab-agenda" class="tab-content"></section>
                 <section id="tab-gestao" class="tab-content"></section>
@@ -44,7 +48,7 @@
     </div>
 
     <nav class="bottom-nav">
-        <button class="nav-btn active" data-target="dashboard">
+        <button class="nav-btn" data-target="dashboard">
             <span class="ico">📊</span><span>Dash</span>
         </button>
         <button class="nav-btn" data-target="receitas">
@@ -54,12 +58,12 @@
             <span class="ico">📅</span><span>Agenda</span>
         </button>
         <button class="nav-btn" data-target="gestao">
-            <span class="ico">⚙️</span><span>Gestão</span>
+            <span class="ico">📈</span><span>Gestão</span>
         </button>
     </nav>
 
-    <script type="module" src="js/app.js"></script>
-    
     <div id="print-area"></div>
+
+    <script type="module" src="js/app.js"></script>
 </body>
 </html>
