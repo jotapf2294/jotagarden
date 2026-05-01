@@ -219,7 +219,7 @@ window.confirmarBaixaStock = async (idReceita) => {
             await save('insumos', insumo);
         }
     }
-    alert("✅ Produção registada e stock atualizado na aba Gestão!");
+    alert("✅ Stock atualizado!");
 };
 
 window.visualizarFicha = async (id) => {
@@ -227,16 +227,18 @@ window.visualizarFicha = async (id) => {
     const insumos = await getAll('insumos');
     const r = receitas.find(x => x.id === id);
     const printArea = document.getElementById('print-area');
+    if (!printArea) return alert("Erro: print-area não encontrada");
+
     const totalMP = calcularTotalGeral(r.ingredientes, insumos);
     const custoPorcao = totalMP / (parseFloat(r.rendPorcoes) || 1);
 
     printArea.innerHTML = `
-        <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;" class="no-print">
+        <div style="display: flex; gap: 10px; justify-content: center; padding: 20px;" class="no-print">
             <button onclick="window.confirmarBaixaStock('${r.id}')" style="background: #059669; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">📉 REGISTAR PRODUÇÃO</button>
             <button onclick="window.print()" style="background: #1e3a8a; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">🖨️ IMPRIMIR</button>
             <button onclick="document.getElementById('print-area').innerHTML=''" style="background: #64748b; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">✖ FECHAR</button>
         </div>
-        <div class="ficha" style="background: white; border: 1px solid #000; font-family: sans-serif; padding:0; width:210mm; margin:auto;">
+        <div class="ficha" style="background: white; border: 1px solid #000; font-family: sans-serif; padding:0; width:210mm; margin:auto; box-sizing: border-box;">
             <div style="background: #1e3a8a; color: white; padding: 20px; display: flex; justify-content: space-between;">
                 <h1 style="font-size: 20px; margin:0;">FICHA TÉCNICA DE PRODUÇÃO</h1>
                 <div style="font-size: 11px; text-align: right;">Doc: FTP-${r.codigo || '000'}<br>Rev: 01 | ${r.dataAtual}</div>
