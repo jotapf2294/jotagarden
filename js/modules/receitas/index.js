@@ -156,25 +156,100 @@ window.confirmarBaixaStock = async (idReceita) => {
     alert("✅ Stock atualizado!");
 };
 
+window.editarFicha = async (id) => {
+    const r = await getById('receitas', id);
+    if (!r) return;
+    modoEdicaoId = id;
+    document.getElementById('details-form').open = true;
+    document.getElementById('form-title').innerText = "✏️ Editando: " + r.nome;
+    document.getElementById('rec-codigo').value = r.codigo || "";
+    document.getElementById('rec-nome').value = r.nome;
+    document.getElementById('rec-categoria').value = r.categoria;
+    document.getElementById('rec-rend-total').value = r.rendTotal || "";
+    document.getElementById('rec-rend-porcoes').value = r.rendPorcoes || 1;
+    document.getElementById('rec-tempo').value = r.tempo || "";
+    document.getElementById('rec-temp-arm').value = r.tempArm || "";
+    document.getElementById('rec-pcc').value = r.pcc || "";
+    document.getElementById('rec-preparo').value = r.preparo || "";
+    document.getElementById('rec-embalagem').value = r.embalagem || "";
+    document.getElementById('rec-validade').value = r.validade || "";
+    document.getElementById('rec-alergenos').value = r.alergenos || "";
+    ingredientesTemp = [...r.ingredientes];
+    atualizarListaTemp();
+};
+
+// --- LOGICA DE BAIXA DE STOCK ---
+window.confirmarBaixaStock = async (idReceita) => {
+    if (!confirm("Confirmar a produção desta receita? O stock será descontado na Gestão.")) return;
+    const [receitas, insumos] = await Promise.all([getAll('receitas'), getAll('insumos')]);
+    const r = receitas.find(x => x.id === idReceita);
+    for (const ing of r.ingredientes) {
+        const insumo = insumos.find(i => i.id === ing.idInsumo);
+        if (insumo) {
+            insumo.qtd = Math.max(0, (parseFloat(insumo.qtd) || 0) - (parseFloat(ing.pesoBruto) || 0));
+            await save('insumos', insumo);
+        }
+    }
+    alert("✅ Produção registada e stock atualizado na aba Gestão!");
+};
+
 window.visualizarFicha = async (id) => {
     const receitas = await getAll('receitas');
     const insumos = await getAll('insumos');
     const r = receitas.find(x => x.id === id);
     const printArea = document.getElementById('print-area');
     const totalMP = calcularTotalGeral(r.ingredientes, insumos);
+    const custoPorcao = totalMP / (parseFloat(r.rendPorcoes) || 1);
 
     printArea.innerHTML = `
         <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;" class="no-print">
-            <button onclick="window.confirmarBaixaStock('${r.id}')" style="background: #059669; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer;">📉 BAIXAR STOCK</button>
-            <button onclick="window.print()" style="background: #1e3a8a; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer;">🖨️ IMPRIMIR</button>
+            <button onclick="window.confirmarBaixaStock('${r.id}')" style="background: #059669; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">📉 REGISTAR PRODUÇÃO</button>
+            <button onclick="window.print()" style="background: #1e3a8a; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">🖨️ IMPRIMIR</button>
+            <button onclick="document.getElementById('print-area').innerHTML=''" style="background: #64748b; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">✖ FECHAR</button>
         </div>
-        <div class="ficha" style="background:white; padding:20px; border:1px solid #000; width:210mm; margin:auto;">
-            <h1 style="background:#1e3a8a; color:white; padding:15px;">FICHA TÉCNICA: ${r.nome}</h1>
-            <p>Custo Total: ${totalMP.toFixed(2)}€</p>
+        <div class="ficha" style="background: white; border: 1px solid #000; font-family: sans-serif; padding:0; width:210mm; margin:auto;">
+            <div style="background: #1e3a8a; color: white; padding: 20px; display: flex; justify-content: space-between;">
+                <h1 style="font-size: 20px; margin:0;">FICHA TÉCNICA DE PRODUÇÃO</h1>
+                <div style="font-size: 11px; text-align: right;">Doc: FTP-${r.codigo || '000'}<br>Rev: 01 | ${r.dataAtual}</div>
+            </div>
+            <div style="padding: 24px;">
+                <h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; margin-bottom:12px;">Informações Básicas</h2>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; font-size: 12px; margin-bottom: 10px;">
+                    <div><b>PRODUTO:</b><br>${r.nome}</div>
+                    <div><b>CATEGORIA:</b><br>${r.categoria}</div>
+                    <div><b>RENDIMENTO:</b><br>${r.rendTotal}</div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; font-size: 12px; margin-bottom: 20px;">
+                    <div><b>PORÇÕES:</b><br>${r.rendPorcoes}</div>
+                    <div><b>TEMPO DE PREPARO:</b><br>${r.tempo || '---'}</div>
+                    <div><b>TEMP. ARMAZENAMENTO:</b><br>${r.tempArm || '---'}</div>
+                </div>
+                <h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; margin-bottom:12px;">Ingredientes e Custos</h2>
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 15px;">
+                    <thead><tr style="background: #f1f5f9;"><th style="border: 1px solid #e2e8f0; padding: 8px; text-align:left;">Ingrediente</th><th style="border: 1px solid #e2e8f0; padding: 8px; text-align:center;">Peso Bruto</th><th style="border: 1px solid #e2e8f0; padding: 8px; text-align:center;">FC</th><th style="border: 1px solid #e2e8f0; padding: 8px; text-align:right;">€ Total</th></tr></thead>
+                    <tbody>
+                        ${r.ingredientes.map(ing => {
+                            const info = insumos.find(i => i.id === ing.idInsumo);
+                            const custo = calcularCustoIngrediente(info, ing.pesoBruto);
+                            return `<tr><td style="border: 1px solid #e2e8f0; padding: 6px;">${ing.nome}</td><td style="border: 1px solid #e2e8f0; padding: 6px; text-align:center;">${ing.pesoBruto} ${ing.un}</td><td style="border: 1px solid #e2e8f0; padding: 6px; text-align:center;">${ing.fc}</td><td style="border: 1px solid #e2e8f0; padding: 6px; text-align:right;">${custo.toFixed(2)}€</td></tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius:6px; margin-bottom: 20px;">
+                    <div style="display:flex; justify-content: space-between; font-weight: bold; color: #1e3a8a; font-size:14px;"><span>CUSTO TOTAL DA RECEITA:</span><span>${totalMP.toFixed(2)} €</span></div>
+                    <div style="display:flex; justify-content: space-between; font-size: 11px; margin-top:5px;"><span>Custo por Porção (${r.rendPorcoes}):</span><span>${custoPorcao.toFixed(3)} €</span></div>
+                </div>
+                <h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; margin-bottom:12px;">Modo de Preparo e Segurança</h2>
+                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px; font-size: 11px; margin-bottom: 12px; border-radius:4px;"><strong>⚠️ PCC (PONTO CRÍTICO):</strong> ${r.pcc || 'Não especificado'}</div>
+                <div style="font-size: 14px; white-space: pre-wrap; margin-bottom: 20px; border: 1px solid #f1f5f9; padding: 15px; border-radius:4px;">${r.preparo}</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div><h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; margin-bottom:8px;">EMBALAGEM</h2><div style="font-size: 12px;">Tipo: ${r.embalagem}<br>Validade: ${r.validade}</div></div>
+                    <div><h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; margin-bottom:8px;">ALERGÉNIOS</h2><div style="font-size: 12px; color: #dc2626; font-weight:bold;">${r.alergenos}</div></div>
+                </div>
+            </div>
+            <div style="background: #f1f5f9; padding: 20px; font-size: 10px; display: flex; justify-content: space-between; margin-top: 30px; border-top: 1px solid #e2e8f0;"><div>Elaborado por: ___________________</div><div>Reg. CE 852/2004 | ASAE</div></div>
         </div>
     `;
-    // Removido o window.print automático para permitir clicar no botão de stock primeiro
 };
 
-window.editarFicha = async (id) => { /* Mantém sua lógica original de preenchimento do form */ };
 window.eliminarFicha = async (id) => { if(confirm("Apagar?")){ await remove('receitas', id); renderReceitas(); }};
