@@ -1,41 +1,35 @@
 // js/app.js
 import { initDB } from './db.js';
 import { renderDashboard } from './modules/dashboard.js';
-import { renderGestao } from './modules/gestao.js';
+import { renderGestao } from './modules/gestao/index.js'; // Ajustado o caminho para a pasta
 import { renderReceitas } from './modules/receitas/index.js';
 
-/**
- * Renderiza um aviso para abas ainda não construídas
- */
 const renderPlaceholder = (targetId) => {
     const container = document.getElementById(`tab-${targetId}`);
     if (container) {
-        container.innerHTML = `<div style="padding: 20px; text-align: center; color: #666;">
-            <h3>📅 Próximo passo: Agenda</h3>
-            <p>Este módulo será integrado em breve.</p>
+        container.innerHTML = `<div style="padding: 40px; text-align: center; color: #64748b;">
+            <div style="font-size: 3rem; margin-bottom: 15px;">📅</div>
+            <h3 style="color: var(--primary);">Próximo passo: Agenda</h3>
+            <p>Este módulo será integrado na próxima fase do projeto.</p>
         </div>`;
     }
 };
 
-/**
- * Maestro de Navegação (Router)
- */
 const router = async (targetId) => {
-    console.log(`🧭 A navegar para: ${targetId}`);
-
-    // 1. Atualizar UI: Esconder todas as abas e desativar botões
+    // 1. Reset visual (remove ativos de Sidebar e Bottom Nav)
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.nav-item, .nav-btn').forEach(b => b.classList.remove('active'));
 
-    // 2. Ativar a aba e os botões corretos (Sincroniza Sidebar e Bottom Nav)
+    // 2. Ativar conteúdo e botões
     const targetTab = document.getElementById(`tab-${targetId}`);
     if (targetTab) targetTab.classList.add('active');
     
+    // Seleciona todos os botões que apontam para este alvo (independente de ser desktop ou mobile)
     document.querySelectorAll(`[data-target="${targetId}"]`).forEach(btn => {
         btn.classList.add('active');
     });
 
-    // 3. Renderizar o conteúdo dinâmico
+    // 3. Renderização Dinâmica
     try {
         if (targetId === 'dashboard') {
             await renderDashboard();
@@ -46,43 +40,33 @@ const router = async (targetId) => {
         } else {
             renderPlaceholder(targetId);
         }
+        // Scroll para o topo ao trocar de aba (útil no iPad)
+        window.scrollTo(0, 0);
     } catch (err) {
         console.error(`💥 Erro ao carregar aba ${targetId}:`, err);
         if (targetTab) {
-            targetTab.innerHTML = `<div style="color:red; padding:20px;">Erro: ${err.message}</div>`;
+            targetTab.innerHTML = `<div style="color:red; padding:20px;">Erro técnico: ${err.message}</div>`;
         }
     }
 };
 
-/**
- * Inicialização do Sistema (DOMContentLoaded)
- */
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('⚡ Iniciando Doce Gestão...');
-
     try {
-        // Inicializa a BD antes de tudo
         await initDB();
-        console.log('✅ Base de Dados Operacional');
-
-        // Configura os cliques em TODOS os botões de navegação
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const target = e.currentTarget.getAttribute('data-target');
+        
+        // Listener universal para qualquer elemento com data-target
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-target]');
+            if (btn) {
+                const target = btn.getAttribute('data-target');
                 router(target);
-            });
+            }
         });
 
-        // Carrega o dashboard inicial
+        // Início padrão
         await router('dashboard');
 
     } catch (error) {
-        console.error('🚨 Erro fatal no arranque:', error);
-        document.body.innerHTML = `
-            <div style="padding:40px; color:red; font-family:sans-serif;">
-                <h2>🚨 Erro Crítico de Sistema</h2>
-                <p>${error}</p>
-                <button onclick="location.reload()" style="padding:10px; cursor:pointer;">Tentar Novamente</button>
-            </div>`;
+        console.error('🚨 Erro no arranque:', error);
     }
 });
