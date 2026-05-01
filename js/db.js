@@ -1,12 +1,22 @@
 // js/db.js
 const DB_NAME = 'docegestao_v4';
 const DB_VERSION = 1;
+let dbInstance = null; // Guarda a conexão para reutilizar
 
 export const initDB = () => {
   return new Promise((resolve, reject) => {
+    // Se já estiver aberta, devolve a mesma
+    if (dbInstance) return resolve(dbInstance);
+
     const request = indexedDB.open(DB_NAME, DB_VERSION);
+    
     request.onerror = (e) => reject(`Erro DB: ${e.target.error}`);
-    request.onsuccess = (e) => resolve(e.target.result);
+    
+    request.onsuccess = (e) => {
+      dbInstance = e.target.result;
+      resolve(dbInstance);
+    };
+
     request.onupgradeneeded = (e) => {
       const db = e.target.result;
       if (!db.objectStoreNames.contains('receitas')) db.createObjectStore('receitas', { keyPath: 'id' });
@@ -16,7 +26,6 @@ export const initDB = () => {
   });
 };
 
-// NOVO: Buscar apenas um item pelo ID (Necessário para Editar)
 export const getById = async (storeName, id) => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
@@ -42,7 +51,8 @@ export const save = async (storeName, data) => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(storeName, 'readwrite');
-    tx.objectStore(storeName).put(data);
+    const store = tx.objectStore(storeName);
+    store.put(data);
     tx.oncomplete = () => resolve(true);
     tx.onerror = () => reject(tx.error);
   });
@@ -52,7 +62,8 @@ export const remove = async (storeName, id) => {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(storeName, 'readwrite');
-    tx.objectStore(storeName).delete(id);
+    const store = tx.objectStore(storeName);
+    store.delete(id);
     tx.oncomplete = () => resolve(true);
     tx.onerror = () => reject(tx.error);
   });
