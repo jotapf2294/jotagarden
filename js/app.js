@@ -1,60 +1,67 @@
-// js/app.js
 import { initDB } from './db.js';
 import { renderDashboard } from './modules/dashboard.js';
-import { renderGestao } from './modules/gestao/index.js'; // Ajustado o caminho para a pasta
+import { renderGestao } from './modules/gestao/index.js';
 import { renderReceitas } from './modules/receitas/index.js';
-
-const renderPlaceholder = (targetId) => {
-    const container = document.getElementById(`tab-${targetId}`);
-    if (container) {
-        container.innerHTML = `<div style="padding: 40px; text-align: center; color: #64748b;">
-            <div style="font-size: 3rem; margin-bottom: 15px;">📅</div>
-            <h3 style="color: var(--primary);">Próximo passo: Agenda</h3>
-            <p>Este módulo será integrado na próxima fase do projeto.</p>
-        </div>`;
-    }
-};
+import { renderAgenda } from './modules/agenda/index.js'; // Importação da Agenda
 
 const router = async (targetId) => {
-    // 1. Reset visual (remove ativos de Sidebar e Bottom Nav)
+    // 1. Limpeza de UI: Fechar visualizações de impressão/fichas ao navegar
+    const printArea = document.getElementById('print-area');
+    if (printArea) printArea.innerHTML = '';
+
+    // 2. Reset visual (remove ativos de Sidebar e Bottom Nav)
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.nav-item, .nav-btn').forEach(b => b.classList.remove('active'));
 
-    // 2. Ativar conteúdo e botões
+    // 3. Ativar conteúdo e botões correspondentes
     const targetTab = document.getElementById(`tab-${targetId}`);
     if (targetTab) targetTab.classList.add('active');
-    
-    // Seleciona todos os botões que apontam para este alvo (independente de ser desktop ou mobile)
+
     document.querySelectorAll(`[data-target="${targetId}"]`).forEach(btn => {
         btn.classList.add('active');
     });
 
-    // 3. Renderização Dinâmica
+    // 4. Renderização Dinâmica dos Módulos
     try {
-        if (targetId === 'dashboard') {
-            await renderDashboard();
-        } else if (targetId === 'gestao') {
-            await renderGestao();
-        } else if (targetId === 'receitas') {
-            await renderReceitas();
-        } else {
-            renderPlaceholder(targetId);
+        switch (targetId) {
+            case 'dashboard':
+                await renderDashboard();
+                break;
+            case 'gestao':
+                await renderGestao();
+                break;
+            case 'receitas':
+                await renderReceitas();
+                break;
+            case 'agenda':
+                await renderAgenda(); // Agora chama a função real
+                break;
+            default:
+                console.warn(`Aba ${targetId} não reconhecida.`);
         }
-        // Scroll para o topo ao trocar de aba (útil no iPad)
+        
+        // Scroll para o topo (essencial para a experiência no iPad)
         window.scrollTo(0, 0);
+        
     } catch (err) {
         console.error(`💥 Erro ao carregar aba ${targetId}:`, err);
         if (targetTab) {
-            targetTab.innerHTML = `<div style="color:red; padding:20px;">Erro técnico: ${err.message}</div>`;
+            targetTab.innerHTML = `
+                <div style="color:var(--danger); padding:20px; text-align:center;">
+                    <h3>Lamento, ocorreu um erro técnico</h3>
+                    <p>${err.message}</p>
+                    <button onclick="location.reload()" class="btn" style="margin-top:10px;">Recarregar App</button>
+                </div>`;
         }
     }
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+        // Inicializa a Base de Dados antes de qualquer renderização
         await initDB();
-        
-        // Listener universal para qualquer elemento com data-target
+
+        // Listener universal para navegação (Desktop e Mobile)
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-target]');
             if (btn) {
@@ -63,10 +70,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // Início padrão
+        // Carrega o Dashboard por defeito no arranque
         await router('dashboard');
 
     } catch (error) {
-        console.error('🚨 Erro no arranque:', error);
+        console.error('🚨 Erro crítico no arranque:', error);
+        document.body.innerHTML = `
+            <div style="padding:50px; text-align:center; font-family:sans-serif;">
+                <h2 style="color:#e91e63;">Falha ao iniciar Doce Gestão</h2>
+                <p>O navegador não conseguiu abrir a base de dados local.</p>
+                <small>${error}</small>
+            </div>`;
     }
 });
