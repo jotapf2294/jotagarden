@@ -94,34 +94,60 @@ input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--bo
     main { padding: 15px; padding-bottom: 80px; }
 }
 
+/* === NOVO SISTEMA DE VISUALIZAÇÃO E IMPRESSÃO (CORRIGIDO) === */
+
+/* Quando o print-area está vazio, ele não ocupa espaço nem bloqueia cliques */
+#print-area:empty { 
+    display: none; 
+}
+
+/* Quando aberto, cobre o ecrã para visualização da ficha no iPad/Browser */
+#print-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 10000;
+    overflow-y: auto;
+    padding: 0;
+}
+
 @media print {
-    /* Esconde tudo o que não interessa na impressão */
-    .app-container, .bottom-nav, .app-header, #details-form, #search-nome, #search-categoria, .btn, .card {
-        display: none !important;
+    /* Esconde tudo o que está no body para uma impressão limpa */
+    body * { 
+        visibility: hidden; 
+    } 
+
+    /* Torna apenas a área da ficha técnica visível */
+    #print-area, #print-area * { 
+        visibility: visible; 
     }
-    
-    body {
-        background: white !important;
+
+    /* Posiciona para o início da página de impressão */
+    #print-area { 
+        position: absolute; 
+        left: 0; 
+        top: 0; 
+        width: 100%; 
+    }
+
+    /* Esconde botões de ação (Fechar, Baixar Stock) na folha de papel */
+    .no-print { 
+        display: none !important; 
+    }
+
+    /* Estilo da Ficha na Impressão */
+    .ficha {
+        box-shadow: none !important;
+        border: none !important;
+        width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
     }
 
-    #print-area {
-        display: block !important;
-        width: 100% !important;
-        margin: 0 !important;
+    @page {
+        margin: 1cm;
     }
-
-    /* Força que a ficha ocupe a página toda mas sem margens feias */
-    .ficha {
-        box-shadow: none !important;
-        border: none !important;
-        width: 210mm; /* A4 */
-        min-height: 297mm;
-    }
-}
-
-
-@media screen {
-    #print-area { display: none; }
 }
