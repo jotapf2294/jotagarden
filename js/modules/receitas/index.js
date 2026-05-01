@@ -306,7 +306,7 @@ window.visualizarFicha = async (id) => {
                 <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px; font-size: 11px; margin-bottom: 12px; border-radius:4px;">
                     <strong>⚠️ PCC (PONTO CRÍTICO):</strong> ${r.pcc || 'Não especificado'}
                 </div>
-                <div style="font-size: 12px; white-space: pre-wrap; margin-bottom: 20px; border: 1px solid #f1f5f9; padding: 15px; border-radius:4px;">${r.preparo}</div>
+                <div style="font-size: 16px; white-space: pre-wrap; margin-bottom: 20px; border: 1px solid #f1f5f9; padding: 15px; border-radius:4px;">${r.preparo}</div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
                     <div>
