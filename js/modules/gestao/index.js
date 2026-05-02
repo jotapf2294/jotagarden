@@ -39,7 +39,7 @@ export const renderGestao = async () => {
                 </button>
             </div>
 
-            <div style="background: white; border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border);">
+            <div style="background: white; border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border); margin-bottom: 30px;">
                 <table style="width: 100%; border-collapse: collapse; text-align: left;">
                     <thead>
                         <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
@@ -82,6 +82,33 @@ export const renderGestao = async () => {
                         }).join('')}
                     </tbody>
                 </table>
+            </div>
+
+            <div style="background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 25px; margin-top: 20px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                    <span style="font-size: 1.5rem;">🛡️</span>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.1rem; color: #334155;">Segurança de Dados</h3>
+                        <p style="margin: 2px 0 0 0; font-size: 0.85rem; color: #64748b;">Guarde ou restaure as suas receitas e agenda</p>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <button onclick="window.fazerBackup()" 
+                            style="background: white; border: 1px solid #cbd5e1; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;">
+                        📥 Descarregar Backup
+                    </button>
+                    <div style="position: relative;">
+                        <button style="background: white; border: 1px solid #cbd5e1; padding: 12px; border-radius: 10px; width: 100%; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            📤 Restaurar Ficheiro
+                        </button>
+                        <input type="file" id="input-import-backup" accept=".json" 
+                               style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;"
+                               onchange="window.restaurarBackup(event)">
+                    </div>
+                </div>
+                <p style="text-align: center; margin-top: 15px; font-size: 0.75rem; color: #94a3b8;">
+                    Ficheiro formato .JSON • Compatível com qualquer dispositivo Doce Gestão
+                </p>
             </div>
         </div>
 
@@ -164,7 +191,7 @@ const setupGestaoEvents = () => {
                 categoria: document.getElementById('ins-cat').value,
                 preco: document.getElementById('ins-preco').value,
                 qtd: valorQtd,
-                qtdOriginal: valorQtd, // Guardamos a dose padrão de compra
+                qtdOriginal: valorQtd, 
                 un: document.getElementById('ins-un').value
             };
             
@@ -175,15 +202,60 @@ const setupGestaoEvents = () => {
     }
 };
 
-// --- FUNÇÕES GLOBAIS ---
+// --- FUNÇÕES GLOBAIS DE BACKUP ---
+window.fazerBackup = async () => {
+    const tabelas = ['receitas', 'agenda', 'insumos'];
+    const backup = {};
 
+    for (const tabela of tabelas) {
+        backup[tabela] = await getAll(tabela);
+    }
+
+    const data = JSON.stringify(backup, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_doce_gestao_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+};
+
+window.restaurarBackup = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!confirm("Atenção: A restauração de backup irá adicionar os dados guardados à sua base de dados atual. Deseja continuar?")) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        try {
+            const backup = JSON.parse(e.target.result);
+            const tabelas = Object.keys(backup);
+
+            for (const tabela of tabelas) {
+                if (Array.isArray(backup[tabela])) {
+                    for (const item of backup[tabela]) {
+                        await save(tabela, item);
+                    }
+                }
+            }
+            alert("✅ Backup restaurado com sucesso!");
+            renderGestao();
+        } catch (err) {
+            alert("❌ Erro ao ler o ficheiro de backup. Verifique se o formato está correto.");
+            console.error(err);
+        }
+    };
+    reader.readAsText(file);
+};
+
+// --- OUTRAS FUNÇÕES GLOBAIS ---
 window.reporStockRápido = async (id) => {
     const i = await getById('insumos', id);
     if (!i) return;
-
-    // Se não houver qtdOriginal definida (em items antigos), usa a qtd atual como base
     const doseReposição = parseFloat(i.qtdOriginal) || parseFloat(i.qtd);
-    
     if (confirm(`Deseja repor +${doseReposição}${i.un} de ${i.nome}?\nNovo stock: ${(parseFloat(i.qtd) + doseReposição).toFixed(2)}${i.un}`)) {
         i.qtd = parseFloat(i.qtd) + doseReposição;
         await save('insumos', i);
@@ -194,7 +266,6 @@ window.reporStockRápido = async (id) => {
 window.abrirEdicaoInsumo = async (id) => {
     const i = await getById('insumos', id);
     if (!i) return;
-    
     const form = document.getElementById('form-insumo-gestao');
     form.dataset.editId = id;
     document.getElementById('modal-title').innerText = "Editar " + i.nome;
