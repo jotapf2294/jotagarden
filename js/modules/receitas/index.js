@@ -49,9 +49,9 @@ export const renderReceitas = async () => {
                         </div>
                         <div id="lista-temp-ing" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:5px;"></div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <textarea id="rec-pcc" placeholder="PCC: Ex: Cozedura > 75°C..." style="height: 60px; border-left: 3px solid #f59e0b; padding:5px;"></textarea>
-                        <textarea id="rec-preparo" placeholder="Modo de Preparo..." style="height: 60px; padding:5px;"></textarea>
+                    <div>
+                        <label style="font-size: 0.75rem; font-weight: bold; color: var(--primary); display: block; margin-bottom: 5px;">MODO DE PREPARO:</label>
+                        <textarea id="rec-preparo" placeholder="Descreve todos os passos da receita aqui..." style="height: 150px; padding: 10px; width: 100%; resize: vertical;"></textarea>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <input type="text" id="rec-embalagem" placeholder="Embalagem">
@@ -119,7 +119,6 @@ const setupEvents = (receitas, insumos) => {
                 rendPorcoes: document.getElementById('rec-rend-porcoes').value,
                 tempo: document.getElementById('rec-tempo').value,
                 tempArm: document.getElementById('rec-temp-arm').value,
-                pcc: document.getElementById('rec-pcc').value,
                 preparo: document.getElementById('rec-preparo').value,
                 embalagem: document.getElementById('rec-embalagem').value,
                 validade: document.getElementById('rec-validade').value,
@@ -198,7 +197,6 @@ window.editarFicha = async (id) => {
     document.getElementById('rec-rend-porcoes').value = r.rendPorcoes || 1;
     document.getElementById('rec-tempo').value = r.tempo || "";
     document.getElementById('rec-temp-arm').value = r.tempArm || "";
-    document.getElementById('rec-pcc').value = r.pcc || "";
     document.getElementById('rec-preparo').value = r.preparo || "";
     document.getElementById('rec-embalagem').value = r.embalagem || "";
     document.getElementById('rec-validade').value = r.validade || "";
@@ -207,7 +205,6 @@ window.editarFicha = async (id) => {
     atualizarListaTemp();
 };
 
-// --- LOGICA DE BAIXA DE STOCK ---
 window.confirmarBaixaStock = async (idReceita) => {
     if (!confirm("Confirmar a produção desta receita? O stock será descontado na Gestão.")) return;
     const [receitas, insumos] = await Promise.all([getAll('receitas'), getAll('insumos')]);
@@ -270,9 +267,8 @@ window.visualizarFicha = async (id) => {
                     <div style="display:flex; justify-content: space-between; font-weight: bold; color: #1e3a8a; font-size:14px;"><span>CUSTO TOTAL DA RECEITA:</span><span>${totalMP.toFixed(2)} €</span></div>
                     <div style="display:flex; justify-content: space-between; font-size: 11px; margin-top:5px;"><span>Custo por Porção (${r.rendPorcoes}):</span><span>${custoPorcao.toFixed(3)} €</span></div>
                 </div>
-                <h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; margin-bottom:12px;">Modo de Preparo e Segurança</h2>
-                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px; font-size: 11px; margin-bottom: 12px; border-radius:4px;"><strong>⚠️ PCC (PONTO CRÍTICO):</strong> ${r.pcc || 'Não especificado'}</div>
-                <div style="font-size: 14px; white-space: pre-wrap; margin-bottom: 20px; border: 1px solid #f1f5f9; padding: 15px; border-radius:4px;">${r.preparo}</div>
+                <h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; margin-bottom:12px;">Modo de Preparo</h2>
+                <div style="font-size: 14px; white-space: pre-wrap; margin-bottom: 20px; border: 1px solid #f1f5f9; padding: 15px; border-radius:4px; min-height: 100px;">${r.preparo}</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
                     <div><h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; margin-bottom:8px;">EMBALAGEM</h2><div style="font-size: 12px;">Tipo: ${r.embalagem}<br>Validade: ${r.validade}</div></div>
                     <div><h2 style="font-size: 13px; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; margin-bottom:8px;">ALERGÉNIOS</h2><div style="font-size: 12px; color: #dc2626; font-weight:bold;">${r.alergenos}</div></div>
